@@ -774,7 +774,7 @@
   "com_config_section_summarization_desc": "Configure conversation summarization behavior",
   "com_endpoint_prompt_cache": "Prompt cache",
   "com_endpoint_anthropic_prompt_cache": "Cache stable prompt context (system messages, tools, long inputs) at the API to reduce per-request input tokens on Anthropic models",
-  "com_auth_title": "Admin Panel",
+  "com_auth_title": "BdREN Synapse",
   "com_auth_email_label": "Email",
   "com_auth_email_placeholder": "admin@example.com",
   "com_auth_password_label": "Password",
@@ -886,7 +886,7 @@
   "com_ui_active": "Active",
   "com_ui_paused": "Paused",
   "com_users_title": "User management",
-  "com_users_subtitle": "Manage users, roles, and permissions for LibreChat",
+  "com_users_subtitle": "Manage users, roles, and permissions for BdREN Synapse",
   "com_users_add": "Add user",
   "com_users_total": "Total users",
   "com_users_admins": "Admins",
@@ -1192,7 +1192,7 @@
   "com_nav_collapse_sidebar": "Collapse sidebar",
   "com_nav_dashboard": "Dashboard",
   "com_dash_title": "Welcome!",
-  "com_dash_subtitle": "Here's everything you need to manage your LibreChat instance.",
+  "com_dash_subtitle": "Here's everything you need to manage your BdREN Synapse instance.",
   "com_dash_quick_links": "Quick links",
   "com_dash_config_desc": "View and manage instance configuration settings.",
   "com_dash_access_desc": "Create and manage groups, assign roles, and fine-tune member permissions across your organization.",
@@ -1224,5 +1224,5 @@
   "com_kv_type_number": "123",
   "com_kv_type_boolean": "T/F",
   "com_kv_type_json": "{ }",
-  "com_a11y_logo_alt": "LibreChat logo"
+  "com_a11y_logo_alt": "BdREN Synapse logo"
 }
