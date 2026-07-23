@@ -7,6 +7,7 @@ import { Alert, Title, Panel, Button, Separator, TextField, Container } from '@c
 import type * as t from '@/types';
 import { adminLoginFn, adminVerify2FAFn, openIdCheckOptions, openidLoginFn } from '@/server';
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from './InputOTP';
+import synapseIcon from '@/assets/synapse-icon.svg';
 import { PasswordInput } from './PasswordInput';
 import { useLocalize } from '@/hooks';
 
@@ -221,6 +222,7 @@ export function AuthCard({
         color="default"
       >
         <Container orientation="vertical" gap="lg" alignItems="center">
+          <img src={synapseIcon} alt="" className="h-12 w-12" draggable={false} />
           <Title type="h1">{localize('com_auth_title')}</Title>
           <p className="text-center text-sm text-(--cui-color-text-muted)">
             {localize('com_auth_sso_redirecting_auto')}
@@ -241,6 +243,7 @@ export function AuthCard({
       color="default"
     >
       <Container orientation="vertical" gap="lg" alignItems="center">
+        <img src={synapseIcon} alt="" className="h-12 w-12" draggable={false} />
         <Title type="h1">
           {step === '2fa' ? localize('com_auth_2fa_title') : localize('com_auth_title')}
         </Title>
