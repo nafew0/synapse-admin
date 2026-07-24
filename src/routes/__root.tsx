@@ -1,4 +1,5 @@
 import '../locales/i18n';
+import '../theme/brandTheme';
 import { ClickUIProvider } from '@clickhouse/click-ui';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
