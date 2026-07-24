@@ -33,7 +33,7 @@ Synapse logo — + **orange** `#F5871F`/`#FBA24D` (dark) — interactive accent
 | `public/manifest.json` | `name`, `short_name`, `theme_color` (→ purple), icon `sizes` string updated to match the regenerated favicon.ico |
 | `src/styles.css` | `--cui-color-accent`, `--cui-color-outline`, `--cui-color-text-primary`, `--cui-color-text-link` overridden to orange in `:root`, `.dark`, **and** the `@media (prefers-color-scheme: dark) { :root:not(.light) }` duplicate block (all three must stay in sync) |
 | `src/routes/login.tsx` | mounts `<NetworkBackground />`; added `position: 'relative'` to the `Container` and wrapped `AuthCard`/`ThemeSelector` in `relative z-10` so they stack above the new background |
-| `src/components/AuthCard.tsx` | added a Synapse icon `<img>` above the title in both the auto-SSO-redirect and normal login card variants |
+| `src/components/AuthCard.tsx` | added a Synapse icon `<img>` above the title in both the auto-SSO-redirect and normal login card variants; restructured into a two-column layout (branding left, form right) above the `lg:` breakpoint, falling back to the original vertical stack below it |
 | `src/routes/__root.tsx` | also adds a side-effect import (`import '../theme/brandTheme';`) — see below |
 
 ## click-ui's own component colors (Button, TextField focus ring, etc.)
