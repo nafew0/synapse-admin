@@ -16,6 +16,7 @@ Synapse logo — + **orange** `#F5871F`/`#FBA24D` (dark) — interactive accent
   watermark shown behind the login page.
 - `src/assets/synapse-icon.svg` — icon-only Synapse mark, used for the login
   watermark and the logo shown above the login title.
+- `src/theme/brandTheme.ts` — see "click-ui's own component colors" below.
 
 ## Same-name asset replacements (zero merge risk)
 
@@ -33,6 +34,35 @@ Synapse logo — + **orange** `#F5871F`/`#FBA24D` (dark) — interactive accent
 | `src/styles.css` | `--cui-color-accent`, `--cui-color-outline`, `--cui-color-text-primary`, `--cui-color-text-link` overridden to orange in `:root`, `.dark`, **and** the `@media (prefers-color-scheme: dark) { :root:not(.light) }` duplicate block (all three must stay in sync) |
 | `src/routes/login.tsx` | mounts `<NetworkBackground />`; added `position: 'relative'` to the `Container` and wrapped `AuthCard`/`ThemeSelector` in `relative z-10` so they stack above the new background |
 | `src/components/AuthCard.tsx` | added a Synapse icon `<img>` above the title in both the auto-SSO-redirect and normal login card variants |
+| `src/routes/__root.tsx` | also adds a side-effect import (`import '../theme/brandTheme';`) — see below |
+
+## click-ui's own component colors (Button, TextField focus ring, etc.)
+
+The `--cui-color-*` CSS variable edits above only affect elements that read
+those variables directly (plain text/links). click-ui's own components are
+styled from a **separate, bundled design-token tree**
+(`themes.dark`/`themes.light`, ~50 color paths) fed through styled-components'
+`ThemeProvider` inside `ClickUIProvider` — which only accepts a theme *name*
+("dark"/"light"), with no override prop. Nesting a second styled-components
+`ThemeProvider` around app content does **not** work either: click-ui bundles
+its own nested copy of styled-components
+(`node_modules/@clickhouse/click-ui/node_modules/styled-components@6.3.11`,
+vs this app's top-level `styled-components@6.4.2`), so it reads from a
+different React Context instance than anything the app imports from the
+top-level `'styled-components'` package.
+
+`src/theme/brandTheme.ts` works around this the only way that reaches both
+instances: `themes.dark`/`themes.light` (exported from `@clickhouse/click-ui`)
+are plain, mutable, module-singleton objects — patching every accent-carrying
+path **in place, once, at import time** changes the data both
+styled-components copies render, since the data itself isn't tied to either
+instance. Imported once for its side effect in `__root.tsx`, before
+`ClickUIProvider` first renders.
+
+If click-ui ever adds a real theme-override prop to `ClickUIProvider`, or the
+nested styled-components duplicate gets resolved (dependency versions align),
+this file can likely be replaced with something less unusual — check on any
+upstream merge that bumps `@clickhouse/click-ui`.
 
 ## Left unchanged (intentional)
 
