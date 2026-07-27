@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { queryOptions } from '@tanstack/react-query';
 import { SystemRoles } from 'librechat-data-provider';
 import { createServerFn } from '@tanstack/react-start';
-import type { AdminMember } from '@librechat/data-schemas';
+import { INSTITUTION_ADMIN_ROLE, type AdminMember } from '@librechat/data-schemas';
 import type * as t from '@/types';
 import { apiFetch, extractApiError } from './utils/api';
 import { MEMBERS_PAGE_SIZE } from './groups';
@@ -23,7 +23,11 @@ interface RawRole {
   permissions?: Record<string, Record<string, boolean>>;
 }
 
-const SYSTEM_ROLE_NAMES = new Set<string>([SystemRoles.ADMIN, SystemRoles.USER]);
+const SYSTEM_ROLE_NAMES = new Set<string>([
+  SystemRoles.ADMIN,
+  SystemRoles.USER,
+  INSTITUTION_ADMIN_ROLE,
+]);
 
 function toRole(raw: RawRole): t.Role {
   return {

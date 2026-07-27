@@ -4,8 +4,17 @@ import { Link } from '@tanstack/react-router';
 import type * as t from '@/types';
 import { useCapabilities, useLocalize } from '@/hooks';
 import { SystemCapabilities } from '@/constants';
+import { getRouteApi } from '@tanstack/react-router';
+
+const Route = getRouteApi('/_app');
 
 const QUICK_LINKS: (t.NavItem & { descKey: string })[] = [
+  {
+    labelKey: 'com_nav_institutions',
+    path: '/institutions',
+    icon: 'users',
+    descKey: 'com_dash_institutions_desc',
+  },
   {
     labelKey: 'com_nav_configuration',
     path: '/configuration',
@@ -19,6 +28,13 @@ const QUICK_LINKS: (t.NavItem & { descKey: string })[] = [
     icon: 'user',
     descKey: 'com_dash_access_desc',
     capability: [SystemCapabilities.READ_ROLES, SystemCapabilities.READ_GROUPS],
+  },
+  {
+    labelKey: 'com_nav_usage',
+    path: '/usage',
+    icon: 'chart',
+    descKey: 'com_dash_usage_desc',
+    capability: SystemCapabilities.READ_USAGE,
   },
   {
     labelKey: 'com_nav_grants',
@@ -37,6 +53,7 @@ const QUICK_LINKS: (t.NavItem & { descKey: string })[] = [
 export function DashboardPage() {
   const localize = useLocalize();
   const { hasCapability } = useCapabilities();
+  const { user } = Route.useRouteContext();
 
   const isMac =
     typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
@@ -44,11 +61,14 @@ export function DashboardPage() {
   const visibleLinks = useMemo(
     () =>
       QUICK_LINKS.filter((link) => {
+        if (link.path === '/institutions') {
+          return user?.isPlatformSuperadmin === true;
+        }
         if (!link.capability) return true;
         if (Array.isArray(link.capability)) return link.capability.some((c) => hasCapability(c));
         return hasCapability(link.capability);
       }),
-    [hasCapability],
+    [hasCapability, user?.isPlatformSuperadmin],
   );
 
   return (

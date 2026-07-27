@@ -1,6 +1,6 @@
 import { Command } from 'cmdk';
 import { Icon } from '@clickhouse/click-ui';
-import { useRouter } from '@tanstack/react-router';
+import { getRouteApi, useRouter } from '@tanstack/react-router';
 import { useCallback, useRef, useState } from 'react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Title as DialogTitle, Description as DialogDescription } from '@radix-ui/react-dialog';
@@ -9,9 +9,12 @@ import { CONFIG_TABS } from './configuration/configMeta';
 import { useSearchIndex, useLocalize } from '@/hooks';
 import { useTheme } from '@/contexts/ThemeContext';
 
+const Route = getRouteApi('/_app');
+
 export function CommandMenu({ open, onOpenChange }: t.CommandMenuProps) {
   const localize = useLocalize();
   const router = useRouter();
+  const { user } = Route.useRouteContext();
   const { setTheme } = useTheme();
   const { items: configSections } = useSearchIndex(localize, open);
 
@@ -72,6 +75,13 @@ export function CommandMenu({ open, onOpenChange }: t.CommandMenuProps) {
             label={localize('com_nav_dashboard')}
             onSelect={() => navigateTo('/')}
           />
+          {user?.isPlatformSuperadmin ? (
+            <CommandItem
+              icon="users"
+              label={localize('com_nav_institutions')}
+              onSelect={() => navigateTo('/institutions')}
+            />
+          ) : null}
           <CommandItem
             icon="settings"
             label={localize('com_nav_configuration')}

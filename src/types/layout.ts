@@ -5,6 +5,7 @@ export interface SidebarProps {
   user?: {
     name?: string;
     email?: string;
+    isPlatformSuperadmin?: boolean;
   } | null;
   collapsed: boolean;
   onToggle: () => void;

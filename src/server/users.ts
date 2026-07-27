@@ -1,67 +1,287 @@
-/**
- * Server functions for user management.
- *
- * Calls the LibreChat Admin API (/api/admin/users) for list, search, and delete.
- * Create user is not yet wired.
- */
-
 import { z } from 'zod';
-import { queryOptions } from '@tanstack/react-query';
-import { SystemRoles } from 'librechat-data-provider';
 import { createServerFn } from '@tanstack/react-start';
-import type { AdminUserSearchResult } from '@librechat/data-schemas';
-import type { TUser } from 'librechat-data-provider';
+import type * as t from '@/types';
 import { apiFetch, extractApiError } from './utils/api';
 
-// ── Server functions ─────────────────────────────────────────────────
+const memberRoleSchema = z.enum(['USER', 'INSTITUTION_ADMIN']);
+const memberStatusSchema = z.enum(['active', 'suspended', 'removed', 'invited', 'expired']);
 
-export const getUsersFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<{ users: TUser[] }> => {
-    const response = await apiFetch('/api/admin/users');
-    if (!response.ok) {
-      throw new Error(`Failed to fetch users: ${response.status}`);
-    }
-    const json = (await response.json()) as { users: TUser[] };
-    return { users: json.users ?? [] };
-  },
-);
-
-export const usersQueryOptions = queryOptions({
-  queryKey: ['users'],
-  queryFn: () => getUsersFn().then((r) => r.users),
-  staleTime: 30_000,
+const listMembersInput = z.object({
+  limit: z.number().int().positive().max(100).default(25),
+  offset: z.number().int().min(0).default(0),
+  query: z.string().optional(),
+  status: memberStatusSchema.or(z.literal('all')).optional(),
+  role: memberRoleSchema.or(z.literal('all')).optional(),
+  platform: z.boolean().optional(),
+  tenantId: z.string().optional(),
 });
 
-export const createUserFn = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      name: z.string().min(1),
-      email: z.string().email(),
-      role: z.nativeEnum(SystemRoles),
-    }),
-  )
-  .handler(async (): Promise<{ user: TUser }> => {
-    throw new Error('Not implemented: createUserFn');
+function toQueryString(input: z.infer<typeof listMembersInput>): string {
+  const params = new URLSearchParams();
+  params.set('limit', String(input.limit));
+  params.set('offset', String(input.offset));
+  if (input.query?.trim()) {
+    params.set('q', input.query.trim());
+  }
+  if (input.status && input.status !== 'all') {
+    params.set('status', input.status);
+  }
+  if (input.role && input.role !== 'all') {
+    params.set('role', input.role);
+  }
+  if (input.tenantId?.trim()) {
+    params.set('tenantId', input.tenantId.trim());
+  }
+  return params.toString();
+}
+
+export const getMembersFn = createServerFn({ method: 'GET' })
+  .inputValidator(listMembersInput)
+  .handler(async ({ data }): Promise<t.InstitutionMemberListResponse> => {
+    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const response = await apiFetch(`${route}?${toQueryString(data)}`);
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to fetch members');
+    }
+    return (await response.json()) as t.InstitutionMemberListResponse;
   });
 
-export const deleteUserFn = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ id: z.string() }))
-  .handler(async ({ data }) => {
-    const response = await apiFetch(`/api/admin/users/${encodeURIComponent(data.id)}`, {
-      method: 'DELETE',
+export const inviteMemberFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      name: z.string().trim().min(1),
+      email: z.string().email(),
+      role: memberRoleSchema,
+    }),
+  )
+  .handler(async ({ data }): Promise<{ inviteLink?: string | null }> => {
+    const response = await apiFetch('/api/admin/users/invite', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
-    if (!response.ok && response.status !== 404) {
-      throw new Error(`Failed to delete user: ${response.status}`);
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to invite member');
     }
+    const json = (await response.json()) as { inviteLink?: string | null };
+    return { inviteLink: json.inviteLink ?? null };
+  });
+
+export const resendInviteFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      inviteId: z.string(),
+      tenantId: z.string().optional(),
+      platform: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data }): Promise<{ inviteLink?: string | null }> => {
+    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const response = await apiFetch(
+      `${route}/invites/${encodeURIComponent(data.inviteId)}/resend`,
+      {
+        method: 'POST',
+        body: data.platform ? JSON.stringify({ tenantId: data.tenantId }) : undefined,
+      },
+    );
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to resend invitation');
+    }
+    const json = (await response.json()) as { inviteLink?: string | null };
+    return { inviteLink: json.inviteLink ?? null };
+  });
+
+export const revokeInviteFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      inviteId: z.string(),
+      tenantId: z.string().optional(),
+      platform: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const response = await apiFetch(
+      `${route}/invites/${encodeURIComponent(data.inviteId)}/revoke`,
+      {
+        method: 'POST',
+        body: data.platform ? JSON.stringify({ tenantId: data.tenantId }) : undefined,
+      },
+    );
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to revoke invitation');
+    }
+  });
+
+export const suspendMemberFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      userId: z.string(),
+      tenantId: z.string().optional(),
+      platform: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const response = await apiFetch(`${route}/${encodeURIComponent(data.userId)}/suspend`, {
+      method: 'POST',
+      body: data.platform ? JSON.stringify({ tenantId: data.tenantId }) : undefined,
+    });
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to suspend member');
+    }
+  });
+
+export const reactivateMemberFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      userId: z.string(),
+      tenantId: z.string().optional(),
+      platform: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const response = await apiFetch(`${route}/${encodeURIComponent(data.userId)}/reactivate`, {
+      method: 'POST',
+      body: data.platform ? JSON.stringify({ tenantId: data.tenantId }) : undefined,
+    });
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to reactivate member');
+    }
+  });
+
+export const removeMemberFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      userId: z.string(),
+      tenantId: z.string().optional(),
+      platform: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const response = await apiFetch(`${route}/${encodeURIComponent(data.userId)}/remove`, {
+      method: 'POST',
+      body: data.platform ? JSON.stringify({ tenantId: data.tenantId }) : undefined,
+    });
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to remove member');
+    }
+  });
+
+export const changeMemberRoleFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      userId: z.string(),
+      role: memberRoleSchema,
+      tenantId: z.string().optional(),
+      platform: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const response = await apiFetch(`${route}/${encodeURIComponent(data.userId)}/role`, {
+      method: 'POST',
+      body: JSON.stringify({
+        role: data.role,
+        ...(data.platform ? { tenantId: data.tenantId } : null),
+      }),
+    });
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to update member role');
+    }
+  });
+
+export const resendMemberVerificationFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      userId: z.string(),
+      tenantId: z.string(),
+      platform: z.literal(true),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const response = await apiFetch(
+      `/api/platform/users/${encodeURIComponent(data.userId)}/resend-verification`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ tenantId: data.tenantId }),
+      },
+    );
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to resend verification email');
+    }
+  });
+
+export const dryRunMemberImportFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ csvText: z.string().min(1) }))
+  .handler(
+    async ({
+      data,
+    }): Promise<{
+      summary: t.InstitutionImportSummary;
+      results: t.InstitutionImportRowResult[];
+    }> => {
+      const response = await apiFetch('/api/admin/users/invites/import/dry-run', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        await extractApiError(response, 'Failed to validate CSV import');
+      }
+      return (await response.json()) as {
+        summary: t.InstitutionImportSummary;
+        results: t.InstitutionImportRowResult[];
+      };
+    },
+  );
+
+export const createMemberImportFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ csvText: z.string().min(1) }))
+  .handler(async ({ data }): Promise<{ job: t.InstitutionImportJob }> => {
+    const response = await apiFetch('/api/admin/users/invites/import', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to start CSV import');
+    }
+    return (await response.json()) as { job: t.InstitutionImportJob };
+  });
+
+export const getMemberImportJobFn = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ jobId: z.string() }))
+  .handler(async ({ data }): Promise<{ job: t.InstitutionImportJob }> => {
+    const response = await apiFetch(`/api/admin/users/imports/${encodeURIComponent(data.jobId)}`);
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to fetch import job');
+    }
+    return (await response.json()) as { job: t.InstitutionImportJob };
   });
 
 export const searchUsersFn = createServerFn({ method: 'GET' })
   .inputValidator(z.object({ query: z.string() }))
-  .handler(async ({ data }): Promise<{ users: AdminUserSearchResult[] }> => {
-    const response = await apiFetch(`/api/admin/users/search?q=${encodeURIComponent(data.query)}`);
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to search users');
-    }
-    const json = (await response.json()) as { users: AdminUserSearchResult[] };
-    return { users: json.users ?? [] };
-  });
+  .handler(
+    async ({
+      data,
+    }): Promise<{
+      users: Array<{ id: string; name: string; email: string; username?: string }>;
+    }> => {
+      const response = await apiFetch(
+        `/api/admin/users/search?q=${encodeURIComponent(data.query)}&limit=20`,
+      );
+      if (!response.ok) {
+        await extractApiError(response, 'Failed to search users');
+      }
+      const json = (await response.json()) as { members: t.InstitutionMember[] };
+      return {
+        users: (json.members ?? [])
+          .filter((member) => member.kind === 'user')
+          .map((member) => ({
+            id: member.id,
+            name: member.name,
+            email: member.email,
+          })),
+      };
+    },
+  );
