@@ -11,26 +11,37 @@ import { adminLogoutFn } from '@/server';
 
 const navItems: t.NavItem[] = [
   { labelKey: 'com_nav_dashboard', path: '/', icon: 'home' },
+  { labelKey: 'com_nav_institutions', path: '/institutions', icon: 'users' },
   {
     labelKey: 'com_nav_configuration',
     path: '/configuration',
     icon: 'settings',
     capability: SystemCapabilities.READ_CONFIGS,
   },
-  // TODO: re-enable once user management is ready
-  // {
-  //   labelKey: 'com_nav_users',
-  //   path: '/users',
-  //   icon: 'users',
-  //   capability: SystemCapabilities.READ_USERS,
-  // },
+  {
+    labelKey: 'com_nav_users',
+    path: '/users',
+    icon: 'users',
+    capability: SystemCapabilities.READ_USERS,
+  },
+  {
+    labelKey: 'com_nav_usage',
+    path: '/usage',
+    icon: 'bar-chart',
+    capability: SystemCapabilities.READ_USAGE,
+  },
   {
     labelKey: 'com_nav_access',
     path: '/access',
     icon: 'user',
     capability: [SystemCapabilities.READ_ROLES, SystemCapabilities.READ_GROUPS],
   },
-  { labelKey: 'com_nav_grants', path: '/grants', icon: 'lock' },
+  {
+    labelKey: 'com_nav_grants',
+    path: '/grants',
+    icon: 'lock',
+    capability: SystemCapabilities.READ_AUDIT_LOG,
+  },
   { labelKey: 'com_nav_help', path: '/help', icon: 'question' },
 ];
 
@@ -50,6 +61,9 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const visibleItems = navItems.filter((item) => {
+    if (item.path === '/institutions') {
+      return user?.isPlatformSuperadmin === true;
+    }
     if (!item.capability) return true;
     if (Array.isArray(item.capability)) return item.capability.some((c) => hasCapability(c));
     return hasCapability(item.capability);

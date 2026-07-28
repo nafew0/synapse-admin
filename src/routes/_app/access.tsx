@@ -29,7 +29,7 @@ function AccessRoute() {
   if (isLoading) return null;
   if (isError) return <PermissionsUnavailable />;
 
-  const canReadRoles = hasCapability(SystemCapabilities.READ_ROLES);
+  const canReadRoles = hasCapability(SystemCapabilities.MANAGE_ROLES);
   const canReadGroups = hasCapability(SystemCapabilities.READ_GROUPS);
 
   if (!canReadRoles && !canReadGroups) {

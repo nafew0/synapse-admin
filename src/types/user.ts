@@ -1,14 +1,76 @@
-import type { TUser } from 'librechat-data-provider';
-import type { ConfigScope, IconName } from './scope';
-
+/** Identifies a role or group a user is assigned to. */
 export interface AssignmentRef {
   id: string;
   name: string;
 }
 
-export interface UserAssignment {
-  roles: AssignmentRef[];
-  groups: AssignmentRef[];
+export type MemberRole = 'USER' | 'INSTITUTION_ADMIN';
+export type MemberStatus = 'active' | 'suspended' | 'removed' | 'invited' | 'expired';
+export type MemberKind = 'user' | 'invite';
+
+export interface InstitutionSeatSummary {
+  activeMembers: number;
+  maxActiveMembers?: number | null;
+  pendingInvites: number;
+  institutions?: number;
+}
+
+export interface InstitutionMember {
+  id: string;
+  kind: MemberKind;
+  tenantId: string;
+  institutionName?: string;
+  name: string;
+  email: string;
+  emailVerified?: boolean;
+  role: MemberRole;
+  status: MemberStatus;
+  provider?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  inviteStatus?: string;
+  inviteSource?: string;
+  lastSentAt?: string;
+  expiresAt?: string;
+  suspendedAt?: string | null;
+  removedAt?: string | null;
+  acceptedAt?: string | null;
+}
+
+export interface InstitutionMemberListResponse {
+  members: InstitutionMember[];
+  total: number;
+  limit: number;
+  offset: number;
+  summary: InstitutionSeatSummary;
+}
+
+export interface InstitutionImportRowResult {
+  rowNumber: number;
+  email?: string;
+  name?: string;
+  requestedRole?: MemberRole;
+  action: 'invite' | 'update_member' | 'skip' | 'error';
+  message: string;
+}
+
+export interface InstitutionImportSummary {
+  totalRows: number;
+  invitesCreated: number;
+  membersUpdated: number;
+  skipped: number;
+  errors: number;
+}
+
+export interface InstitutionImportJob {
+  id: string;
+  tenantId: string;
+  idempotencyKey: string;
+  status: 'pending' | 'completed' | 'failed';
+  summary: InstitutionImportSummary;
+  results: InstitutionImportRowResult[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateUserDialogProps {
@@ -16,78 +78,17 @@ export interface CreateUserDialogProps {
   onClose: () => void;
 }
 
-export type RoleFilter = 'all' | 'admin' | 'user';
-
-export interface UserRowProps {
-  user: TUser;
-  roles: AssignmentRef[];
-  groups: AssignmentRef[];
-  hasUserProfile: boolean;
-  isLast: boolean;
-  onViewDetails: () => void;
-  onDelete: () => void;
-  canManage: boolean;
+export interface ImportMembersDialogProps {
+  open: boolean;
+  onClose: () => void;
 }
-
-export type RemoveTarget =
-  | { kind: 'role'; ref: AssignmentRef }
-  | { kind: 'group'; ref: AssignmentRef }
-  | { kind: 'profile'; scope: ConfigScope };
 
 export interface UserDetailDialogProps {
-  user: TUser | null;
+  member: InstitutionMember | null;
   onClose: () => void;
-  canManageRoles?: boolean;
-  canManageGroups?: boolean;
-  canAssignConfigs?: boolean;
+  canManage: boolean;
+  platform: boolean;
 }
 
-export interface ProfileListProps {
-  roles: AssignmentRef[];
-  groups: AssignmentRef[];
-  userProfile: ConfigScope | undefined;
-  userName: string;
-  busy: boolean;
-  canManageRoles: boolean;
-  canManageGroups: boolean;
-  canAssignConfigs: boolean;
-  onRemoveRole: (roleId: string) => void;
-  onRemoveGroup: (groupId: string) => void;
-  onDeleteUserProfile: (scope: ConfigScope) => void;
-}
-
-export interface ProfileRowProps {
-  icon: IconName;
-  colorClass: string;
-  label: string;
-  onRemove: () => void;
-  removeLabel: string;
-  busy: boolean;
-  canRemove: boolean;
-}
-
-export interface AddProfilesPanelProps {
-  availableRoles: AssignmentRef[];
-  availableGroups: AssignmentRef[];
-  hasUserProfile: boolean;
-  userName: string;
-  busy: boolean;
-  canManageRoles: boolean;
-  canManageGroups: boolean;
-  canAssignConfigs: boolean;
-  onAddRole: (roleId: string) => void;
-  onAddGroup: (groupId: string) => void;
-  onCreateUserProfile: () => void;
-  onDone: () => void;
-}
-
-export interface PickerSectionProps {
-  label: string;
-  listLabel: string;
-  icon: IconName;
-  colorClass: string;
-  items: AssignmentRef[];
-  emptyLabel: string;
-  busy: boolean;
-  onSelect: (id: string) => void;
-}
+export type RoleFilter = 'all' | 'user' | 'institution_admin';
+export type StatusFilter = 'all' | MemberStatus;

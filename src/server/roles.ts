@@ -23,7 +23,16 @@ interface RawRole {
   permissions?: Record<string, Record<string, boolean>>;
 }
 
-const SYSTEM_ROLE_NAMES = new Set<string>([SystemRoles.ADMIN, SystemRoles.USER]);
+/** Declared here rather than imported from `@librechat/data-schemas`: this app
+ * installs the published package, which has no such export, and importing a
+ * missing named export from it takes the whole roles module down. */
+const INSTITUTION_ADMIN_ROLE = 'INSTITUTION_ADMIN';
+
+const SYSTEM_ROLE_NAMES = new Set<string>([
+  SystemRoles.ADMIN,
+  SystemRoles.USER,
+  INSTITUTION_ADMIN_ROLE,
+]);
 
 function toRole(raw: RawRole): t.Role {
   return {

@@ -2,6 +2,8 @@ export * from './auth';
 export * from './capabilities';
 export * from './config';
 export * from './groups';
+export * from './platformInstitutions';
 export * from './roles';
 export * from './scopes';
 export * from './users';
+export * from './usage';
