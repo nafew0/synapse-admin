@@ -105,7 +105,17 @@ export function ImportMembersDialog({ open, onClose }: t.ImportMembersDialogProp
       </div>
 
       <p className="text-xs text-(--cui-color-text-muted)">
-        Expected columns: <code>email</code>, optional <code>name</code>, optional <code>role</code>.
+        Required column: <code>email</code>. Optional: <code>name</code> and <code>role</code> —
+        leave a cell blank to omit it. <code>role</code> must be exactly{' '}
+        <code>INSTITUTION_ADMIN</code> to grant institution admin; anything else becomes a regular
+        member.{' '}
+        <a
+          href="/sample-member-import.csv"
+          download
+          className="underline text-(--cui-color-text-link)"
+        >
+          Download a sample CSV
+        </a>
       </p>
 
       {summary ? (
