@@ -399,13 +399,32 @@ GET    /api/platform/institutions
 POST   /api/platform/institutions
 GET    /api/platform/institutions/:tenantId
 PATCH  /api/platform/institutions/:tenantId
-PUT    /api/platform/institutions/:tenantId/limits
 POST   /api/platform/institutions/:tenantId/admins
 DELETE /api/platform/institutions/:tenantId/admins/:userId
 POST   /api/platform/institutions/:tenantId/suspend
 POST   /api/platform/institutions/:tenantId/reactivate
-GET    /api/platform/institutions/:tenantId/usage
+GET    /api/platform/institutions/:tenantId/quota
+GET    /api/platform/institutions/:tenantId/quota/readiness
+GET    /api/platform/institutions/:tenantId/policies
+POST   /api/platform/institutions/:tenantId/policies
+POST   /api/platform/institutions/:tenantId/policies/preview
+GET    /api/platform/institutions/:tenantId/usage/summary
+GET    /api/platform/institutions/:tenantId/usage/members
+GET    /api/platform/institutions/:tenantId/usage/models
 ```
+
+Limits are not edited through a `PUT /limits` endpoint as originally sketched.
+Because policies are immutable and versioned, changing a limit means appending
+a new policy version via `POST /policies` (with `expectedVersion` for optimistic
+concurrency); seat count is the one limit still changed in place through
+`PATCH /:tenantId`.
+
+The platform router's three `usage/*` endpoints back the institution detail
+page. The standalone Usage and Users pages instead use `/api/admin/usage/*`
+and `/api/admin/users/*`, which are the same views an institution admin sees
+and additionally cover timeseries and CSV export. A platform superadmin has no
+tenant of their own, so those admin routes accept an explicit `?tenantId=` from
+a superadmin and reject it from everyone else.
 
 All changes require an append-only audit event containing actor, target tenant, before/after policy, request ID, IP, and timestamp.
 
@@ -483,7 +502,12 @@ Each phase should be a separately reviewable change with migrations, tests, and 
 - Define feature flags:
   - `SAAS_INSTITUTIONS_ENABLED`;
   - `TENANT_ISOLATION_STRICT`;
-  - `USAGE_QUOTAS_MODE=off|shadow|enforce`.
+  - ~~`USAGE_QUOTAS_MODE=off|shadow|enforce`~~ — not implemented, and not
+    needed: mode is a property of each institution's active `UsagePolicy`
+    (`shadow` | `enforce`), so it is set per tenant rather than per process.
+    There is no global `off`; an institution with no policy defaults to
+    shadow. `TENANT_REQUIRE_REGISTERED_INSTITUTION` additionally controls
+    whether a tenant with no institution row is refused (default: no).
 
 **Acceptance gate**
 
@@ -647,8 +671,13 @@ Two concurrent final-seat operations must not both succeed. Use a conditional at
   uncovered agent/tool, image, assistant, retry, or cancellation path keeps
   reservation coverage below 100% and prevents enforcement approval.
 - Development and deployment Compose definitions now run MongoDB as a
-  single-node replica set. Existing installations must restart through the
-  updated Compose topology before enforce mode can be selected.
+  single-node replica set. **Neither environment we actually run uses Compose**
+  — the Mac uses Homebrew `mongodb-community` and the Ubuntu host uses a
+  systemd `mongod`, both standalone. Converting each to a single-node replica
+  set is documented in `librechat-mac-local-dev-guide.md` §1.2 and
+  `librechat-ubuntu-npm-deployment-guide.md` §1.3; the Ubuntu one additionally
+  needs a keyFile because authorization is enabled there. Enforce mode cannot
+  be selected until the host the API talks to has been converted.
 - Phase 7 is implemented with a server-paginated institution directory and
   detail tabs for overview, institution-filtered members, quota health,
   policy preview/editing, and version history. All APIs remain protected by
@@ -658,8 +687,9 @@ Two concurrent final-seat operations must not both succeed. Use a conditional at
 
 **Rollout state**
 
-- Shadow collection may begin after the API is restarted on the replica-set
-  Compose topology.
+- Shadow collection needs no replica set and is already running: the quota
+  engine probes for transaction support and falls back to non-transactional
+  writes when there is none. Only enforce mode requires the conversion.
 - Hard enforcement is intentionally not enabled by this implementation.
   Review the institution’s “Shadow rollout gate” after at least seven days and
   1,000 attributable calls, then pilot internally before enabling a client.
