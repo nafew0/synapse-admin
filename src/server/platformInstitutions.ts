@@ -223,3 +223,49 @@ export const assignPlatformInstitutionAdminFn = createServerFn({ method: 'POST' 
       inviteLink: json.inviteLink ?? null,
     };
   });
+
+export const suspendPlatformInstitutionFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ tenantId: z.string().trim().min(1) }))
+  .handler(async ({ data }): Promise<{ institution: t.PlatformInstitution }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/suspend`,
+      { method: 'POST' },
+    );
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to suspend institution');
+    }
+    return (await response.json()) as { institution: t.PlatformInstitution };
+  });
+
+export const reactivatePlatformInstitutionFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ tenantId: z.string().trim().min(1) }))
+  .handler(async ({ data }): Promise<{ institution: t.PlatformInstitution }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/reactivate`,
+      { method: 'POST' },
+    );
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to reactivate institution');
+    }
+    return (await response.json()) as { institution: t.PlatformInstitution };
+  });
+
+export const revokePlatformInstitutionAdminFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      tenantId: z.string().trim().min(1),
+      userId: z.string().trim().min(1),
+    }),
+  )
+  .handler(async ({ data }): Promise<{ ok: true }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/admins/${encodeURIComponent(
+        data.userId,
+      )}`,
+      { method: 'DELETE' },
+    );
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to revoke institution admin');
+    }
+    return { ok: true };
+  });

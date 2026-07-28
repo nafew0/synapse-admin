@@ -12,8 +12,8 @@ export interface PlatformInstitution {
   tenantId: string;
   name: string;
   slug?: string;
-  active?: boolean;
-  status?: 'active' | 'suspended';
+  /** The API reports lifecycle state as `status`; there is no `active` flag. */
+  status: 'active' | 'suspended';
   authDomains?: string[];
   timezone?: string;
   usagePolicyVersion?: number;
@@ -33,6 +33,19 @@ export interface PlatformInstitutionListResponse {
 export interface UsageModelLimit {
   modelKey: string;
   maxTokens: number | null;
+}
+
+/** The editable subset of a policy — what the editor submits to preview/create.
+ *  Version, tenant and provenance are assigned by the server. */
+export interface UsagePolicyInput {
+  mode: 'shadow' | 'enforce';
+  timezone: string;
+  limits: {
+    institutionTokens: number | null;
+    memberTokens: number | null;
+    modelTokens: UsageModelLimit[];
+  };
+  warningThresholds: number[];
 }
 
 export interface UsagePolicy {

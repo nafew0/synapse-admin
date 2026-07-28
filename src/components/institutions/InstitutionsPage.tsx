@@ -7,6 +7,8 @@ import {
   listPlatformInstitutionsFn,
   createPlatformInstitutionFn,
   assignPlatformInstitutionAdminFn,
+  suspendPlatformInstitutionFn,
+  reactivatePlatformInstitutionFn,
 } from '@/server';
 import { EmptyState, FormDialog, LoadingState, SearchInput } from '@/components/shared';
 import { notifyError, notifySuccess } from '@/utils';
@@ -19,6 +21,7 @@ export function InstitutionsPage() {
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [assignTarget, setAssignTarget] = useState<t.PlatformInstitution | null>(null);
+  const [lifecycleTarget, setLifecycleTarget] = useState<t.PlatformInstitution | null>(null);
   const [offset, setOffset] = useState(0);
 
   const institutionsQuery = useQuery({
@@ -27,6 +30,24 @@ export function InstitutionsPage() {
       listPlatformInstitutionsFn({
         data: { q: search.trim() || undefined, limit: 25, offset },
       }),
+  });
+
+  const lifecycleMutation = useMutation({
+    mutationFn: (institution: t.PlatformInstitution) =>
+      institution.status === 'suspended'
+        ? reactivatePlatformInstitutionFn({ data: { tenantId: institution.tenantId } })
+        : suspendPlatformInstitutionFn({ data: { tenantId: institution.tenantId } }),
+    onSuccess: (_result, institution) => {
+      notifySuccess(
+        institution.status === 'suspended'
+          ? `${institution.name} reactivated`
+          : `${institution.name} suspended`,
+      );
+      queryClient.invalidateQueries({ queryKey: ['platformInstitutions'] });
+      queryClient.invalidateQueries({ queryKey: ['platformInstitution', institution.tenantId] });
+      setLifecycleTarget(null);
+    },
+    onError: (error: Error) => notifyError(error.message),
   });
 
   const filtered = institutionsQuery.data?.institutions ?? [];
@@ -59,7 +80,9 @@ export function InstitutionsPage() {
         <SummaryCard label="Institutions" value={String(institutionsQuery.data?.total ?? 0)} />
         <SummaryCard
           label="Active institutions"
-          value={String(institutions.filter((institution) => institution.active !== false).length)}
+          value={String(
+            institutions.filter((institution) => institution.status === 'active').length,
+          )}
         />
         <SummaryCard
           label="Configured seat caps"
@@ -138,15 +161,7 @@ export function InstitutionsPage() {
                       : `${institution.stats?.activeMembers ?? 0} / unlimited`}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={
-                        institution.active === false
-                          ? 'rounded-full bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400'
-                          : 'rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400'
-                      }
-                    >
-                      {institution.active === false ? 'suspended' : 'active'}
-                    </span>
+                    <StatusPill status={institution.status} />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
@@ -161,6 +176,12 @@ export function InstitutionsPage() {
                         type="secondary"
                         label="Invite admin"
                         onClick={() => setAssignTarget(institution)}
+                      />
+                      <Button
+                        type="secondary"
+                        label={institution.status === 'suspended' ? 'Reactivate' : 'Suspend'}
+                        disabled={lifecycleMutation.isPending}
+                        onClick={() => setLifecycleTarget(institution)}
                       />
                     </div>
                   </td>
@@ -205,7 +226,43 @@ export function InstitutionsPage() {
           queryClient.invalidateQueries({ queryKey: ['platformInstitutions'] });
         }}
       />
+
+      <FormDialog
+        open={lifecycleTarget != null}
+        title={
+          lifecycleTarget?.status === 'suspended' ? 'Reactivate institution' : 'Suspend institution'
+        }
+        submitLabel={lifecycleTarget?.status === 'suspended' ? 'Reactivate' : 'Suspend'}
+        saving={lifecycleMutation.isPending}
+        onSubmit={() => {
+          if (lifecycleTarget) {
+            lifecycleMutation.mutate(lifecycleTarget);
+          }
+        }}
+        onClose={() => setLifecycleTarget(null)}
+      >
+        <p className="text-sm text-(--cui-color-text-default)">
+          {lifecycleTarget?.status === 'suspended'
+            ? `Restore access for every member of ${lifecycleTarget?.name}?`
+            : `Suspending ${lifecycleTarget?.name} blocks every member of the institution from using Synapse until it is reactivated. Usage already recorded is kept.`}
+        </p>
+      </FormDialog>
     </div>
+  );
+}
+
+function StatusPill({ status }: { status: t.PlatformInstitution['status'] }) {
+  const suspended = status === 'suspended';
+  return (
+    <span
+      className={
+        suspended
+          ? 'rounded-full bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400'
+          : 'rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400'
+      }
+    >
+      {status}
+    </span>
   );
 }
 

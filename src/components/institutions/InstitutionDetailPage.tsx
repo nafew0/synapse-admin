@@ -10,24 +10,37 @@ import {
   getPlatformInstitutionQuotaReadinessFn,
   listPlatformInstitutionPoliciesFn,
   previewPlatformInstitutionPolicyFn,
+  revokePlatformInstitutionAdminFn,
 } from '@/server';
 import type * as t from '@/types';
 import { EmptyState, LoadingState } from '@/components/shared';
 import { notifyError, notifySuccess } from '@/utils';
 
 const Route = getRouteApi('/_app/institutions/$tenantId');
+const AppRoute = getRouteApi('/_app');
 type Tab = 'overview' | 'members' | 'usage' | 'policy' | 'history';
 
 function formatTokens(value: number | null | undefined) {
   return value == null ? 'Unlimited' : new Intl.NumberFormat().format(value);
 }
 
+/** Blank means unlimited. Anything non-numeric is a mistake, not unlimited:
+ *  JSON.stringify turns NaN into null, which the API accepts as "no limit". */
 function parseLimit(value: string): number | null {
-  return value.trim() ? Number(value) : null;
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const parsed = Number(trimmed);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`"${trimmed}" is not a whole number. Leave blank for unlimited.`);
+  }
+  return parsed;
 }
 
 export function InstitutionDetailPage() {
   const { tenantId } = Route.useParams();
+  const { user } = AppRoute.useRouteContext();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('overview');
   const [memberQuery, setMemberQuery] = useState('');
@@ -82,6 +95,24 @@ export function InstitutionDetailPage() {
     queryFn: () => listPlatformInstitutionPoliciesFn({ data: { tenantId } }),
     enabled: tab === 'history',
   });
+  const revokeAdminMutation = useMutation({
+    mutationFn: (admin: t.InstitutionMember) =>
+      revokePlatformInstitutionAdminFn({ data: { tenantId, userId: admin.id } }),
+    onSuccess: () => {
+      notifySuccess('Institution administrator revoked');
+      queryClient.invalidateQueries({ queryKey: ['platformInstitutionAdmins', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['platformInstitutionMembers', tenantId] });
+    },
+    onError: (error: Error) => notifyError(error.message),
+  });
+
+  if (!user?.isPlatformSuperadmin) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <EmptyState message="Platform superadmin access is required for institution management." />
+      </div>
+    );
+  }
 
   if (institutionQuery.isLoading || quotaQuery.isLoading) return <LoadingState />;
   if (institutionQuery.isError || quotaQuery.isError) {
@@ -122,8 +153,14 @@ export function InstitutionDetailPage() {
           </h1>
           <p className="text-sm text-(--cui-color-text-muted)">{institution.tenantId}</p>
         </div>
-        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-400">
-          {institution.status ?? (institution.active === false ? 'suspended' : 'active')}
+        <span
+          className={
+            institution.status === 'suspended'
+              ? 'rounded-full bg-amber-500/15 px-3 py-1 text-xs text-amber-400'
+              : 'rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-400'
+          }
+        >
+          {institution.status}
         </span>
       </header>
 
@@ -145,9 +182,19 @@ export function InstitutionDetailPage() {
       </nav>
 
       {tab === 'overview' && (
-        <Overview institution={institution} policy={quota.policy} admins={admins} />
+        <Overview
+          institution={institution}
+          policy={quota.policy}
+          admins={admins}
+          adminsError={adminsQuery.isError}
+          revoking={revokeAdminMutation.isPending}
+          onRevokeAdmin={(admin) => revokeAdminMutation.mutate(admin)}
+        />
       )}
-      {tab === 'members' && (
+      {tab === 'members' && membersQuery.isError && (
+        <EmptyState message={membersQuery.error?.message || 'Failed to load members.'} />
+      )}
+      {tab === 'members' && !membersQuery.isError && (
         <Members
           members={membersQuery.data?.members ?? []}
           total={membersQuery.data?.total ?? 0}
@@ -163,10 +210,19 @@ export function InstitutionDetailPage() {
         />
       )}
       {tab === 'usage' && (
-        <Usage policy={quota.policy} health={quota.health} readiness={readinessQuery.data} />
+        <Usage
+          policy={quota.policy}
+          health={quota.health}
+          readiness={readinessQuery.data}
+          readinessError={readinessQuery.isError}
+        />
       )}
       {tab === 'policy' && (
         <PolicyEditor
+          /** Remount when the loaded version changes so the form values and the
+           *  expectedVersion sent with them always describe the same policy —
+           *  otherwise a background refetch silently arms an overwrite. */
+          key={`${tenantId}:${quota.policy.version}`}
           tenantId={tenantId}
           policy={quota.policy}
           onSaved={() => {
@@ -175,7 +231,12 @@ export function InstitutionDetailPage() {
           }}
         />
       )}
-      {tab === 'history' && <History policies={historyQuery.data?.policies ?? []} />}
+      {tab === 'history' &&
+        (historyQuery.isError ? (
+          <EmptyState message={historyQuery.error?.message || 'Failed to load policy history.'} />
+        ) : (
+          <History policies={historyQuery.data?.policies ?? []} />
+        ))}
     </div>
   );
 }
@@ -184,10 +245,16 @@ function Overview({
   institution,
   policy,
   admins,
+  adminsError,
+  revoking,
+  onRevokeAdmin,
 }: {
   institution: t.PlatformInstitution;
   policy: t.UsagePolicy;
   admins: t.InstitutionMember[];
+  adminsError: boolean;
+  revoking: boolean;
+  onRevokeAdmin: (admin: t.InstitutionMember) => void;
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -202,13 +269,26 @@ function Overview({
         />
       </Panel>
       <Panel title="Administrators">
-        {admins.length === 0 ? (
-          <p className="text-sm text-amber-400">No active institution administrator.</p>
-        ) : (
-          admins.map((admin) => (
-            <Detail key={admin.id} label={admin.name || admin.email} value={admin.email} />
-          ))
+        {adminsError && (
+          <p className="text-sm text-(--cui-color-text-muted)">
+            Could not load administrators — retry before acting on this.
+          </p>
         )}
+        {!adminsError && admins.length === 0 && (
+          <p className="text-sm text-amber-400">No active institution administrator.</p>
+        )}
+        {!adminsError &&
+          admins.map((admin) => (
+            <div key={admin.id} className="flex items-center justify-between gap-2">
+              <Detail label={admin.name || admin.email} value={admin.email} />
+              <Button
+                type="secondary"
+                label="Revoke"
+                disabled={revoking}
+                onClick={() => onRevokeAdmin(admin)}
+              />
+            </div>
+          ))}
       </Panel>
     </div>
   );
@@ -274,6 +354,7 @@ function Usage({
   policy,
   health,
   readiness,
+  readinessError,
 }: {
   policy: t.UsagePolicy;
   health: {
@@ -282,6 +363,7 @@ function Usage({
     warnings: t.UsageWarning[];
   };
   readiness?: t.QuotaReadinessReport;
+  readinessError?: boolean;
 }) {
   const institutionBucket = health.buckets.find((bucket) => bucket.scopeType === 'institution');
   return (
@@ -313,6 +395,15 @@ function Usage({
           Resets {new Date(health.range.end).toLocaleString()} ({health.range.timezone})
         </p>
       </Panel>
+      {readinessError && (
+        <div className="md:col-span-3">
+          <Panel title="Shadow rollout gate">
+            <p className="text-sm text-(--cui-color-text-muted)">
+              Could not load the readiness report. This panel is not a pass or a fail — retry.
+            </p>
+          </Panel>
+        </div>
+      )}
       {readiness && (
         <Panel title="Shadow rollout gate" className="md:col-span-3">
           <p className={readiness.ready ? 'text-sm text-emerald-400' : 'text-sm text-amber-400'}>
@@ -385,44 +476,60 @@ function PolicyEditor({
   const [acknowledge, setAcknowledge] = useState(false);
   const [preview, setPreview] = useState<t.UsagePolicyPreview | null>(null);
 
-  const input = useMemo(
-    () => ({
-      mode,
-      timezone,
-      limits: {
-        institutionTokens: parseLimit(institutionLimit),
-        memberTokens: parseLimit(memberLimit),
-        modelTokens: modelLimits
-          .split('\n')
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .map((line) => {
-            const [modelKey, rawLimit = ''] = line.split('=');
-            return { modelKey: modelKey.trim(), maxTokens: parseLimit(rawLimit) };
-          }),
-      },
-      warningThresholds: [0.8, 0.9],
-    }),
-    [institutionLimit, memberLimit, mode, modelLimits, timezone],
-  );
+  /** A malformed limit is a user error, not a crash: keep it out of render and
+   *  report it when they try to preview or save. */
+  const parsed = useMemo<{ input?: t.UsagePolicyInput; error?: string }>(() => {
+    try {
+      return {
+        input: {
+          mode,
+          timezone,
+          limits: {
+            institutionTokens: parseLimit(institutionLimit),
+            memberTokens: parseLimit(memberLimit),
+            modelTokens: modelLimits
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .map((line) => {
+                const [modelKey, rawLimit = ''] = line.split('=');
+                return { modelKey: modelKey.trim(), maxTokens: parseLimit(rawLimit) };
+              }),
+          },
+          warningThresholds: [0.8, 0.9],
+        },
+      };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Invalid limit' };
+    }
+  }, [institutionLimit, memberLimit, mode, modelLimits, timezone]);
 
-  useEffect(() => setPreview(null), [input]);
+  useEffect(() => setPreview(null), [parsed]);
   const previewMutation = useMutation({
-    mutationFn: () => previewPlatformInstitutionPolicyFn({ data: { tenantId, policy: input } }),
+    mutationFn: () => {
+      if (!parsed.input) {
+        throw new Error(parsed.error ?? 'Invalid limit');
+      }
+      return previewPlatformInstitutionPolicyFn({ data: { tenantId, policy: parsed.input } });
+    },
     onSuccess: setPreview,
     onError: (error: Error) => notifyError(error.message),
   });
   const saveMutation = useMutation({
-    mutationFn: () =>
-      createPlatformInstitutionPolicyFn({
+    mutationFn: () => {
+      if (!parsed.input) {
+        throw new Error(parsed.error ?? 'Invalid limit');
+      }
+      return createPlatformInstitutionPolicyFn({
         data: {
           tenantId,
           expectedVersion: policy.version,
-          policy: input,
+          policy: parsed.input,
           reason,
           acknowledgeOverage: acknowledge,
         },
-      }),
+      });
+    },
     onSuccess: () => {
       notifySuccess('Usage policy saved');
       onSaved();
@@ -517,10 +624,79 @@ function PolicyEditor({
   );
 }
 
+/** Human-readable diff between two policy versions. Policies are immutable, so
+ *  the previous version *is* the "before" — no separate audit snapshot needed. */
+function describePolicyChanges(
+  next: t.UsagePolicy,
+  previous: t.UsagePolicy | undefined,
+): string[] {
+  if (!previous) {
+    return ['Initial policy'];
+  }
+  const changes: string[] = [];
+  if (previous.mode !== next.mode) {
+    changes.push(`Mode ${previous.mode} → ${next.mode}`);
+  }
+  if (previous.timezone !== next.timezone) {
+    changes.push(`Timezone ${previous.timezone} → ${next.timezone}`);
+  }
+  if (previous.limits.institutionTokens !== next.limits.institutionTokens) {
+    changes.push(
+      `Institution limit ${formatTokens(previous.limits.institutionTokens)} → ${formatTokens(
+        next.limits.institutionTokens,
+      )}`,
+    );
+  }
+  if (previous.limits.memberTokens !== next.limits.memberTokens) {
+    changes.push(
+      `Member limit ${formatTokens(previous.limits.memberTokens)} → ${formatTokens(
+        next.limits.memberTokens,
+      )}`,
+    );
+  }
+
+  const before = new Map(previous.limits.modelTokens.map((e) => [e.modelKey, e.maxTokens]));
+  const after = new Map(next.limits.modelTokens.map((e) => [e.modelKey, e.maxTokens]));
+  for (const [modelKey, maxTokens] of after) {
+    if (!before.has(modelKey)) {
+      changes.push(`Added ${modelKey} limit ${formatTokens(maxTokens)}`);
+    } else if (before.get(modelKey) !== maxTokens) {
+      changes.push(
+        `${modelKey} limit ${formatTokens(before.get(modelKey) ?? null)} → ${formatTokens(
+          maxTokens,
+        )}`,
+      );
+    }
+  }
+  for (const modelKey of before.keys()) {
+    if (!after.has(modelKey)) {
+      changes.push(`Removed ${modelKey} limit`);
+    }
+  }
+
+  return changes.length > 0 ? changes : ['No effective limit changes'];
+}
+
 function History({ policies }: { policies: t.UsagePolicy[] }) {
+  if (policies.length === 0) {
+    return (
+      <Panel title="Policy history">
+        <p className="text-sm text-(--cui-color-text-muted)">No policy versions recorded yet.</p>
+      </Panel>
+    );
+  }
+
+  const ascending = [...policies].sort((a, b) => a.version - b.version);
+  const previousByVersion = new Map<number, t.UsagePolicy>();
+  ascending.forEach((policy, index) => {
+    if (index > 0) {
+      previousByVersion.set(policy.version, ascending[index - 1]);
+    }
+  });
+
   return (
     <Panel title="Policy history">
-      {policies.map((policy) => (
+      {[...ascending].reverse().map((policy) => (
         <div key={policy.version} className="border-b border-(--cui-color-stroke-default) py-3">
           <p className="text-sm font-medium text-(--cui-color-text-default)">
             Version {policy.version} · {policy.mode}
@@ -529,6 +705,13 @@ function History({ policies }: { policies: t.UsagePolicy[] }) {
             {policy.reason ?? 'No reason recorded'} ·{' '}
             {new Date(policy.effectiveAt).toLocaleString()}
           </p>
+          <ul className="mt-2 flex flex-col gap-0.5">
+            {describePolicyChanges(policy, previousByVersion.get(policy.version)).map((change) => (
+              <li key={change} className="text-xs text-(--cui-color-text-default)">
+                {change}
+              </li>
+            ))}
+          </ul>
         </div>
       ))}
     </Panel>

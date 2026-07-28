@@ -694,7 +694,69 @@ Two concurrent final-seat operations must not both succeed. Use a conditional at
   Review the institution’s “Shadow rollout gate” after at least seven days and
   1,000 attributable calls, then pilot internally before enabling a client.
 
+#### Phase 7 closure — 2026-07-28
+
+The earlier status entry claimed Phase 7 was implemented. It was not: the console
+could not take an institution offline, so the acceptance gate ("administer an
+institution end to end without ... direct database changes") failed. Ten defects
+were found and fixed:
+
+- **Lifecycle was unreachable.** `suspend`/`reactivate` existed on the API but
+  nothing called them. Both are now wired, with a confirmation dialog that states
+  suspension blocks every member.
+- **Status was read from a field the API never sends** (`institution.active`;
+  the API sends `status`). Suspended institutions rendered as active, in green.
+  The phantom field is deleted from the type so the compiler finds every use.
+- **Institution-admin revocation had no UI**, and the API allowed revoking the
+  last active administrator — which only a platform superadmin could undo. Now
+  refused with 409, and revocation is available per administrator.
+- **The policy editor defeated its own optimistic concurrency.** Form state was
+  initialized once while `expectedVersion` was read live, so a background refetch
+  armed a silent overwrite. The editor now remounts on version change.
+- **Failed sub-queries rendered as reassuring empty states** — a failed admins
+  fetch showed "No active institution administrator", inviting a wrong action.
+  Members, readiness and history report failure distinctly.
+- **Seat limits accepted `0`, negatives, decimals and non-numerics.**
+  `findOneAndUpdate` does not run validators, so the schema's `min: 1` never
+  fired; `0` permanently blocked onboarding. Validated at the route.
+- **A failed admin appointment left an orphaned institution** that could never be
+  re-created (unique `tenantId`). Creation now rolls the institution back and
+  audits the rollback.
+- **`NaN` passed threshold validation** (it is a `number` and fails every
+  comparison), which made warnings fire on the first request of every period
+  forever. Thresholds must now be finite, and capped at ten.
+- **Model limits silently became "unlimited"** when non-numeric: `JSON.stringify`
+  turns `NaN` into `null`, which the API accepts as no limit. Rejected in the
+  editor.
+- **No before/after view.** History now diffs each version against its
+  predecessor — mode, timezone, institution/member limits, and per-model limits
+  added, changed or removed. Policies are immutable, so the previous version *is*
+  the "before"; no separate snapshot is needed.
+
+Verified against the running API: seat `0`/`-5`/`"abc"`/`2.5` → 400 and `null` →
+unlimited; `NaN` thresholds → 400; revoking the sole administrator → 409;
+`reactivate` idempotent; unknown tenant → 404.
+
 ### Phase 8 — Optional subgroup admins
+
+**Status: design and data model only — see `synapse/docs/phase8-subgroup-admins.md`.**
+
+Two decisions are settled:
+
+- **One group per administrator, enforced by a unique partial index** on
+  `(tenantId, userId)` where `revokedAt: null`.
+- **Billing attribution therefore needs no rule.** A member can never sit under
+  two group budgets, so no usage event has to choose between them — attribution
+  is unambiguous by construction. The rejected alternative (multi-group plus a
+  "primary group" tiebreak) puts a mutable field on the billing path, and mutable
+  billing attribution cannot be audited.
+
+`AdminScopeAssignment` exists as schema, type and model. Nothing reads it: no
+query is scoped, no route trusts it, no UI exposes it. The acceptance gate turns
+on *inference*, not filtering — pagination totals, search hit/miss, error-code
+differences, usage aggregates and export all leak membership if left alone. The
+design document enumerates every channel with the required behaviour, so the
+enforcement pass can be done in one go and tested channel by channel.
 
 Implement only if independently administered internal groups are a confirmed requirement.
 
