@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Icon } from '@clickhouse/click-ui';
+import { getRouteApi } from '@tanstack/react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { SystemCapabilities } from '@/constants';
 import { useCapabilities } from '@/hooks';
@@ -9,6 +10,7 @@ import {
   getUsageModelsFn,
   getUsageSummaryFn,
   getUsageTimeseriesFn,
+  listPlatformInstitutionsFn,
 } from '@/server';
 import {
   AccessDenied,
@@ -51,6 +53,8 @@ function downloadBlob(blob: Blob): void {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+const Route = getRouteApi('/_app');
+
 export function UsagePage() {
   const {
     hasCapability,
@@ -58,41 +62,61 @@ export function UsagePage() {
     isError: capabilitiesError,
   } = useCapabilities();
   const canRead = hasCapability(SystemCapabilities.READ_USAGE);
+  const { user } = Route.useRouteContext();
+
+  /** Institution admins are bound to their own tenant; a platform superadmin
+   *  has none and picks which institution to look at. */
+  const needsInstitutionChoice = !user?.tenantId && user?.isPlatformSuperadmin === true;
 
   const [start, setStart] = useState(currentMonthStart);
   const [end, setEnd] = useState(nextMonthStart);
   const [search, setSearch] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [selectedTenantId, setSelectedTenantId] = useState('');
 
-  const range = useMemo(() => ({ start, end }), [end, start]);
+  const institutionsQuery = useQuery({
+    queryKey: ['platformInstitutions', 'usage-picker'],
+    queryFn: () => listPlatformInstitutionsFn({ data: { limit: 100, offset: 0 } }),
+    enabled: needsInstitutionChoice,
+  });
+
+  const tenantId = needsInstitutionChoice ? selectedTenantId : undefined;
+  const scopeReady = !needsInstitutionChoice || Boolean(selectedTenantId);
+
+  const range = useMemo(() => ({ start, end, tenantId }), [end, start, tenantId]);
   const listInput = useMemo(
     () => ({
       start,
       end,
+      tenantId,
       query: search,
       limit: 10,
       offset: 0,
     }),
-    [end, search, start],
+    [end, search, start, tenantId],
   );
 
   const summaryQuery = useQuery({
     queryKey: ['usage-summary', range],
     queryFn: () => getUsageSummaryFn({ data: range }),
+    enabled: scopeReady,
   });
   const membersQuery = useQuery({
     queryKey: ['usage-members', listInput],
     queryFn: () => getUsageMembersFn({ data: listInput }),
     placeholderData: keepPreviousData,
+    enabled: scopeReady,
   });
   const modelsQuery = useQuery({
     queryKey: ['usage-models', listInput],
     queryFn: () => getUsageModelsFn({ data: listInput }),
     placeholderData: keepPreviousData,
+    enabled: scopeReady,
   });
   const timeseriesQuery = useQuery({
     queryKey: ['usage-timeseries', range],
     queryFn: () => getUsageTimeseriesFn({ data: range }),
+    enabled: scopeReady,
   });
 
   const handleExport = useCallback(async () => {
@@ -117,6 +141,43 @@ export function UsagePage() {
     return <AccessDenied />;
   }
 
+  const institutionPicker = needsInstitutionChoice ? (
+    <div className="flex items-center gap-2 p-4">
+      <label htmlFor="usage-institution" className="text-sm font-medium">
+        Institution
+      </label>
+      <select
+        id="usage-institution"
+        aria-label="Institution"
+        className="rounded border px-2 py-1 text-sm"
+        value={selectedTenantId}
+        onChange={(event) => setSelectedTenantId(event.target.value)}
+      >
+        <option value="">Select an institution…</option>
+        {(institutionsQuery.data?.institutions ?? []).map((institution) => (
+          <option key={institution.tenantId} value={institution.tenantId}>
+            {institution.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  ) : null;
+
+  if (needsInstitutionChoice && !selectedTenantId) {
+    return (
+      <div className="flex flex-1 flex-col">
+        {institutionPicker}
+        <EmptyState
+          message={
+            institutionsQuery.isError
+              ? 'Failed to load institutions.'
+              : 'Select an institution to view its usage.'
+          }
+        />
+      </div>
+    );
+  }
+
   if (
     summaryQuery.isLoading ||
     membersQuery.isLoading ||
@@ -134,6 +195,10 @@ export function UsagePage() {
     );
   }
 
+  if (!summaryQuery.data) {
+    return <EmptyState message="No usage data available." />;
+  }
+
   const summary = summaryQuery.data.summary;
   const members = membersQuery.data?.members ?? [];
   const models = modelsQuery.data?.models ?? [];
@@ -142,6 +207,7 @@ export function UsagePage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 overflow-auto p-6">
+      {institutionPicker}
       <section className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm text-(--cui-color-text-muted)">
           Period start

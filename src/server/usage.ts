@@ -6,6 +6,8 @@ import { apiFetch, extractApiError } from './utils/api';
 const usageFilterSchema = z.object({
   start: z.string().optional(),
   end: z.string().optional(),
+  /** Platform superadmins have no tenant of their own and must name one. */
+  tenantId: z.string().optional(),
 });
 
 const usageListSchema = usageFilterSchema.extend({
@@ -30,7 +32,7 @@ export const getUsageSummaryFn = createServerFn({ method: 'GET' })
   .inputValidator(usageFilterSchema)
   .handler(async ({ data }): Promise<{ range: t.UsageRange; summary: t.UsageSummary }> => {
     const response = await apiFetch(
-      `/api/admin/usage/summary${buildQuery({ start: data.start, end: data.end })}`,
+      `/api/admin/usage/summary${buildQuery({ start: data.start, end: data.end, tenantId: data.tenantId })}`,
     );
     if (!response.ok) {
       await extractApiError(response, 'Failed to fetch usage summary');
@@ -52,6 +54,7 @@ export const getUsageMembersFn = createServerFn({ method: 'GET' })
     }> => {
       const response = await apiFetch(
         `/api/admin/usage/members${buildQuery({
+          tenantId: data.tenantId,
           start: data.start,
           end: data.end,
           q: data.query?.trim(),
@@ -86,6 +89,7 @@ export const getUsageModelsFn = createServerFn({ method: 'GET' })
     }> => {
       const response = await apiFetch(
         `/api/admin/usage/models${buildQuery({
+          tenantId: data.tenantId,
           start: data.start,
           end: data.end,
           q: data.query?.trim(),
@@ -110,7 +114,7 @@ export const getUsageTimeseriesFn = createServerFn({ method: 'GET' })
   .inputValidator(usageFilterSchema)
   .handler(async ({ data }): Promise<{ range: t.UsageRange; points: t.UsageTimeseriesPoint[] }> => {
     const response = await apiFetch(
-      `/api/admin/usage/timeseries${buildQuery({ start: data.start, end: data.end })}`,
+      `/api/admin/usage/timeseries${buildQuery({ start: data.start, end: data.end, tenantId: data.tenantId })}`,
     );
     if (!response.ok) {
       await extractApiError(response, 'Failed to fetch usage timeseries');
@@ -122,7 +126,7 @@ export const exportUsageCsvServerFn = createServerFn({ method: 'POST' })
   .inputValidator(usageFilterSchema)
   .handler(async ({ data }): Promise<Response> => {
     const response = await apiFetch(
-      `/api/admin/usage/export.csv${buildQuery({ start: data.start, end: data.end })}`,
+      `/api/admin/usage/export.csv${buildQuery({ start: data.start, end: data.end, tenantId: data.tenantId })}`,
       {
         method: 'GET',
         headers: { Accept: 'text/csv' },

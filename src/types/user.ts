@@ -1,3 +1,9 @@
+/** Identifies a role or group a user is assigned to. */
+export interface AssignmentRef {
+  id: string;
+  name: string;
+}
+
 export type MemberRole = 'USER' | 'INSTITUTION_ADMIN';
 export type MemberStatus = 'active' | 'suspended' | 'removed' | 'invited' | 'expired';
 export type MemberKind = 'user' | 'invite';

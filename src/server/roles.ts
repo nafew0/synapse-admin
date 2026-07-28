@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { queryOptions } from '@tanstack/react-query';
 import { SystemRoles } from 'librechat-data-provider';
 import { createServerFn } from '@tanstack/react-start';
-import { INSTITUTION_ADMIN_ROLE, type AdminMember } from '@librechat/data-schemas';
+import type { AdminMember } from '@librechat/data-schemas';
 import type * as t from '@/types';
 import { apiFetch, extractApiError } from './utils/api';
 import { MEMBERS_PAGE_SIZE } from './groups';
@@ -22,6 +22,11 @@ interface RawRole {
   description?: string;
   permissions?: Record<string, Record<string, boolean>>;
 }
+
+/** Declared here rather than imported from `@librechat/data-schemas`: this app
+ * installs the published package, which has no such export, and importing a
+ * missing named export from it takes the whole roles module down. */
+const INSTITUTION_ADMIN_ROLE = 'INSTITUTION_ADMIN';
 
 const SYSTEM_ROLE_NAMES = new Set<string>([
   SystemRoles.ADMIN,

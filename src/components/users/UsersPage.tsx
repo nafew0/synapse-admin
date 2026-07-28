@@ -114,6 +114,9 @@ export function UsersPage() {
   }
 
   const data = membersQuery.data;
+  if (!data) {
+    return <EmptyState message="No institution members available." />;
+  }
   const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
 
   return (

@@ -255,7 +255,7 @@ function CreateInstitutionDialog({
           tenantId,
           name,
           slug: slug || undefined,
-          adminEmail: adminEmail || undefined,
+          adminEmail: adminEmail.trim(),
           adminName: adminName || undefined,
           maxActiveMembers: maxActiveMembers ? Number(maxActiveMembers) : null,
         },

@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 import { Icon } from '@clickhouse/click-ui';
-import { Link } from '@tanstack/react-router';
+import { Link, getRouteApi  } from '@tanstack/react-router';
 import type * as t from '@/types';
 import { useCapabilities, useLocalize } from '@/hooks';
 import { SystemCapabilities } from '@/constants';
-import { getRouteApi } from '@tanstack/react-router';
 
 const Route = getRouteApi('/_app');
 
@@ -32,7 +31,7 @@ const QUICK_LINKS: (t.NavItem & { descKey: string })[] = [
   {
     labelKey: 'com_nav_usage',
     path: '/usage',
-    icon: 'chart',
+    icon: 'bar-chart',
     descKey: 'com_dash_usage_desc',
     capability: SystemCapabilities.READ_USAGE,
   },

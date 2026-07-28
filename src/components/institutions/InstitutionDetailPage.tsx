@@ -98,6 +98,14 @@ export function InstitutionDetailPage() {
     );
   }
 
+  if (!institutionQuery.data || !quotaQuery.data) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <EmptyState message="Failed to load institution" />
+      </div>
+    );
+  }
+
   const institution = institutionQuery.data.institution;
   const quota = quotaQuery.data;
   const admins = adminsQuery.data?.members ?? [];
@@ -252,23 +260,11 @@ function Members({
         {members.length === 0 && <EmptyState message="No members found." />}
       </div>
       <div className="mt-4 flex items-center justify-between">
-        <Button
-          type="button"
-          disabled={offset === 0 || loading}
-          onClick={() => onOffsetChange(Math.max(offset - limit, 0))}
-        >
-          Previous
-        </Button>
+        <Button disabled={offset === 0 || loading} onClick={() => onOffsetChange(Math.max(offset - limit, 0))} label="Previous" />
         <span className="text-xs text-(--cui-color-text-muted)">
           {total === 0 ? 0 : offset + 1}–{Math.min(offset + limit, total)} of {total}
         </span>
-        <Button
-          type="button"
-          disabled={offset + limit >= total || loading}
-          onClick={() => onOffsetChange(offset + limit)}
-        >
-          Next
-        </Button>
+        <Button disabled={offset + limit >= total || loading} onClick={() => onOffsetChange(offset + limit)} label="Next" />
       </div>
     </Panel>
   );
