@@ -155,7 +155,12 @@ describe('verifyAdminTokenFn', () => {
   });
 
   it('keeps a fresh delegated admin session without requiring the ADMIN role', async () => {
-    const user = { id: 'user-3', role: 'department-admin', email: 'delegate3@example.com' };
+    const user = {
+      id: 'user-3',
+      role: 'department-admin',
+      email: 'delegate3@example.com',
+      isPlatformSuperadmin: false,
+    };
     sessionState.data = {
       user,
       token: 'jwt-token-3',

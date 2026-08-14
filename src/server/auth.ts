@@ -197,7 +197,10 @@ export const verifyAdminTokenFn = createServerFn({ method: 'GET' }).handler(asyn
       return { valid: false, error: 'Session expired due to inactivity' };
     }
 
-    const needsRevalidation = !lastVerified || now - lastVerified > sessionConfig.revalidationInterval;
+    const needsRevalidation =
+      user.isPlatformSuperadmin == null ||
+      !lastVerified ||
+      now - lastVerified > sessionConfig.revalidationInterval;
 
     if (needsRevalidation) {
       try {
@@ -230,8 +233,15 @@ export const verifyAdminTokenFn = createServerFn({ method: 'GET' }).handler(asyn
                     headers: { Authorization: `Bearer ${refreshed.token}` },
                   });
                   if (reVerify.ok) {
-                    await session.update(refreshedSession);
-                    return { valid: true, user };
+                    const reVerifyPayload = (await reVerify.json().catch(() => null)) as {
+                      user?: t.SerializableUser;
+                    } | null;
+                    const refreshedUser = reVerifyPayload?.user;
+                    await session.update({
+                      ...refreshedSession,
+                      ...(refreshedUser ? { user: refreshedUser } : null),
+                    });
+                    return { valid: true, user: refreshedUser ?? user };
                   }
                 } catch {
                   await session.update(refreshedSession);
@@ -251,7 +261,16 @@ export const verifyAdminTokenFn = createServerFn({ method: 'GET' }).handler(asyn
           );
         }
 
-        await session.update({ lastVerified: now, lastActivity: now });
+        const verifiedPayload = (await response.json().catch(() => null)) as {
+          user?: t.SerializableUser;
+        } | null;
+        const verifiedUser = verifiedPayload?.user;
+        await session.update({
+          ...(verifiedUser ? { user: verifiedUser } : null),
+          lastVerified: now,
+          lastActivity: now,
+        });
+        return { valid: true, user: verifiedUser ?? user };
       } catch (error) {
         console.warn(
           '[verifyAdminTokenFn] Re-validation call failed, allowing cached session:',

@@ -7,6 +7,7 @@ import { Alert, Title, Panel, Button, Separator, TextField, Container } from '@c
 import type * as t from '@/types';
 import { adminLoginFn, adminVerify2FAFn, openIdCheckOptions, openidLoginFn } from '@/server';
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from './InputOTP';
+import synapseIcon from '@/assets/synapse-icon.svg';
 import { PasswordInput } from './PasswordInput';
 import { useLocalize } from '@/hooks';
 
@@ -213,134 +214,150 @@ export function AuthCard({
   if (showAutoRedirect) {
     return (
       <Panel
-        className="auth-card w-full max-w-md"
+        className="auth-card w-full max-w-md lg:max-w-3xl"
         padding="xl"
         radii="lg"
         hasBorder
         hasShadow
         color="default"
       >
-        <Container orientation="vertical" gap="lg" alignItems="center">
-          <Title type="h1">{localize('com_auth_title')}</Title>
-          <p className="text-center text-sm text-(--cui-color-text-muted)">
-            {localize('com_auth_sso_redirecting_auto')}
-          </p>
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-(--cui-color-stroke-default) border-t-(--cui-color-accent-info)" />
-        </Container>
+        <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-center lg:gap-10">
+          <div className="flex flex-col items-center gap-3 lg:w-2/5 lg:items-start lg:border-r lg:border-(--cui-color-stroke-default) lg:pr-8">
+            <img src={synapseIcon} alt="" className="h-12 w-12" draggable={false} />
+            <Title type="h1">{localize('com_auth_title')}</Title>
+          </div>
+          <Container
+            orientation="vertical"
+            gap="lg"
+            alignItems="center"
+            className="w-full lg:w-3/5"
+          >
+            <p className="text-center text-sm text-(--cui-color-text-muted)">
+              {localize('com_auth_sso_redirecting_auto')}
+            </p>
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-(--cui-color-stroke-default) border-t-(--cui-color-accent-info)" />
+          </Container>
+        </div>
       </Panel>
     );
   }
 
   return (
     <Panel
-      className="auth-card w-full max-w-md"
+      className="auth-card w-full max-w-md lg:max-w-3xl"
       padding="xl"
       radii="lg"
       hasBorder
       hasShadow
       color="default"
     >
-      <Container orientation="vertical" gap="lg" alignItems="center">
-        <Title type="h1">
-          {step === '2fa' ? localize('com_auth_2fa_title') : localize('com_auth_title')}
-        </Title>
+      <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-center lg:gap-10">
+        <div className="flex flex-col items-center gap-3 lg:w-2/5 lg:items-start lg:border-r lg:border-(--cui-color-stroke-default) lg:pr-8">
+          <img src={synapseIcon} alt="" className="h-12 w-12" draggable={false} />
+          <Title type="h1">
+            {step === '2fa' ? localize('com_auth_2fa_title') : localize('com_auth_title')}
+          </Title>
+        </div>
+        <Container orientation="vertical" gap="lg" alignItems="center" className="w-full lg:w-3/5">
+          {generalError && <Alert type="banner" state="danger" text={generalError} />}
 
-        {generalError && <Alert type="banner" state="danger" text={generalError} />}
-
-        {step === '2fa' ? (
-          <>
-            <p className="text-center text-sm text-(--cui-color-text-muted)">
-              {localize('com_auth_2fa_prompt')}
-            </p>
-            <div className="flex justify-center">
-              <InputOTP
-                maxLength={6}
-                value={totpCode}
-                onChange={(value) => setTotpCode(value)}
-                onComplete={handleVerify2FA}
-                pattern={REGEXP_ONLY_DIGITS}
-                disabled={isSubmitting}
-                aria-label={localize('com_auth_2fa_code_label')}
-                autoFocus
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                </InputOTPGroup>
-                <InputOTPSeparator />
-                <InputOTPGroup>
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-            {isSubmitting && (
+          {step === '2fa' ? (
+            <>
               <p className="text-center text-sm text-(--cui-color-text-muted)">
-                {localize('com_auth_2fa_verifying')}
+                {localize('com_auth_2fa_prompt')}
               </p>
-            )}
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={isSubmitting}
-              className="text-sm text-(--cui-color-accent-info) transition-colors hover:underline disabled:pointer-events-none disabled:opacity-50"
-            >
-              {localize('com_auth_2fa_back')}
-            </button>
-          </>
-        ) : (
-          <>
-            <TextField
-              label={localize('com_auth_email_label')}
-              placeholder={localize('com_auth_email_placeholder')}
-              value={email}
-              onChange={(value) => {
-                setEmail(value);
-                if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
-              }}
-              onKeyDown={handleKeyDown}
-              error={errors.email}
-            />
+              <div className="flex justify-center">
+                <InputOTP
+                  maxLength={6}
+                  value={totpCode}
+                  onChange={(value) => setTotpCode(value)}
+                  onComplete={handleVerify2FA}
+                  pattern={REGEXP_ONLY_DIGITS}
+                  disabled={isSubmitting}
+                  aria-label={localize('com_auth_2fa_code_label')}
+                  autoFocus
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                  </InputOTPGroup>
+                  <InputOTPSeparator />
+                  <InputOTPGroup>
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+              {isSubmitting && (
+                <p className="text-center text-sm text-(--cui-color-text-muted)">
+                  {localize('com_auth_2fa_verifying')}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={isSubmitting}
+                className="text-sm text-(--cui-color-accent-info) transition-colors hover:underline disabled:pointer-events-none disabled:opacity-50"
+              >
+                {localize('com_auth_2fa_back')}
+              </button>
+            </>
+          ) : (
+            <>
+              <TextField
+                label={localize('com_auth_email_label')}
+                placeholder={localize('com_auth_email_placeholder')}
+                value={email}
+                onChange={(value) => {
+                  setEmail(value);
+                  if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+                }}
+                onKeyDown={handleKeyDown}
+                error={errors.email}
+              />
 
-            <PasswordInput
-              label={localize('com_auth_password_label')}
-              placeholder={localize('com_auth_password_placeholder')}
-              value={password}
-              onChange={(value) => {
-                setPassword(value);
-                if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
-              }}
-              onKeyDown={handleKeyDown}
-              error={errors.password}
-            />
+              <PasswordInput
+                label={localize('com_auth_password_label')}
+                placeholder={localize('com_auth_password_placeholder')}
+                value={password}
+                onChange={(value) => {
+                  setPassword(value);
+                  if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+                }}
+                onKeyDown={handleKeyDown}
+                error={errors.password}
+              />
 
-            <Button
-              label={isSubmitting ? localize('com_auth_signing_in') : localize('com_auth_sign_in')}
-              type="primary"
-              onClick={handleLogin}
-              disabled={isSubmitting}
-            />
+              <Button
+                label={
+                  isSubmitting ? localize('com_auth_signing_in') : localize('com_auth_sign_in')
+                }
+                type="primary"
+                onClick={handleLogin}
+                disabled={isSubmitting}
+              />
 
-            {ssoAvailable && (
-              <>
-                <Separator size="sm" />
-                <Button
-                  label={
-                    ssoLoading
-                      ? localize('com_auth_sso_redirecting')
-                      : localize('com_auth_sso_sign_in')
-                  }
-                  type="secondary"
-                  onClick={handleSsoLogin}
-                  disabled={ssoLoading}
-                />
-              </>
-            )}
-          </>
-        )}
-      </Container>
+              {ssoAvailable && (
+                <>
+                  <Separator size="sm" />
+                  <Button
+                    label={
+                      ssoLoading
+                        ? localize('com_auth_sso_redirecting')
+                        : localize('com_auth_sso_sign_in')
+                    }
+                    type="secondary"
+                    onClick={handleSsoLogin}
+                    disabled={ssoLoading}
+                  />
+                </>
+              )}
+            </>
+          )}
+        </Container>
+      </div>
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </div>

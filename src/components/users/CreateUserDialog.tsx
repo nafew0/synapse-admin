@@ -1,104 +1,100 @@
 import { useState } from 'react';
-import { SystemRoles } from 'librechat-data-provider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type * as t from '@/types';
-import { notifySuccess, notifyError } from '@/utils';
 import { FormDialog } from '@/components/shared';
-import { createUserFn } from '@/server';
-import { useLocalize } from '@/hooks';
+import { inviteMemberFn } from '@/server';
+import { notifyError, notifySuccess } from '@/utils';
 
 export function CreateUserDialog({ open, onClose }: t.CreateUserDialogProps) {
-  const localize = useLocalize();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<SystemRoles>(SystemRoles.USER);
+  const [role, setRole] = useState<t.MemberRole>('USER');
   const [error, setError] = useState('');
 
+  const resetAndClose = () => {
+    setName('');
+    setEmail('');
+    setRole('USER');
+    setError('');
+    onClose();
+  };
+
   const mutation = useMutation({
-    mutationFn: async ({ name: submittedName }: { name: string }) => {
-      await createUserFn({ data: { name: submittedName, email, role } });
-      return { name: submittedName };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      notifySuccess(localize('com_toast_user_invited', { name: data.name }));
+    mutationFn: () => inviteMemberFn({ data: { name, email, role } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      notifySuccess('Invitation created');
       resetAndClose();
     },
     onError: (err: Error) => notifyError(err.message),
   });
 
-  const resetAndClose = () => {
-    setName('');
-    setEmail('');
-    setRole(SystemRoles.USER);
-    setError('');
-    onClose();
-  };
-
-  const doSubmit = () => {
+  const onSubmit = () => {
     setError('');
     if (!name.trim()) {
-      setError(localize('com_access_name_required'));
+      setError('Name is required');
       return;
     }
     if (!email.trim()) {
-      setError(localize('com_users_email_required'));
+      setError('Email is required');
       return;
     }
-    mutation.mutate({ name });
+    mutation.mutate();
   };
 
   return (
     <FormDialog
       open={open}
-      title={localize('com_users_add')}
-      submitLabel={localize('com_users_add')}
+      title="Invite member"
+      submitLabel="Send invite"
       submitDisabled={!name.trim() || !email.trim()}
       saving={mutation.isPending}
       error={error}
-      onSubmit={doSubmit}
+      onSubmit={onSubmit}
       onClose={resetAndClose}
     >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="user-name" className="text-sm font-medium text-(--cui-color-text-default)">
-          {localize('com_access_col_name')}
+        <label htmlFor="member-name" className="text-sm font-medium text-(--cui-color-text-default)">
+          Name
         </label>
         <input
-          id="user-name"
+          id="member-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={localize('com_users_name_placeholder')}
+          placeholder="Member name"
           autoFocus
-          className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default) placeholder:text-(--cui-color-text-disabled)"
+          className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
         />
       </div>
+
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="user-email" className="text-sm font-medium text-(--cui-color-text-default)">
-          {localize('com_auth_email_label')}
+        <label htmlFor="member-email" className="text-sm font-medium text-(--cui-color-text-default)">
+          Email
         </label>
         <input
-          id="user-email"
+          id="member-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder={localize('com_users_email_placeholder')}
-          className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default) placeholder:text-(--cui-color-text-disabled)"
+          placeholder="name@example.com"
+          className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
         />
       </div>
+
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="user-role" className="text-sm font-medium text-(--cui-color-text-default)">
-          {localize('com_users_role_label')}
+        <label htmlFor="member-role" className="text-sm font-medium text-(--cui-color-text-default)">
+          Role
         </label>
         <select
-          id="user-role"
+          id="member-role"
           value={role}
-          onChange={(e) => setRole(e.target.value as SystemRoles)}
+          onChange={(e) => setRole(e.target.value as t.MemberRole)}
           className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
         >
-          <option value={SystemRoles.USER}>{SystemRoles.USER}</option>
-          <option value={SystemRoles.ADMIN}>{SystemRoles.ADMIN}</option>
+          <option value="USER">Member</option>
+          <option value="INSTITUTION_ADMIN">Institution admin</option>
         </select>
       </div>
     </FormDialog>

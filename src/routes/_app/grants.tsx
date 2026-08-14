@@ -1,5 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { GrantsPage } from '@/components/grants';
+import { AccessDenied, PermissionsUnavailable } from '@/components/shared';
+import { SystemCapabilities } from '@/constants';
+import { useCapabilities } from '@/hooks';
 
 type Tab = 'management' | 'audit-log';
 
@@ -21,8 +24,14 @@ export const Route = createFileRoute('/_app/grants')({
 });
 
 function GrantsRoute() {
+  const { hasCapability, isLoading, isError } = useCapabilities();
   const { tab, entryId } = Route.useSearch();
   const navigate = useNavigate({ from: '/grants' });
+  if (isLoading) return null;
+  if (isError) return <PermissionsUnavailable />;
+  if (!hasCapability(SystemCapabilities.READ_AUDIT_LOG)) {
+    return <AccessDenied />;
+  }
   /**
    * Permalinks land here without `tab` set (e.g. `/grants?entryId=abc`), so
    * default to the audit-log tab when an `entryId` is present so the drawer
