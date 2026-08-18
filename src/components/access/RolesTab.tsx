@@ -102,7 +102,7 @@ export function RolesTab({ onCreateRole }: t.RolesTabProps) {
         <div className="flex flex-col">
           {paged.map((role) => (
             <div
-              key={role.id}
+              key={role.scopeKey}
               className="mb-2 flex items-center gap-3 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-panel) px-3 py-3"
             >
               <button
@@ -119,6 +119,9 @@ export function RolesTab({ onCreateRole }: t.RolesTabProps) {
                       {localize('com_access_system_role')}
                     </span>
                   )}
+                  <span className="inline-block rounded-full bg-(--cui-color-background-secondary) px-2 py-0.5 text-[10px] font-medium text-(--cui-color-text-muted)">
+                    {role.tenantId ? `Institution: ${role.tenantId}` : 'Global'}
+                  </span>
                 </div>
                 {role.description && (
                   <div className="truncate text-xs text-(--cui-color-text-muted)">

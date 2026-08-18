@@ -20,6 +20,7 @@ interface RawRole {
   _id: string;
   name: string;
   description?: string;
+  tenantId?: string | null;
   permissions?: Record<string, Record<string, boolean>>;
 }
 
@@ -35,8 +36,11 @@ const SYSTEM_ROLE_NAMES = new Set<string>([
 ]);
 
 function toRole(raw: RawRole): t.Role {
+  const tenantId = raw.tenantId ?? null;
   return {
     id: raw.name,
+    scopeKey: `${raw.name}:${tenantId ?? 'global'}`,
+    tenantId,
     name: raw.name,
     description: raw.description ?? '',
     isSystemRole: SYSTEM_ROLE_NAMES.has(raw.name),

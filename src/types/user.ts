@@ -4,7 +4,11 @@ export interface AssignmentRef {
   name: string;
 }
 
-export type MemberRole = 'USER' | 'INSTITUTION_ADMIN';
+export type MemberRole =
+  | 'USER'
+  | 'INSTITUTION_ADMIN'
+  | 'INSTITUTION_MEMBER'
+  | 'STANDALONE_USER';
 export type MemberStatus = 'active' | 'suspended' | 'removed' | 'invited' | 'expired';
 export type MemberKind = 'user' | 'invite';
 

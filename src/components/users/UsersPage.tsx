@@ -52,6 +52,19 @@ function toMemberRoleFilter(roleFilter: t.RoleFilter): t.MemberRole | 'all' {
   return 'all';
 }
 
+function roleLabel(role: t.MemberRole): string {
+  switch (role) {
+    case 'INSTITUTION_ADMIN':
+      return 'Institution admin';
+    case 'STANDALONE_USER':
+      return 'Standalone user';
+    case 'INSTITUTION_MEMBER':
+    case 'USER':
+    default:
+      return 'Institution member';
+  }
+}
+
 export function UsersPage() {
   const { user } = Route.useRouteContext();
   const {
@@ -293,7 +306,7 @@ export function UsersPage() {
                   ) : null}
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-(--cui-color-background-secondary) px-2 py-0.5 text-xs text-(--cui-color-text-default)">
-                      {member.role === 'INSTITUTION_ADMIN' ? 'Institution admin' : 'Member'}
+                      {roleLabel(member.role)}
                     </span>
                   </td>
                   <td className="px-4 py-3">

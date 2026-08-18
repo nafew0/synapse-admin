@@ -9,7 +9,7 @@ export function CreateUserDialog({ open, onClose }: t.CreateUserDialogProps) {
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<t.MemberRole>('USER');
+  const [role, setRole] = useState<'USER' | 'INSTITUTION_ADMIN'>('USER');
   const [error, setError] = useState('');
 
   const resetAndClose = () => {
@@ -90,7 +90,7 @@ export function CreateUserDialog({ open, onClose }: t.CreateUserDialogProps) {
         <select
           id="member-role"
           value={role}
-          onChange={(e) => setRole(e.target.value as t.MemberRole)}
+          onChange={(e) => setRole(e.target.value as 'USER' | 'INSTITUTION_ADMIN')}
           className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
         >
           <option value="USER">Member</option>

@@ -6,6 +6,8 @@ export type RolePermissions = {
 
 export interface Role extends Omit<TRole, 'permissions'> {
   id: string;
+  scopeKey: string;
+  tenantId?: string | null;
   description: string;
   isSystemRole: boolean;
   isActive: boolean;

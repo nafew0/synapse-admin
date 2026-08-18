@@ -3,7 +3,12 @@ import { createServerFn } from '@tanstack/react-start';
 import type * as t from '@/types';
 import { apiFetch, extractApiError } from './utils/api';
 
-const memberRoleSchema = z.enum(['USER', 'INSTITUTION_ADMIN']);
+const memberRoleSchema = z.enum([
+  'USER',
+  'INSTITUTION_ADMIN',
+  'INSTITUTION_MEMBER',
+  'STANDALONE_USER',
+]);
 const memberStatusSchema = z.enum(['active', 'suspended', 'removed', 'invited', 'expired']);
 
 const listMembersInput = z.object({

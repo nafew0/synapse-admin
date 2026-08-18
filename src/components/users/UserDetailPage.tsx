@@ -43,6 +43,19 @@ function formatCost(credits: number): string {
   return `$${usd.toFixed(2)}`;
 }
 
+function roleLabel(role: t.MemberRole): string {
+  switch (role) {
+    case 'INSTITUTION_ADMIN':
+      return 'Institution admin';
+    case 'STANDALONE_USER':
+      return 'Standalone user';
+    case 'INSTITUTION_MEMBER':
+    case 'USER':
+    default:
+      return 'Institution member';
+  }
+}
+
 export function UserDetailPage() {
   const { user } = AppRoute.useRouteContext();
   const { userId } = Route.useParams();
@@ -178,7 +191,7 @@ function Overview({ member, balance, latestGrant, packages }: { member: t.Instit
         <Detail label="Username" value={member.username} />
         <Detail label="Email" value={member.email} />
         <Detail label="Email verification" value={member.emailVerified ? 'Verified' : 'Pending'} />
-        <Detail label="Role" value={member.role === 'INSTITUTION_ADMIN' ? 'Institution admin' : 'Member'} />
+        <Detail label="Role" value={roleLabel(member.role)} />
         <Detail label="Institution" value={member.institutionName || member.tenantId || 'Others'} />
         <Detail label="Created" value={formatDate(member.createdAt)} />
       </Panel>
