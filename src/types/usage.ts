@@ -48,3 +48,18 @@ export interface UsageTimeseriesPoint {
   totalCost: number;
   eventCount: number;
 }
+
+export interface UserUsageResponse {
+  range: UsageRange & { timezone?: string };
+  summary: Omit<UsageSummary, 'memberCount' | 'modelCount'> & { lastUsedAt?: string | null };
+  models: Array<{
+    providerKey?: string;
+    modelKey: string;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    totalCost: number;
+    eventCount: number;
+    lastUsedAt?: string | null;
+  }>;
+}

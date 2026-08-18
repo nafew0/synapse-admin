@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Dialog } from '@clickhouse/click-ui';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type * as t from '@/types';
 import {
   changeMemberRoleFn,
@@ -10,6 +10,8 @@ import {
   resendMemberVerificationFn,
   revokeInviteFn,
   suspendMemberFn,
+  getUserCreditsFn,
+  grantCreditsFn,
 } from '@/server';
 import { Avatar } from '@/components/shared';
 import { ConfirmDialog } from '@/components/access';
@@ -24,7 +26,12 @@ export function UserDetailDialog({
   const queryClient = useQueryClient();
   const [confirmAction, setConfirmAction] = useState<'revoke' | 'remove' | null>(null);
   const [resendLink, setResendLink] = useState<string | null>(null);
-
+  const [packageId, setPackageId] = useState('');
+  const credits = useQuery({
+    queryKey: ['user-credits', member?.id, platform],
+    queryFn: () => getUserCreditsFn({ data: { userId: member!.id, platform } }),
+    enabled: !!member && member.kind === 'user',
+  });
   useEffect(() => {
     setResendLink(null);
   }, [member?.id]);
@@ -109,7 +116,7 @@ export function UserDetailDialog({
       changeMemberRoleFn({
         data: {
           userId: member!.id,
-          tenantId: member!.tenantId,
+          tenantId: member!.tenantId!,
           role,
           platform,
         },
@@ -126,11 +133,22 @@ export function UserDetailDialog({
       resendMemberVerificationFn({
         data: {
           userId: member!.id,
-          tenantId: member!.tenantId,
+          tenantId: member!.tenantId!,
           platform: true,
         },
       }),
     onSuccess: () => notifySuccess('Verification email resent'),
+    onError,
+  });
+
+  const grantMutation = useMutation({
+    mutationFn: () => grantCreditsFn({ data: { userId: member!.id, packageId, platform } }),
+    onSuccess: () => {
+      invalidate();
+      credits.refetch();
+      notifySuccess('Credits granted');
+      setPackageId('');
+    },
     onError,
   });
 
@@ -141,7 +159,8 @@ export function UserDetailDialog({
     reactivateMutation.isPending ||
     removeMutation.isPending ||
     roleMutation.isPending ||
-    verificationMutation.isPending;
+    verificationMutation.isPending ||
+    grantMutation.isPending;
 
   return (
     <>
@@ -197,6 +216,36 @@ export function UserDetailDialog({
                 ) : null}
               </div>
 
+              {member.kind === 'user' && (
+                <div className="rounded-lg border border-(--cui-color-stroke-default) p-4 text-sm">
+                  <DetailRow
+                    label="Credits"
+                    value={(credits.data?.balance ?? 0).toLocaleString()}
+                  />
+                  {canManage && (
+                    <div className="mt-3 flex gap-2">
+                      <select
+                        value={packageId}
+                        onChange={(e) => setPackageId(e.target.value)}
+                        className="min-w-0 flex-1 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-2 py-2"
+                      >
+                        <option value="">Select package</option>
+                        {credits.data?.packages?.list.map((pkg) => (
+                          <option key={pkg.id} value={pkg.id}>
+                            {pkg.label}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        label="Grant"
+                        disabled={!packageId || grantMutation.isPending}
+                        onClick={() => grantMutation.mutate()}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {member.kind === 'user' ? (
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1.5">
@@ -219,7 +268,7 @@ export function UserDetailDialog({
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    {platform && !member.emailVerified ? (
+                    {platform && member.tenantId && !member.emailVerified ? (
                       <Button
                         type="secondary"
                         label="Resend verification"
@@ -297,13 +346,13 @@ export function UserDetailDialog({
 
       <ConfirmDialog
         open={!!confirmAction}
-        title={confirmAction === 'revoke' ? 'Revoke invitation' : 'Remove member'}
+        title={confirmAction === 'revoke' ? 'Revoke invitation' : 'Delete member account'}
         description={
           confirmAction === 'revoke'
             ? `Revoke the invitation for ${member?.email}?`
-            : `Remove ${member?.email} from this institution?`
+            : `Permanently delete ${member?.email} and all of their account data? Suspend keeps the account and only blocks access.`
         }
-        confirmLabel={confirmAction === 'revoke' ? 'Revoke' : 'Remove'}
+        confirmLabel={confirmAction === 'revoke' ? 'Revoke' : 'Delete permanently'}
         confirmType="danger"
         saving={busy}
         onConfirm={() => {

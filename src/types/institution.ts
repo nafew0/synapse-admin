@@ -13,7 +13,7 @@ export interface PlatformInstitution {
   name: string;
   slug?: string;
   /** The API reports lifecycle state as `status`; there is no `active` flag. */
-  status: 'active' | 'suspended';
+  status: 'active' | 'suspended' | 'closed';
   authDomains?: string[];
   timezone?: string;
   usagePolicyVersion?: number;
@@ -28,6 +28,16 @@ export interface PlatformInstitutionListResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface InstitutionPackage {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency: string;
+  monthlyTokenLimit: number;
+  active: boolean;
 }
 
 export interface UsageModelLimit {
@@ -140,6 +150,9 @@ export interface PlatformInstitutionAdminResult {
     email?: string;
     status?: string;
     requestedRole?: string;
+    accountScope?: 'institution' | 'standalone';
+    username?: string | null;
+    inviteLink?: string | null;
   };
   inviteLink?: string | null;
 }
@@ -157,4 +170,26 @@ export interface AssignPlatformInstitutionAdminInput {
   tenantId: string;
   email: string;
   name?: string;
+}
+
+export interface PlatformAgentAccessAgent {
+  id: string;
+  name: string;
+  description?: string;
+  tenantId?: string | null;
+  enabled: boolean;
+}
+
+export interface PlatformAgentAccessGroup {
+  id: string;
+  name: string;
+  description?: string;
+  source?: string;
+  memberCount: number;
+}
+
+export interface PlatformAgentAccessResponse {
+  agents: PlatformAgentAccessAgent[];
+  groups: PlatformAgentAccessGroup[];
+  selectedGroupId: string | null;
 }

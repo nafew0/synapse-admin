@@ -14,7 +14,33 @@ const listMembersInput = z.object({
   role: memberRoleSchema.or(z.literal('all')).optional(),
   platform: z.boolean().optional(),
   tenantId: z.string().optional(),
+  accountScope: z.enum(['all', 'institution', 'standalone']).optional(),
 });
+
+export const listStandaloneCreditPackagesFn = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<{ currency: string; list: t.CreditPackage[] }> => {
+    const response = await apiFetch('/api/platform/users/standalone/packages');
+    if (!response.ok) await extractApiError(response, 'Failed to fetch individual packages');
+    return (await response.json()) as { currency: string; list: t.CreditPackage[] };
+  },
+);
+
+export const createStandaloneInviteFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      email: z.string().email(),
+      username: z.string().trim().min(2).max(80).optional(),
+      creditPackageId: z.string().min(1),
+    }),
+  )
+  .handler(async ({ data }): Promise<t.StandaloneInviteResponse> => {
+    const response = await apiFetch('/api/platform/users/standalone/invites', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) await extractApiError(response, 'Failed to invite individual user');
+    return (await response.json()) as t.StandaloneInviteResponse;
+  });
 
 function toQueryString(input: z.infer<typeof listMembersInput>): string {
   const params = new URLSearchParams();
@@ -32,6 +58,8 @@ function toQueryString(input: z.infer<typeof listMembersInput>): string {
   if (input.tenantId?.trim()) {
     params.set('tenantId', input.tenantId.trim());
   }
+  if (input.accountScope && input.accountScope !== 'institution')
+    params.set('accountScope', input.accountScope);
   return params.toString();
 }
 
@@ -46,12 +74,44 @@ export const getMembersFn = createServerFn({ method: 'GET' })
     return (await response.json()) as t.InstitutionMemberListResponse;
   });
 
+export const getUserDetailFn = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ userId: z.string(), platform: z.boolean().optional() }))
+  .handler(async ({ data }): Promise<{ member: t.InstitutionMember }> => {
+    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const response = await apiFetch(`${route}/${encodeURIComponent(data.userId)}`);
+    if (!response.ok) await extractApiError(response, 'Failed to fetch user details');
+    return (await response.json()) as { member: t.InstitutionMember };
+  });
+
+export const getUserUsageFn = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({
+      userId: z.string(),
+      platform: z.boolean().optional(),
+      start: z.string().optional(),
+      end: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }): Promise<t.UserUsageResponse> => {
+    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const params = new URLSearchParams();
+    if (data.start) params.set('start', data.start);
+    if (data.end) params.set('end', data.end);
+    const query = params.toString();
+    const response = await apiFetch(
+      `${route}/${encodeURIComponent(data.userId)}/usage${query ? `?${query}` : ''}`,
+    );
+    if (!response.ok) await extractApiError(response, 'Failed to fetch user usage');
+    return (await response.json()) as t.UserUsageResponse;
+  });
+
 export const inviteMemberFn = createServerFn({ method: 'POST' })
   .inputValidator(
     z.object({
       name: z.string().trim().min(1),
       email: z.string().email(),
       role: memberRoleSchema,
+      creditPackageId: z.string().min(1).optional(),
     }),
   )
   .handler(async ({ data }): Promise<{ inviteLink?: string | null }> => {
@@ -75,7 +135,11 @@ export const resendInviteFn = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data }): Promise<{ inviteLink?: string | null }> => {
-    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const route = data.platform
+      ? data.tenantId
+        ? '/api/platform/users'
+        : '/api/platform/users/standalone'
+      : '/api/admin/users';
     const response = await apiFetch(
       `${route}/invites/${encodeURIComponent(data.inviteId)}/resend`,
       {
@@ -99,7 +163,11 @@ export const revokeInviteFn = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data }) => {
-    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const route = data.platform
+      ? data.tenantId
+        ? '/api/platform/users'
+        : '/api/platform/users/standalone'
+      : '/api/admin/users';
     const response = await apiFetch(
       `${route}/invites/${encodeURIComponent(data.inviteId)}/revoke`,
       {

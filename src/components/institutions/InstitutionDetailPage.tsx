@@ -6,11 +6,13 @@ import {
   createPlatformInstitutionPolicyFn,
   getMembersFn,
   getPlatformInstitutionFn,
+  getPlatformInstitutionAgentAccessFn,
   getPlatformInstitutionQuotaFn,
   getPlatformInstitutionQuotaReadinessFn,
   listPlatformInstitutionPoliciesFn,
   previewPlatformInstitutionPolicyFn,
   revokePlatformInstitutionAdminFn,
+  updatePlatformInstitutionAgentAccessFn,
 } from '@/server';
 import type * as t from '@/types';
 import { EmptyState, LoadingState } from '@/components/shared';
@@ -18,7 +20,7 @@ import { notifyError, notifySuccess } from '@/utils';
 
 const Route = getRouteApi('/_app/institutions/$tenantId');
 const AppRoute = getRouteApi('/_app');
-type Tab = 'overview' | 'members' | 'usage' | 'policy' | 'history';
+type Tab = 'overview' | 'members' | 'agents' | 'usage' | 'policy' | 'history';
 
 function formatTokens(value: number | null | undefined) {
   return value == null ? 'Unlimited' : new Intl.NumberFormat().format(value);
@@ -45,6 +47,7 @@ export function InstitutionDetailPage() {
   const [tab, setTab] = useState<Tab>('overview');
   const [memberQuery, setMemberQuery] = useState('');
   const [memberOffset, setMemberOffset] = useState(0);
+  const [agentGroupId, setAgentGroupId] = useState('');
   const memberLimit = 25;
   const institutionQuery = useQuery({
     queryKey: ['platformInstitution', tenantId],
@@ -95,6 +98,24 @@ export function InstitutionDetailPage() {
     queryFn: () => listPlatformInstitutionPoliciesFn({ data: { tenantId } }),
     enabled: tab === 'history',
   });
+  const agentAccessQuery = useQuery({
+    queryKey: ['platformInstitutionAgentAccess', tenantId, agentGroupId],
+    queryFn: () =>
+      getPlatformInstitutionAgentAccessFn({
+        data: { tenantId, groupId: agentGroupId || undefined },
+      }),
+    enabled: tab === 'agents',
+  });
+  useEffect(() => {
+    const groups = agentAccessQuery.data?.groups ?? [];
+    if (groups.length === 0) {
+      setAgentGroupId('');
+      return;
+    }
+    setAgentGroupId((current) =>
+      current && groups.some((group) => group.id === current) ? current : groups[0].id,
+    );
+  }, [agentAccessQuery.data]);
   const revokeAdminMutation = useMutation({
     mutationFn: (admin: t.InstitutionMember) =>
       revokePlatformInstitutionAdminFn({ data: { tenantId, userId: admin.id } }),
@@ -102,6 +123,19 @@ export function InstitutionDetailPage() {
       notifySuccess('Institution administrator revoked');
       queryClient.invalidateQueries({ queryKey: ['platformInstitutionAdmins', tenantId] });
       queryClient.invalidateQueries({ queryKey: ['platformInstitutionMembers', tenantId] });
+    },
+    onError: (error: Error) => notifyError(error.message),
+  });
+  const agentAccessMutation = useMutation({
+    mutationFn: (input: { agentId: string; enabled: boolean }) =>
+      updatePlatformInstitutionAgentAccessFn({
+        data: { tenantId, groupId: agentGroupId, ...input },
+      }),
+    onSuccess: () => {
+      notifySuccess('Agent access updated');
+      queryClient.invalidateQueries({
+        queryKey: ['platformInstitutionAgentAccess', tenantId, agentGroupId],
+      });
     },
     onError: (error: Error) => notifyError(error.message),
   });
@@ -165,7 +199,7 @@ export function InstitutionDetailPage() {
       </header>
 
       <nav className="flex flex-wrap gap-2 border-b border-(--cui-color-stroke-default) pb-3">
-        {(['overview', 'members', 'usage', 'policy', 'history'] as const).map((item) => (
+        {(['overview', 'members', 'agents', 'usage', 'policy', 'history'] as const).map((item) => (
           <button
             key={item}
             type="button"
@@ -207,6 +241,17 @@ export function InstitutionDetailPage() {
             setMemberOffset(0);
           }}
           onOffsetChange={setMemberOffset}
+        />
+      )}
+      {tab === 'agents' && (
+        <AgentAccess
+          data={agentAccessQuery.data}
+          loading={agentAccessQuery.isLoading || agentAccessQuery.isFetching}
+          error={agentAccessQuery.isError ? agentAccessQuery.error?.message : undefined}
+          groupId={agentGroupId}
+          updating={agentAccessMutation.isPending}
+          onGroupChange={setAgentGroupId}
+          onToggle={(agentId, enabled) => agentAccessMutation.mutate({ agentId, enabled })}
         />
       )}
       {tab === 'usage' && (
@@ -345,6 +390,86 @@ function Members({
           {total === 0 ? 0 : offset + 1}–{Math.min(offset + limit, total)} of {total}
         </span>
         <Button disabled={offset + limit >= total || loading} onClick={() => onOffsetChange(offset + limit)} label="Next" />
+      </div>
+    </Panel>
+  );
+}
+
+function AgentAccess({
+  data,
+  loading,
+  error,
+  groupId,
+  updating,
+  onGroupChange,
+  onToggle,
+}: {
+  data?: t.PlatformAgentAccessResponse;
+  loading: boolean;
+  error?: string;
+  groupId: string;
+  updating: boolean;
+  onGroupChange: (value: string) => void;
+  onToggle: (agentId: string, enabled: boolean) => void;
+}) {
+  if (loading) return <LoadingState />;
+  if (error) return <EmptyState message={error} />;
+
+  const groups = data?.groups ?? [];
+  const agents = data?.agents ?? [];
+
+  if (groups.length === 0) {
+    return (
+      <Panel title="Agent access">
+        <EmptyState message="No groups are associated with this institution. Create or sync an institution group first." />
+      </Panel>
+    );
+  }
+  if (agents.length === 0) {
+    return (
+      <Panel title="Agent access">
+        <EmptyState message="No user-facing agents are registered. Run the agent sync script first." />
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel title="Agent access">
+      <p className="mb-4 text-sm text-(--cui-color-text-muted)">
+        Grant the selected institution group access to a registered agent. Office Assistant’s
+        internal specialist agents are enabled automatically when its access is granted.
+      </p>
+      <label className="mb-4 block max-w-xl text-sm text-(--cui-color-text-default)">
+        Institution group
+        <select
+          value={groupId}
+          onChange={(event) => onGroupChange(event.target.value)}
+          className="mt-2 block w-full rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
+        >
+          {groups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name} ({group.memberCount} members)
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="divide-y divide-(--cui-color-stroke-default)">
+        {agents.map((agent) => (
+          <div key={agent.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <div>
+              <p className="text-sm font-medium text-(--cui-color-text-default)">{agent.name}</p>
+              <p className="text-xs text-(--cui-color-text-muted)">
+                {agent.description || agent.id}
+              </p>
+            </div>
+            <Button
+              type={agent.enabled ? 'secondary' : 'primary'}
+              label={agent.enabled ? 'Revoke access' : 'Grant access'}
+              disabled={updating || !groupId}
+              onClick={() => onToggle(agent.id, !agent.enabled)}
+            />
+          </div>
+        ))}
       </div>
     </Panel>
   );

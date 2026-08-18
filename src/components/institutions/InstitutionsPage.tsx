@@ -9,9 +9,11 @@ import {
   assignPlatformInstitutionAdminFn,
   suspendPlatformInstitutionFn,
   reactivatePlatformInstitutionFn,
+  removePlatformInstitutionFn,
 } from '@/server';
 import { EmptyState, FormDialog, LoadingState, SearchInput } from '@/components/shared';
 import { notifyError, notifySuccess } from '@/utils';
+import { InviteIndividualUserDialog } from './InviteIndividualUserDialog';
 
 const Route = getRouteApi('/_app');
 
@@ -20,8 +22,10 @@ export function InstitutionsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
+  const [inviteIndividualOpen, setInviteIndividualOpen] = useState(false);
   const [assignTarget, setAssignTarget] = useState<t.PlatformInstitution | null>(null);
   const [lifecycleTarget, setLifecycleTarget] = useState<t.PlatformInstitution | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<t.PlatformInstitution | null>(null);
   const [offset, setOffset] = useState(0);
 
   const institutionsQuery = useQuery({
@@ -46,6 +50,18 @@ export function InstitutionsPage() {
       queryClient.invalidateQueries({ queryKey: ['platformInstitutions'] });
       queryClient.invalidateQueries({ queryKey: ['platformInstitution', institution.tenantId] });
       setLifecycleTarget(null);
+    },
+    onError: (error: Error) => notifyError(error.message),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (institution: t.PlatformInstitution) =>
+      removePlatformInstitutionFn({ data: { tenantId: institution.tenantId } }),
+    onSuccess: (_result, institution) => {
+      notifySuccess(`${institution.name} removed`);
+      queryClient.invalidateQueries({ queryKey: ['platformInstitutions'] });
+      queryClient.invalidateQueries({ queryKey: ['platformInstitution', institution.tenantId] });
+      setRemoveTarget(null);
     },
     onError: (error: Error) => notifyError(error.message),
   });
@@ -111,6 +127,14 @@ export function InstitutionsPage() {
         >
           <Icon name="plus" size="xs" />
           Create institution
+        </button>
+        <button
+          type="button"
+          onClick={() => setInviteIndividualOpen(true)}
+          className="flex items-center gap-1.5 rounded-lg border border-(--cui-color-stroke-default) px-3 py-2 text-sm text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover)"
+        >
+          <Icon name="plus" size="xs" />
+          Invite individual user
         </button>
       </section>
 
@@ -183,6 +207,12 @@ export function InstitutionsPage() {
                         disabled={lifecycleMutation.isPending}
                         onClick={() => setLifecycleTarget(institution)}
                       />
+                      <Button
+                        type="danger"
+                        label="Remove"
+                        disabled={removeMutation.isPending}
+                        onClick={() => setRemoveTarget(institution)}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -219,6 +249,11 @@ export function InstitutionsPage() {
         }}
       />
 
+      <InviteIndividualUserDialog
+        open={inviteIndividualOpen}
+        onClose={() => setInviteIndividualOpen(false)}
+      />
+
       <AssignInstitutionAdminDialog
         institution={assignTarget}
         onClose={() => setAssignTarget(null)}
@@ -247,18 +282,38 @@ export function InstitutionsPage() {
             : `Suspending ${lifecycleTarget?.name} blocks every member of the institution from using Synapse until it is reactivated. Usage already recorded is kept.`}
         </p>
       </FormDialog>
+
+      <FormDialog
+        open={removeTarget != null}
+        title="Remove institution?"
+        submitLabel="Yes, remove institution"
+        saving={removeMutation.isPending}
+        onSubmit={() => {
+          if (removeTarget) removeMutation.mutate(removeTarget);
+        }}
+        onClose={() => setRemoveTarget(null)}
+      >
+        <p className="text-sm text-(--cui-color-text-default)">
+          Remove <strong>{removeTarget?.name}</strong> from the active institution registry? Its
+          members, usage, and audit history will be retained, but the institution will be closed and
+          no longer available for normal use.
+        </p>
+      </FormDialog>
     </div>
   );
 }
 
 function StatusPill({ status }: { status: t.PlatformInstitution['status'] }) {
   const suspended = status === 'suspended';
+  const closed = status === 'closed';
   return (
     <span
       className={
-        suspended
-          ? 'rounded-full bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400'
-          : 'rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400'
+        closed
+          ? 'rounded-full bg-(--cui-color-background-muted) px-2 py-0.5 text-xs text-(--cui-color-text-muted)'
+          : suspended
+            ? 'rounded-full bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400'
+            : 'rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400'
       }
     >
       {status}

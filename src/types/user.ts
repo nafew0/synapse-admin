@@ -18,9 +18,11 @@ export interface InstitutionSeatSummary {
 export interface InstitutionMember {
   id: string;
   kind: MemberKind;
-  tenantId: string;
+  tenantId?: string;
+  accountScope?: 'institution' | 'standalone';
   institutionName?: string;
   name: string;
+  username?: string | null;
   email: string;
   emailVerified?: boolean;
   role: MemberRole;
@@ -35,6 +37,18 @@ export interface InstitutionMember {
   suspendedAt?: string | null;
   removedAt?: string | null;
   acceptedAt?: string | null;
+}
+
+export interface StandaloneInviteResponse {
+  invite: {
+    _id?: string;
+    accountScope?: 'standalone';
+    email: string;
+    username?: string | null;
+    inviteLink?: string | null;
+    status?: string;
+  };
+  inviteLink?: string | null;
 }
 
 export interface InstitutionMemberListResponse {

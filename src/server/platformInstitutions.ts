@@ -42,6 +42,44 @@ export const getPlatformInstitutionFn = createServerFn({ method: 'GET' })
     return (await response.json()) as { institution: t.PlatformInstitution };
   });
 
+export const getPlatformInstitutionAgentAccessFn = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ tenantId: z.string().min(1), groupId: z.string().min(1).optional() }))
+  .handler(async ({ data }): Promise<t.PlatformAgentAccessResponse> => {
+    const params = new URLSearchParams();
+    if (data.groupId) params.set('groupId', data.groupId);
+    const query = params.toString();
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/agent-access${query ? `?${query}` : ''}`,
+    );
+    if (!response.ok) await extractApiError(response, 'Failed to load agent access');
+    return (await response.json()) as t.PlatformAgentAccessResponse;
+  });
+
+export const updatePlatformInstitutionAgentAccessFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      tenantId: z.string().min(1),
+      agentId: z.string().min(1),
+      groupId: z.string().min(1),
+      enabled: z.boolean(),
+    }),
+  )
+  .handler(async ({ data }): Promise<{ enabled: boolean; agentId: string; groupId: string }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/agent-access`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          agentId: data.agentId,
+          groupId: data.groupId,
+          enabled: data.enabled,
+        }),
+      },
+    );
+    if (!response.ok) await extractApiError(response, 'Failed to update agent access');
+    return (await response.json()) as { enabled: boolean; agentId: string; groupId: string };
+  });
+
 export const getPlatformInstitutionQuotaFn = createServerFn({ method: 'GET' })
   .inputValidator(z.object({ tenantId: z.string().min(1) }))
   .handler(
@@ -247,6 +285,17 @@ export const reactivatePlatformInstitutionFn = createServerFn({ method: 'POST' }
     if (!response.ok) {
       await extractApiError(response, 'Failed to reactivate institution');
     }
+    return (await response.json()) as { institution: t.PlatformInstitution };
+  });
+
+export const removePlatformInstitutionFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ tenantId: z.string().trim().min(1) }))
+  .handler(async ({ data }): Promise<{ institution: t.PlatformInstitution }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}`,
+      { method: 'DELETE' },
+    );
+    if (!response.ok) await extractApiError(response, 'Failed to remove institution');
     return (await response.json()) as { institution: t.PlatformInstitution };
   });
 

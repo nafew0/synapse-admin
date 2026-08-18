@@ -21,6 +21,8 @@ import {
   changeMemberRoleFn,
   createMemberImportFn,
   dryRunMemberImportFn,
+  getUserDetailFn,
+  getUserUsageFn,
   getMembersFn,
   inviteMemberFn,
   resendMemberVerificationFn,
@@ -165,5 +167,19 @@ describe('member admin server functions', () => {
       method: 'POST',
       body: JSON.stringify({ role: 'USER' }),
     });
+  });
+
+  it('loads platform user details and usage with the user id', async () => {
+    apiFetch.mockResolvedValueOnce(jsonResponse(200, { member: { id: 'user-1' } }));
+    await getUserDetailFn({ data: { userId: 'user-1', platform: true } });
+    expect(apiFetch).toHaveBeenCalledWith('/api/platform/users/user-1');
+
+    apiFetch.mockResolvedValueOnce(jsonResponse(200, { summary: {}, models: [], range: {} }));
+    await getUserUsageFn({
+      data: { userId: 'user-1', platform: true, start: '2026-07-01', end: '2026-08-01' },
+    });
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/api/platform/users/user-1/usage?start=2026-07-01&end=2026-08-01',
+    );
   });
 });

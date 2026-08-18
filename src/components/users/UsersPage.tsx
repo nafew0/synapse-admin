@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react';
-import { Icon } from '@clickhouse/click-ui';
+import { Button, Icon } from '@clickhouse/click-ui';
 import { getRouteApi } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type * as t from '@/types';
 import { SystemCapabilities } from '@/constants';
 import { useCapabilities } from '@/hooks';
-import { cn } from '@/utils';
-import { getMembersFn, listPlatformInstitutionsFn } from '@/server';
+import { cn, notifyError, notifySuccess } from '@/utils';
+import {
+  getMembersFn,
+  listPlatformInstitutionsFn,
+  removeMemberFn,
+  suspendMemberFn,
+} from '@/server';
 import {
   AccessDenied,
   EmptyState,
@@ -18,6 +23,7 @@ import {
 import { CreateUserDialog } from './CreateUserDialog';
 import { ImportMembersDialog } from './ImportMembersDialog';
 import { UserDetailDialog } from './UserDetailDialog';
+import { ConfirmDialog } from '../access';
 
 const PAGE_SIZE = 25;
 const Route = getRouteApi('/_app');
@@ -75,6 +81,9 @@ export function UsersPage() {
       status: statusFilter,
       platform: isPlatformSuperadmin,
       tenantId: tenantFilter === 'all' ? undefined : tenantFilter,
+      accountScope: (tenantFilter === 'others' ? 'standalone' : 'institution') as
+        | 'institution'
+        | 'standalone',
     }),
     [isPlatformSuperadmin, page, roleFilter, search, statusFilter, tenantFilter],
   );
@@ -190,6 +199,7 @@ export function UsersPage() {
             className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
           >
             <option value="all">All institutions</option>
+            <option value="others">Others</option>
             {(institutionsQuery.data?.institutions ?? []).map((institution) => (
               <option key={institution.tenantId} value={institution.tenantId}>
                 {institution.name}
@@ -250,18 +260,30 @@ export function UsersPage() {
                 <tr
                   key={`${member.kind}-${member.id}`}
                   className={cn(
-                    'cursor-pointer bg-(--cui-color-background-panel) transition-colors hover:bg-(--cui-color-background-hover)',
+                    'bg-(--cui-color-background-panel) transition-colors hover:bg-(--cui-color-background-hover)',
+                    member.kind === 'invite' && 'cursor-pointer',
                     index < data.members.length - 1 &&
                       'border-b border-(--cui-color-stroke-default)',
                   )}
-                  onClick={() => setSelectedMember(member)}
+                  onClick={() => {
+                    if (member.kind === 'invite') {
+                      setSelectedMember(member);
+                    }
+                  }}
                 >
                   <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
-                      <span className="font-medium text-(--cui-color-text-default)">
-                        {member.name || 'Unnamed member'}
-                      </span>
-                      <span className="text-xs text-(--cui-color-text-muted)">{member.email}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <span className="font-medium text-(--cui-color-text-default)">
+                          {member.name || 'Unnamed member'}
+                        </span>
+                        <span className="text-xs text-(--cui-color-text-muted)">
+                          {member.email}
+                        </span>
+                      </div>
+                      {member.kind !== 'invite' ? (
+                        <UserRowActions member={member} canManage={canManage} platform={isPlatformSuperadmin} />
+                      ) : null}
                     </div>
                   </td>
                   {isPlatformSuperadmin ? (
@@ -316,6 +338,85 @@ function SummaryCard({ label, value, detail }: { label: string; value: string; d
       {detail ? <p className="mt-1 text-xs text-(--cui-color-text-muted)">{detail}</p> : null}
     </div>
   );
+}
+
+function UserRowActions({
+  member,
+  canManage,
+  platform,
+}: {
+  member: t.InstitutionMember;
+  canManage: boolean;
+  platform: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const suspendMutation = useMutation({
+    mutationFn: () =>
+      suspendMemberFn({ data: { userId: member.id, tenantId: member.tenantId, platform } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ['user-detail', member.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-usage', member.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-credits', member.id] });
+      notifySuccess('User suspended');
+    },
+    onError: (error: Error) => notifyError(error.message),
+  });
+  const removeMutation = useMutation({
+    mutationFn: () =>
+      removeMemberFn({ data: { userId: member.id, tenantId: member.tenantId, platform } }),
+    onSuccess: () => {
+      setConfirmRemove(false);
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ['user-detail', member.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-usage', member.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-credits', member.id] });
+      notifySuccess('User removed');
+    },
+    onError: (error: Error) => notifyError(error.message),
+  });
+  const busy = suspendMutation.isPending || removeMutation.isPending;
+
+  return (
+    <>
+      <div className="flex shrink-0 items-center gap-2" onClick={(event) => event.stopPropagation()}>
+        <a
+          href={buildUserDetailHref(member.id)}
+          className="rounded-lg border border-(--cui-color-stroke-default) px-3 py-1.5 text-xs text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover)"
+        >
+          Open
+        </a>
+        <Button
+          type="secondary"
+          label="Suspend"
+          disabled={!canManage || busy || member.status === 'suspended'}
+          onClick={() => suspendMutation.mutate()}
+        />
+        <Button
+          type="danger"
+          label="Remove"
+          disabled={!canManage || busy}
+          onClick={() => setConfirmRemove(true)}
+        />
+      </div>
+      <ConfirmDialog
+        open={confirmRemove}
+        title="Remove user account"
+        description={`Permanently delete ${member.email} and all account data? This cannot be undone. Choose Suspend to keep the data while blocking access.`}
+        confirmLabel="Remove permanently"
+        confirmType="danger"
+        saving={removeMutation.isPending}
+        onConfirm={() => removeMutation.mutate()}
+        onCancel={() => setConfirmRemove(false)}
+      />
+    </>
+  );
+}
+
+function buildUserDetailHref(userId: string): string {
+  const basePath = (import.meta.env.VITE_BASE_PATH || '').replace(/\/$/, '');
+  return `${basePath}/users/${encodeURIComponent(userId)}`;
 }
 
 function statusBadgeClass(status: t.MemberStatus) {

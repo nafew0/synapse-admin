@@ -20,6 +20,7 @@ import { Route as AppGrantsRouteImport } from './routes/_app/grants'
 import { Route as AppAccessRouteImport } from './routes/_app/access'
 import { Route as AppConfigurationIndexRouteImport } from './routes/_app/configuration/index'
 import { Route as AuthOpenidCallbackRouteImport } from './routes/auth/openid/callback'
+import { Route as AppUsersUserIdRouteImport } from './routes/_app/users.$userId'
 import { Route as AppInstitutionsTenantIdRouteImport } from './routes/_app/institutions.$tenantId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -76,6 +77,11 @@ const AuthOpenidCallbackRoute = AuthOpenidCallbackRouteImport.update({
   path: '/auth/openid/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppUsersUserIdRoute = AppUsersUserIdRouteImport.update({
+  id: '/$userId',
+  path: '/$userId',
+  getParentRoute: () => AppUsersRoute,
+} as any)
 const AppInstitutionsTenantIdRoute = AppInstitutionsTenantIdRouteImport.update({
   id: '/$tenantId',
   path: '/$tenantId',
@@ -90,8 +96,9 @@ export interface FileRoutesByFullPath {
   '/help': typeof AppHelpRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
   '/usage': typeof AppUsageRoute
-  '/users': typeof AppUsersRoute
+  '/users': typeof AppUsersRouteWithChildren
   '/institutions/$tenantId': typeof AppInstitutionsTenantIdRoute
+  '/users/$userId': typeof AppUsersUserIdRoute
   '/auth/openid/callback': typeof AuthOpenidCallbackRoute
   '/configuration/': typeof AppConfigurationIndexRoute
 }
@@ -102,9 +109,10 @@ export interface FileRoutesByTo {
   '/help': typeof AppHelpRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
   '/usage': typeof AppUsageRoute
-  '/users': typeof AppUsersRoute
+  '/users': typeof AppUsersRouteWithChildren
   '/': typeof AppIndexRoute
   '/institutions/$tenantId': typeof AppInstitutionsTenantIdRoute
+  '/users/$userId': typeof AppUsersUserIdRoute
   '/auth/openid/callback': typeof AuthOpenidCallbackRoute
   '/configuration': typeof AppConfigurationIndexRoute
 }
@@ -117,9 +125,10 @@ export interface FileRoutesById {
   '/_app/help': typeof AppHelpRoute
   '/_app/institutions': typeof AppInstitutionsRouteWithChildren
   '/_app/usage': typeof AppUsageRoute
-  '/_app/users': typeof AppUsersRoute
+  '/_app/users': typeof AppUsersRouteWithChildren
   '/_app/': typeof AppIndexRoute
   '/_app/institutions/$tenantId': typeof AppInstitutionsTenantIdRoute
+  '/_app/users/$userId': typeof AppUsersUserIdRoute
   '/auth/openid/callback': typeof AuthOpenidCallbackRoute
   '/_app/configuration/': typeof AppConfigurationIndexRoute
 }
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/usage'
     | '/users'
     | '/institutions/$tenantId'
+    | '/users/$userId'
     | '/auth/openid/callback'
     | '/configuration/'
   fileRoutesByTo: FileRoutesByTo
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/'
     | '/institutions/$tenantId'
+    | '/users/$userId'
     | '/auth/openid/callback'
     | '/configuration'
   id:
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/_app/users'
     | '/_app/'
     | '/_app/institutions/$tenantId'
+    | '/_app/users/$userId'
     | '/auth/openid/callback'
     | '/_app/configuration/'
   fileRoutesById: FileRoutesById
@@ -251,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOpenidCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/users/$userId': {
+      id: '/_app/users/$userId'
+      path: '/$userId'
+      fullPath: '/users/$userId'
+      preLoaderRoute: typeof AppUsersUserIdRouteImport
+      parentRoute: typeof AppUsersRoute
+    }
     '/_app/institutions/$tenantId': {
       id: '/_app/institutions/$tenantId'
       path: '/$tenantId'
@@ -273,13 +292,25 @@ const AppInstitutionsRouteWithChildren = AppInstitutionsRoute._addFileChildren(
   AppInstitutionsRouteChildren,
 )
 
+interface AppUsersRouteChildren {
+  AppUsersUserIdRoute: typeof AppUsersUserIdRoute
+}
+
+const AppUsersRouteChildren: AppUsersRouteChildren = {
+  AppUsersUserIdRoute: AppUsersUserIdRoute,
+}
+
+const AppUsersRouteWithChildren = AppUsersRoute._addFileChildren(
+  AppUsersRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAccessRoute: typeof AppAccessRoute
   AppGrantsRoute: typeof AppGrantsRoute
   AppHelpRoute: typeof AppHelpRoute
   AppInstitutionsRoute: typeof AppInstitutionsRouteWithChildren
   AppUsageRoute: typeof AppUsageRoute
-  AppUsersRoute: typeof AppUsersRoute
+  AppUsersRoute: typeof AppUsersRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
   AppConfigurationIndexRoute: typeof AppConfigurationIndexRoute
 }
@@ -290,7 +321,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHelpRoute: AppHelpRoute,
   AppInstitutionsRoute: AppInstitutionsRouteWithChildren,
   AppUsageRoute: AppUsageRoute,
-  AppUsersRoute: AppUsersRoute,
+  AppUsersRoute: AppUsersRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
   AppConfigurationIndexRoute: AppConfigurationIndexRoute,
 }
