@@ -61,6 +61,21 @@
   }
 }
 
+/* Native select/date popovers otherwise keep a light UA palette in dark mode. */
+.admin-themed-control {
+  color-scheme: light;
+}
+
+.dark .admin-themed-control {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .admin-themed-control {
+    color-scheme: dark;
+  }
+}
+
 @layer theme {
   :root {
     --cui-color-stroke-default: #e3e5e8;

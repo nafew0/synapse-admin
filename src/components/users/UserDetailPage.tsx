@@ -56,6 +56,32 @@ function roleLabel(role: t.MemberRole): string {
   }
 }
 
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label
+      className="admin-themed-control relative flex min-w-36 cursor-pointer flex-col gap-1 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-xs text-(--cui-color-text-muted)"
+    >
+      <span>{label}</span>
+      <span className="text-sm text-(--cui-color-text-default)">{value || 'Select date'}</span>
+      <input
+        type="date"
+        value={value}
+        aria-label={label}
+        onChange={(event) => onChange(event.target.value)}
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+      />
+    </label>
+  );
+}
+
 export function UserDetailPage() {
   const { user } = AppRoute.useRouteContext();
   const { userId } = Route.useParams();
@@ -212,8 +238,8 @@ function Usage({ usage, loading, error, start, end, onStartChange, onEndChange }
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-xs text-(--cui-color-text-muted)">Start<input type="date" value={start} onChange={(event) => onStartChange(event.target.value)} className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)" /></label>
-        <label className="flex flex-col gap-1 text-xs text-(--cui-color-text-muted)">End<input type="date" value={end} onChange={(event) => onEndChange(event.target.value)} className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)" /></label>
+        <DateField label="Start" value={start} onChange={onStartChange} />
+        <DateField label="End" value={end} onChange={onEndChange} />
         <span className="pb-2 text-xs text-(--cui-color-text-muted)">Timezone: {usage.range.timezone || 'UTC'}</span>
       </div>
       <div className="grid gap-4 md:grid-cols-4">
@@ -237,7 +263,7 @@ function Credits({ balance, grants, packages, packageId, canManage, loading, pac
   return (
     <div className="flex flex-col gap-4">
       <Panel title="Current balance"><p className="text-2xl font-semibold text-(--cui-color-text-default)">{formatNumber(balance)} credits</p></Panel>
-      {canManage && <Panel title="Grant credits"><div className="flex flex-wrap gap-2"><select value={packageId} onChange={(event) => onPackageChange(event.target.value)} disabled={packagesLoading || granting} className="min-w-64 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"><option value="">{packagesLoading ? 'Loading packages…' : 'Select package'}</option>{packages.map((pkg) => <option key={pkg.id} value={pkg.id}>{pkg.label} · {formatNumber(pkg.credits)} credits</option>)}</select><Button label="Grant" disabled={!packageId || granting} onClick={onGrant} /></div></Panel>}
+      {canManage && <Panel title="Grant credits"><div className="flex flex-wrap gap-2"><select value={packageId} onChange={(event) => onPackageChange(event.target.value)} disabled={packagesLoading || granting} className="admin-themed-control min-w-64 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"><option value="">{packagesLoading ? 'Loading packages…' : 'Select package'}</option>{packages.map((pkg) => <option key={pkg.id} value={pkg.id}>{pkg.label} · {formatNumber(pkg.credits)} credits</option>)}</select><Button label="Grant" disabled={!packageId || granting} onClick={onGrant} /></div></Panel>}
       <Panel title="Grant history">{loading ? <LoadingState /> : grants.length === 0 ? <p className="text-sm text-(--cui-color-text-muted)">No grants recorded.</p> : <div className="divide-y divide-(--cui-color-stroke-default)">{grants.map((grant) => <div key={grant._id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"><div><p className="font-medium text-(--cui-color-text-default)">{grant.packageId}</p><p className="text-xs text-(--cui-color-text-muted)">{formatDate(grant.createdAt)} · {grant.source}</p></div><div className="text-right"><p>{formatNumber(grant.credits)} credits</p><p className="text-xs text-(--cui-color-text-muted)">{grant.price} {grant.currency}</p></div></div>)}</div>}</Panel>
     </div>
   );

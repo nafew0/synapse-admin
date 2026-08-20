@@ -58,6 +58,32 @@ function formatCredits(credits: number): string {
   return `${new Intl.NumberFormat().format(Math.round(credits))} credits`;
 }
 
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label
+      className="admin-themed-control relative flex min-w-40 cursor-pointer flex-col gap-1 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-muted)"
+    >
+      <span>{label}</span>
+      <span className="text-sm text-(--cui-color-text-default)">{value || 'Select date'}</span>
+      <input
+        type="date"
+        value={value}
+        aria-label={label}
+        onChange={(event) => onChange(event.target.value)}
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+      />
+    </label>
+  );
+}
+
 function downloadBlob(blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -165,7 +191,7 @@ export function UsagePage() {
       <select
         id="usage-institution"
         aria-label="Institution"
-        className="rounded border px-2 py-1 text-sm"
+        className="admin-themed-control rounded border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-2 py-1 text-sm text-(--cui-color-text-default)"
         value={selectedTenantId}
         onChange={(event) => setSelectedTenantId(event.target.value)}
       >
@@ -225,24 +251,8 @@ export function UsagePage() {
     <div className="flex flex-1 flex-col gap-6 overflow-auto p-6">
       {institutionPicker}
       <section className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-sm text-(--cui-color-text-muted)">
-          Period start
-          <input
-            type="date"
-            value={start}
-            onChange={(event) => setStart(event.target.value)}
-            className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-(--cui-color-text-muted)">
-          Period end
-          <input
-            type="date"
-            value={end}
-            onChange={(event) => setEnd(event.target.value)}
-            className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
-          />
-        </label>
+        <DateField label="Period start" value={start} onChange={setStart} />
+        <DateField label="Period end" value={end} onChange={setEnd} />
         <SearchInput
           value={search}
           onChange={setSearch}
