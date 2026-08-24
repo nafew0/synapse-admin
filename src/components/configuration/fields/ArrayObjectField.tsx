@@ -7,8 +7,8 @@ import { useLocalize } from '@/hooks';
 function getEntryLabel(item: t.ConfigValue): string | null {
   if (item && typeof item === 'object' && !Array.isArray(item)) {
     const obj = item as Record<string, t.ConfigValue>;
-    if (typeof obj.name === 'string' && obj.name) return obj.name;
     if (typeof obj.label === 'string' && obj.label) return obj.label;
+    if (typeof obj.name === 'string' && obj.name) return obj.name;
     if (typeof obj.group === 'string' && obj.group) return obj.group;
   }
   return null;

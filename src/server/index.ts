@@ -1,6 +1,7 @@
 export * from './auth';
 export * from './capabilities';
 export * from './config';
+export * from './globalConfig';
 export * from './groups';
 export * from './platformInstitutions';
 export * from './roles';

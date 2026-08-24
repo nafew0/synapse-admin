@@ -51,8 +51,10 @@ import { ContentToolbar } from './ContentToolbar';
 import { SystemCapabilities } from '@/constants';
 import { ConfigTabBar } from './ConfigTabBar';
 import { InfoBanner } from './InfoBanner';
+import { getConfigAccess } from '@/config/access';
 
 const routeApi = getRouteApi('/_app/configuration/');
+const appRouteApi = getRouteApi('/_app');
 const LAST_SCOPE_KEY = 'config:lastScope';
 
 function collectFieldPaths(fields: t.SchemaField[], prefix = ''): string[] {
@@ -98,9 +100,12 @@ function resolvedConfigOptions(scope: t.ScopeSelection) {
 
 export function ConfigPage({ initialTab, highlightField, initialScope }: t.ConfigPageProps) {
   const localize = useLocalize();
+  const { user } = appRouteApi.useRouteContext();
   const queryClient = useQueryClient();
   const { hasCapability } = useCapabilities();
   const canManageConfig = hasCapability(SystemCapabilities.MANAGE_CONFIGS);
+  const configAccess = getConfigAccess(user, canManageConfig, canManageConfig);
+  const canEditGlobal = configAccess.canMutateGlobal;
   const canAssignConfigs = hasCapability(SystemCapabilities.ASSIGN_CONFIGS) || canManageConfig;
   const navigate = useNavigate({ from: '/configuration/' });
   const { tree: schemaTree } = routeApi.useLoaderData();
@@ -775,7 +780,7 @@ export function ConfigPage({ initialTab, highlightField, initialScope }: t.Confi
   );
   const setActiveSection = useActiveSection(scrollEl, tocEl, activeTab);
 
-  const canEditActiveTab = editableTabIds.has(activeTab);
+  const canEditActiveTab = editableTabIds.has(activeTab) && (isEditingScope || canEditGlobal);
 
   /** Route-level gating ensures canView; canEdit reflects per-tab manage capability. */
   const permissions: t.ScopePermissions = useMemo(
@@ -920,14 +925,17 @@ export function ConfigPage({ initialTab, highlightField, initialScope }: t.Confi
         />
       );
     }
+    if (!isEditingScope && !canEditGlobal) {
+      return <InfoBanner text={localize('com_config_superadmin_required')} dismissible={false} />;
+    }
     return null;
   };
 
   const banner = renderBanner();
 
   const resetBaseTitle = (() => {
-    if (!canManageConfig) {
-      return localize('com_cap_no_permission', { cap: SystemCapabilities.MANAGE_CONFIGS });
+    if (!canEditGlobal) {
+      return localize('com_config_superadmin_required');
     }
     if (isDirty) return localize('com_config_reset_base_dirty');
     return undefined;
@@ -939,15 +947,15 @@ export function ConfigPage({ initialTab, highlightField, initialScope }: t.Confi
         {banner && <div className="pt-4 pb-2">{banner}</div>}
         <HeaderActions
           showImport
-          importDisabled={isDirty || !canManageConfig}
+          importDisabled={isDirty || (!isEditingScope && !canEditGlobal)}
           importTitle={
-            !canManageConfig
-              ? localize('com_cap_no_permission', { cap: SystemCapabilities.MANAGE_CONFIGS })
+            !isEditingScope && !canEditGlobal
+              ? localize('com_config_superadmin_required')
               : undefined
           }
           onImportClick={() => setImportOpen(true)}
           showReset={!isEditingScope && dbOverridePaths.size > 0}
-          resetDisabled={isDirty || !canManageConfig}
+          resetDisabled={isDirty || !canEditGlobal}
           resetTitle={resetBaseTitle}
           onResetClick={() => {
             setResetBaseError(null);

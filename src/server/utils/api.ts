@@ -54,5 +54,18 @@ export async function extractApiError(response: Response, fallback: string): Pro
     (body as { error?: string }).error ??
     (body as { message?: string }).message ??
     `${fallback}: ${response.status}`;
-  throw new Error(message);
+  throw new AdminApiError(message, response.status, (body as { code?: string }).code);
+}
+
+/** Error returned by an admin API call, retaining status/code for authoritative UI handling. */
+export class AdminApiError extends Error {
+  status: number;
+  code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = 'AdminApiError';
+    this.status = status;
+    this.code = code;
+  }
 }

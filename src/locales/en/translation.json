@@ -145,6 +145,7 @@
   "com_dash_institutions_desc": "Provision institutions and appoint institution admins",
   "com_config_import_yaml": "Import YAML",
   "com_config_import_yaml_title": "Import configuration",
+  "com_config_superadmin_required": "Global configuration is read-only. Only platform Superadmins can change it.",
   "com_config_import_yaml_desc": "Upload or paste a librechat.yaml file to populate configuration values across the UI.",
   "com_config_import_upload": "Upload file",
   "com_config_import_paste": "Paste YAML",

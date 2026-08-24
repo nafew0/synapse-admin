@@ -21,6 +21,7 @@ import { filterSecretPreviewFields, stripSecretPreviewValues } from '@/utils';
 import { safeFieldPath } from './utils/validation';
 import { flattenObject } from '@/utils/format';
 import { apiFetch } from './utils/api';
+import { saveGlobalConfigFn, resetGlobalConfigFieldFn, resetGlobalConfigFn } from './globalConfig';
 
 const WRAPPER_TYPES = new Set([
   'ZodOptional',
@@ -1055,19 +1056,7 @@ export const saveBaseConfigFn = createServerFn({ method: 'POST' })
       throw new Error(`Validation failed — ${details}`);
     }
 
-    const response = await apiFetch(`/api/admin/config/role/${BASE_CONFIG_PRINCIPAL_ID}/fields`, {
-      method: 'PATCH',
-      body: JSON.stringify({ entries: filtered, priority: 0 }),
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(
-        (err as { error?: string }).error ?? `Failed to save base config: ${response.status}`,
-      );
-    }
-
-    return { success: true };
+    return saveGlobalConfigFn({ data: { entries: filtered } });
   });
 
 /** Full-replace save used by YAML import (intentionally sends the entire config). */
@@ -1086,9 +1075,8 @@ export const importBaseConfigFn = createServerFn({ method: 'POST' })
       );
     }
 
-    const response = await apiFetch(`/api/admin/config/role/${BASE_CONFIG_PRINCIPAL_ID}`, {
-      method: 'PUT',
-      body: JSON.stringify({ overrides, priority: 0 }),
+    const response = await apiFetch('/api/admin/global/config/import', {
+      method: 'POST', body: JSON.stringify({ config: overrides }),
     });
 
     if (!response.ok) {
@@ -1107,19 +1095,7 @@ export const resetBaseConfigFieldFn = createServerFn({ method: 'POST' })
     if (isInterfacePermissionPath(data.fieldPath)) return { success: true };
     const section = data.fieldPath.split('.')[0];
     await requireAnyCapability([SystemCapabilities.MANAGE_CONFIGS, `manage:configs:${section}`]);
-    const response = await apiFetch(
-      `/api/admin/config/role/${BASE_CONFIG_PRINCIPAL_ID}/fields?fieldPath=${encodeURIComponent(data.fieldPath)}`,
-      { method: 'DELETE' },
-    );
-
-    if (!response.ok && response.status !== 404) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(
-        (err as { error?: string }).error ?? `Failed to reset field: ${response.status}`,
-      );
-    }
-
-    return { success: true };
+    return resetGlobalConfigFieldFn({ data: { fieldPath: data.fieldPath } });
   });
 
 /** Deletes the entire base config DB override, reverting every value back to
@@ -1128,16 +1104,5 @@ export const resetBaseConfigFieldFn = createServerFn({ method: 'POST' })
  *  override to begin with, which is treated as success. */
 export const resetBaseConfigFn = createServerFn({ method: 'POST' }).handler(async () => {
   await requireCapability(SystemCapabilities.MANAGE_CONFIGS);
-  const response = await apiFetch(`/api/admin/config/role/${BASE_CONFIG_PRINCIPAL_ID}`, {
-    method: 'DELETE',
-  });
-
-  if (!response.ok && response.status !== 404) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(
-      (err as { error?: string }).error ?? `Failed to reset base config: ${response.status}`,
-    );
-  }
-
-  return { success: true };
+  return resetGlobalConfigFn({ data: {} });
 });
