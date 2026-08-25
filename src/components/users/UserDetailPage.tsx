@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Button } from '@clickhouse/click-ui';
 import { Link, getRouteApi } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -65,18 +65,39 @@ function DateField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const openPicker = () => {
+    const input = inputRef.current;
+    if (!input) return;
+    // `showPicker` opens the native calendar even when the input is visually
+    // transparent. Older browsers fall back to focusing the date input.
+    if (typeof input.showPicker === 'function') {
+      try {
+        input.showPicker();
+        return;
+      } catch {
+        // The browser can reject showPicker outside a trusted event; focus is
+        // still enough to open the picker in supported date-input browsers.
+      }
+    }
+    input.focus();
+  };
+
   return (
     <label
+      onClick={openPicker}
       className="admin-themed-control relative flex min-w-36 cursor-pointer flex-col gap-1 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-xs text-(--cui-color-text-muted)"
     >
       <span>{label}</span>
       <span className="text-sm text-(--cui-color-text-default)">{value || 'Select date'}</span>
       <input
+        ref={inputRef}
         type="date"
         value={value}
         aria-label={label}
         onChange={(event) => onChange(event.target.value)}
-        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        className="pointer-events-none absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
       />
     </label>
   );
@@ -102,7 +123,9 @@ export function UserDetailPage() {
   const usageQuery = useQuery({
     queryKey: ['user-usage', userId, isPlatform, start, end],
     queryFn: () => getUserUsageFn({ data: { userId, platform: isPlatform, start, end } }),
-    enabled: tab === 'usage',
+    // Avoid querying while the user is temporarily editing an invalid range.
+    // The API treats the end date as inclusive, so equal dates are valid.
+    enabled: tab === 'usage' && (!start || !end || start <= end),
   });
   const creditsQuery = useQuery({
     queryKey: ['user-credits', userId, isPlatform],
@@ -233,6 +256,18 @@ function Overview({ member, balance, latestGrant, packages }: { member: t.Instit
 }
 
 function Usage({ usage, loading, error, start, end, onStartChange, onEndChange }: { usage?: t.UserUsageResponse; loading: boolean; error?: string; start: string; end: string; onStartChange: (value: string) => void; onEndChange: (value: string) => void }) {
+  const invalidRange = Boolean(start && end && start > end);
+  if (invalidRange) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <DateField label="Start" value={start} onChange={onStartChange} />
+          <DateField label="End" value={end} onChange={onEndChange} />
+        </div>
+        <EmptyState message="The start date must be on or before the end date." />
+      </div>
+    );
+  }
   if (loading) return <LoadingState />;
   if (error || !usage) return <EmptyState message={error || 'No usage data available.'} />;
   return (

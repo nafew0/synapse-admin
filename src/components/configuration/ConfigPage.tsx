@@ -636,7 +636,12 @@ export function ConfigPage({ initialTab, highlightField, initialScope }: t.Confi
             },
           });
         } else {
-          await saveBaseConfigFn({ data: { entries: saves } });
+          const result = (await saveBaseConfigFn({ data: { entries: saves } })) as {
+            application?: { mode?: string; affectedPaths?: string[] };
+          };
+          if (result.application?.mode === 'restart-required') {
+            notifySuccess('Saved. Restart the backend for these settings to take effect.');
+          }
         }
       }
 

@@ -184,10 +184,30 @@ export const SECTION_META: Record<
     descriptionKey: 'com_config_section_skillSync_desc',
     tab: 'system',
   },
+  cache: {
+    titleKey: 'com_config_section_cache',
+    descriptionKey: 'com_config_section_cache_desc',
+    tab: 'system',
+  },
+  langfuse: {
+    titleKey: 'com_config_section_langfuse',
+    descriptionKey: 'com_config_section_langfuse_desc',
+    tab: 'system',
+  },
+  creditPackages: {
+    titleKey: 'com_config_section_creditPackages',
+    descriptionKey: 'com_config_section_creditPackages_desc',
+    tab: 'system',
+  },
+  version: {
+    titleKey: 'com_config_section_version',
+    descriptionKey: 'com_config_section_version_desc',
+    tab: 'system',
+  },
 };
 
-/** Sections omitted from the UI entirely (legacy fields pending removal from the schema). */
-export const HIDDEN_SECTIONS = new Set(['version', 'cache']);
+/** Reserved for schema fields that are intentionally not exposed in Admin. */
+export const HIDDEN_SECTIONS = new Set<string>();
 
 export function splitCamelCase(str: string): string[] {
   return str.replace(/([a-z])([A-Z])/g, '$1 $2').split(/\s+/);

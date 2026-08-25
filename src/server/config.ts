@@ -1076,7 +1076,8 @@ export const importBaseConfigFn = createServerFn({ method: 'POST' })
     }
 
     const response = await apiFetch('/api/admin/global/config/import', {
-      method: 'POST', body: JSON.stringify({ config: overrides }),
+      method: 'POST',
+      body: JSON.stringify({ overrides }),
     });
 
     if (!response.ok) {
