@@ -7,5 +7,6 @@ export * from './platformInstitutions';
 export * from './roles';
 export * from './scopes';
 export * from './users';
+export * from './agentsCatalog';
 export * from './billing';
 export * from './usage';

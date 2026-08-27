@@ -12,6 +12,7 @@ import { adminLogoutFn } from '@/server';
 const navItems: t.NavItem[] = [
   { labelKey: 'com_nav_dashboard', path: '/', icon: 'home' },
   { labelKey: 'com_nav_institutions', path: '/institutions', icon: 'users' },
+  { labelKey: 'com_nav_agents', path: '/agents', icon: 'cpu' },
   {
     labelKey: 'com_nav_configuration',
     path: '/configuration',
@@ -62,6 +63,9 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
 
   const visibleItems = navItems.filter((item) => {
     if (item.path === '/institutions') {
+      return user?.isPlatformSuperadmin === true;
+    }
+    if (item.path === '/agents') {
       return user?.isPlatformSuperadmin === true;
     }
     if (!item.capability) return true;

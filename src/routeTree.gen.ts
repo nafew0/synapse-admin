@@ -17,6 +17,7 @@ import { Route as AppUsageRouteImport } from './routes/_app/usage'
 import { Route as AppInstitutionsRouteImport } from './routes/_app/institutions'
 import { Route as AppHelpRouteImport } from './routes/_app/help'
 import { Route as AppGrantsRouteImport } from './routes/_app/grants'
+import { Route as AppAgentsRouteImport } from './routes/_app/agents'
 import { Route as AppAccessRouteImport } from './routes/_app/access'
 import { Route as AppConfigurationIndexRouteImport } from './routes/_app/configuration/index'
 import { Route as AuthOpenidCallbackRouteImport } from './routes/auth/openid/callback'
@@ -62,6 +63,11 @@ const AppGrantsRoute = AppGrantsRouteImport.update({
   path: '/grants',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAgentsRoute = AppAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAccessRoute = AppAccessRouteImport.update({
   id: '/access',
   path: '/access',
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/access': typeof AppAccessRoute
+  '/agents': typeof AppAgentsRoute
   '/grants': typeof AppGrantsRoute
   '/help': typeof AppHelpRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
@@ -105,6 +112,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/access': typeof AppAccessRoute
+  '/agents': typeof AppAgentsRoute
   '/grants': typeof AppGrantsRoute
   '/help': typeof AppHelpRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/access': typeof AppAccessRoute
+  '/_app/agents': typeof AppAgentsRoute
   '/_app/grants': typeof AppGrantsRoute
   '/_app/help': typeof AppHelpRoute
   '/_app/institutions': typeof AppInstitutionsRouteWithChildren
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/access'
+    | '/agents'
     | '/grants'
     | '/help'
     | '/institutions'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/access'
+    | '/agents'
     | '/grants'
     | '/help'
     | '/institutions'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/access'
+    | '/_app/agents'
     | '/_app/grants'
     | '/_app/help'
     | '/_app/institutions'
@@ -242,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGrantsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/agents': {
+      id: '/_app/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AppAgentsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/access': {
       id: '/_app/access'
       path: '/access'
@@ -306,6 +325,7 @@ const AppUsersRouteWithChildren = AppUsersRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAccessRoute: typeof AppAccessRoute
+  AppAgentsRoute: typeof AppAgentsRoute
   AppGrantsRoute: typeof AppGrantsRoute
   AppHelpRoute: typeof AppHelpRoute
   AppInstitutionsRoute: typeof AppInstitutionsRouteWithChildren
@@ -317,6 +337,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAccessRoute: AppAccessRoute,
+  AppAgentsRoute: AppAgentsRoute,
   AppGrantsRoute: AppGrantsRoute,
   AppHelpRoute: AppHelpRoute,
   AppInstitutionsRoute: AppInstitutionsRouteWithChildren,

@@ -674,6 +674,15 @@ export const getConfigSchemaFields = createServerFn({ method: 'GET' }).handler(a
 export const parseImportedYaml = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ yamlContent: z.string() }))
   .handler(async ({ data }: { data: { yamlContent: string } }) => {
+    const MAX_IMPORT_BYTES = 1024 * 1024;
+    if (new TextEncoder().encode(data.yamlContent).byteLength > MAX_IMPORT_BYTES) {
+      return {
+        success: false,
+        error: 'Configuration YAML is too large (maximum 1 MB).',
+        validationErrors: undefined,
+        appConfig: null,
+      };
+    }
     let rawConfig: unknown;
     try {
       rawConfig = yaml.load(data.yamlContent, { schema: yaml.JSON_SCHEMA });
@@ -696,7 +705,64 @@ export const parseImportedYaml = createServerFn({ method: 'POST' })
       };
     }
 
-    const result = configSchema.safeParse(rawConfig);
+    // Reject prototype-pollution keys and unknown root sections before Zod's
+    // object parser can strip them. This keeps preview/import behavior explicit.
+    const unsafeKeys = new Set(['__proto__', 'prototype', 'constructor']);
+    const schemaShape = (configSchema as unknown as { shape?: Record<string, unknown> }).shape ?? {};
+    // Keep this compatibility set for Admin deployments whose bundled
+    // librechat-data-provider schema predates fields already supported by the
+    // API/runtime (the source schema includes these fields, but an older
+    // installed package may not expose them at runtime).
+    const supportedRuntimeKeys = new Set(['creditPackages', 'langfuse']);
+    const unknownRootKeys = Object.keys(rawConfig as Record<string, unknown>).filter(
+      (key) => !Object.hasOwn(schemaShape, key) && !supportedRuntimeKeys.has(key),
+    );
+    const unsafePath: string | undefined = (() => {
+      const walk = (value: unknown, path: string): string | undefined => {
+        if (Array.isArray(value)) {
+          for (let i = 0; i < value.length; i++) {
+            const found = walk(value[i], `${path}.${i}`);
+            if (found) return found;
+          }
+          return undefined;
+        }
+        if (value && typeof value === 'object') {
+          for (const [key, child] of Object.entries(value)) {
+            const childPath = path ? `${path}.${key}` : key;
+            if (unsafeKeys.has(key)) return childPath;
+            const found = walk(child, childPath);
+            if (found) return found;
+          }
+        }
+        return undefined;
+      };
+      return walk(rawConfig, '');
+    })();
+    if (unsafePath || unknownRootKeys.length > 0) {
+      const fields = unsafePath ? `unsafe field: ${unsafePath}` : `unknown field(s): ${unknownRootKeys.join(', ')}`;
+      return {
+        success: false,
+        error: `Configuration import rejected (${fields}).`,
+        validationErrors: undefined,
+        appConfig: null,
+      };
+    }
+
+    // Older Admin bundles can carry an outdated AgentCapabilities enum even
+    // though the API/runtime already supports newer values from librechat.yaml.
+    // Normalize those known-compatible values for validation, then restore the
+    // original capability list in the returned config.
+    const validationConfig = JSON.parse(JSON.stringify(rawConfig)) as Record<string, any>;
+    const agentCapabilities = validationConfig.endpoints?.agents?.capabilities;
+    const compatibilityCapabilities = new Set(['ask_user_question', 'memory']);
+    if (Array.isArray(agentCapabilities)) {
+      validationConfig.endpoints.agents.capabilities = agentCapabilities.filter(
+        (capability: unknown) =>
+          typeof capability !== 'string' || !compatibilityCapabilities.has(capability),
+      );
+    }
+
+    const result = configSchema.safeParse(validationConfig);
 
     if (!result.success) {
       return {
@@ -723,11 +789,24 @@ export const parseImportedYaml = createServerFn({ method: 'POST' })
      * registration. The consumer (ImportYamlDialog) treats appConfig as
      * `Record<string, ConfigValue>`, so widening the return is the local fix.
      */
+    const parsedConfig = { ...(result.data as Record<string, t.ConfigValue>) };
+    for (const key of supportedRuntimeKeys) {
+      if (Object.hasOwn(rawConfig as Record<string, unknown>, key) && !Object.hasOwn(parsedConfig, key)) {
+        parsedConfig[key] = (rawConfig as Record<string, t.ConfigValue>)[key];
+      }
+    }
+    if (Array.isArray(agentCapabilities)) {
+      const endpoints = (parsedConfig.endpoints ?? {}) as Record<string, t.ConfigValue>;
+      const agents = (endpoints.agents ?? {}) as Record<string, t.ConfigValue>;
+      endpoints.agents = { ...agents, capabilities: agentCapabilities };
+      parsedConfig.endpoints = endpoints;
+    }
+
     return {
       success: true,
       error: undefined,
       validationErrors: undefined,
-      appConfig: result.data as Record<string, t.ConfigValue>,
+      appConfig: parsedConfig,
     };
   });
 
