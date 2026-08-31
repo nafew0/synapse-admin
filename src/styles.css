@@ -407,6 +407,157 @@ textarea:focus-visible {
   box-sizing: border-box;
 }
 
+.admin-login-page {
+  background: #06161a;
+  color: #f2f4f4;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.admin-login-background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: url('./assets/auth-network-bg-dark.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.admin-login-card-shell {
+  width: min(28rem, calc(100vw - 2rem));
+  margin-inline: auto;
+}
+
+.admin-login-card {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 34rem !important;
+  border: 1px solid rgb(240 168 87 / 0.2) !important;
+  border-radius: 1.25rem !important;
+  background: rgb(15 31 36 / 0.94) !important;
+  box-shadow: 0 24px 70px -28px rgb(0 0 0 / 0.9), 0 0 0 1px rgb(20 110 105 / 0.16) !important;
+  backdrop-filter: blur(18px);
+}
+
+.admin-login-card > div {
+  width: 100% !important;
+}
+
+.admin-login-brand {
+  padding-bottom: 0.25rem;
+}
+
+.admin-login-brand img {
+  object-fit: contain;
+}
+
+.admin-login-brand h1 {
+  color: #4fb6ba;
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.admin-login-form {
+  width: min(100%, 32rem) !important;
+  margin-inline: auto;
+}
+
+.admin-login-form > * {
+  width: 100%;
+}
+
+.admin-login-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-login-heading h2 {
+  color: #f2f4f4;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.admin-login-heading p {
+  color: #8d9698;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.admin-login-card input {
+  background: #1b2226;
+  border-color: #34464a;
+  color: #f2f4f4;
+}
+
+.admin-login-card input::placeholder {
+  color: #8d9698;
+}
+
+.admin-login-card input:focus {
+  border-color: #f0a857 !important;
+  box-shadow: 0 0 0 3px rgb(240 168 87 / 0.2);
+}
+
+.admin-login-card button[type='submit'],
+.admin-login-card button[data-type='primary'] {
+  background: #f0a857;
+  color: #12171a;
+}
+
+.light .admin-login-page {
+  background: #ffffff;
+  color: #132321;
+}
+
+.light .admin-login-background {
+  background-image: url('./assets/auth-network-background-light.png');
+}
+
+.light .admin-login-card {
+  border-color: rgb(19 79 84 / 0.16) !important;
+  background: rgb(255 255 255 / 0.94) !important;
+  box-shadow: 0 24px 70px -28px rgb(19 79 84 / 0.24), 0 0 0 1px rgb(50 138 138 / 0.1) !important;
+}
+
+.light .admin-login-heading h2 {
+  color: #132321;
+}
+
+.light .admin-login-heading p {
+  color: #6f8f8f;
+}
+
+.light .admin-login-brand h1 {
+  color: #134f54;
+}
+
+.light .admin-login-card input {
+  background: #f7fafa;
+  border-color: rgb(19 79 84 / 0.16);
+  color: #132321;
+}
+
+.light .admin-login-card input::placeholder {
+  color: #7d9c9c;
+}
+
+.light .admin-login-card input:focus {
+  border-color: #186569 !important;
+  box-shadow: 0 0 0 3px rgb(24 101 105 / 0.16);
+}
+
+.light .admin-login-card button[type='submit'],
+.light .admin-login-card button[data-type='primary'] {
+  background: linear-gradient(135deg, #328a8a, #134f54);
+  color: #ffffff;
+}
+
 @media (max-width: 400px) {
   .auth-card {
     padding-left: 0.75rem !important;

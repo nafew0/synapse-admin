@@ -7,9 +7,11 @@ import { Alert, Title, Panel, Button, Separator, TextField, Container } from '@c
 import type * as t from '@/types';
 import { adminLoginFn, adminVerify2FAFn, openIdCheckOptions, openidLoginFn } from '@/server';
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from './InputOTP';
-import synapseIcon from '@/assets/synapse-icon.svg';
+import synapseIcon from '@/assets/synapse-logo.svg';
+import synapseDarkLogo from '@/assets/synapse-logo-dark.svg';
 import { PasswordInput } from './PasswordInput';
 import { useLocalize } from '@/hooks';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export function AuthCard({
   redirectTo = '/',
@@ -18,6 +20,8 @@ export function AuthCard({
 }: t.AuthCardProps) {
   const router = useRouter();
   const localize = useLocalize();
+  const { resolvedTheme } = useTheme();
+  const loginLogo = resolvedTheme === 'dark' ? synapseDarkLogo : synapseIcon;
   const [step, setStep] = useState<t.AuthStep>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -214,24 +218,30 @@ export function AuthCard({
   if (showAutoRedirect) {
     return (
       <Panel
-        className="auth-card w-full max-w-md lg:max-w-3xl"
+        className="auth-card admin-login-card w-full max-w-2xl"
         padding="xl"
         radii="lg"
         hasBorder
         hasShadow
         color="default"
       >
-        <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-center lg:gap-10">
-          <div className="flex flex-col items-center gap-3 lg:w-2/5 lg:items-start lg:border-r lg:border-(--cui-color-stroke-default) lg:pr-8">
-            <img src={synapseIcon} alt="" className="h-12 w-12" draggable={false} />
-            <Title type="h1">{localize('com_auth_title')}</Title>
+        <div className="flex flex-col items-stretch gap-8">
+          <div className="admin-login-brand flex items-center gap-3">
+            <img src={loginLogo} alt={localize('com_a11y_logo_alt')} className="h-14 w-14" draggable={false} />
+            <div className="flex flex-col gap-0.5">
+              <Title type="h1">Synapse</Title>
+            </div>
           </div>
           <Container
             orientation="vertical"
             gap="lg"
-            alignItems="center"
-            className="w-full lg:w-3/5"
+            alignItems="stretch"
+            className="admin-login-form w-full"
           >
+            <div className="admin-login-heading">
+              <h2>{localize('com_auth_sign_in')}</h2>
+              <p>Enter your admin credentials to continue.</p>
+            </div>
             <p className="text-center text-sm text-(--cui-color-text-muted)">
               {localize('com_auth_sso_redirecting_auto')}
             </p>
@@ -244,21 +254,26 @@ export function AuthCard({
 
   return (
     <Panel
-      className="auth-card w-full max-w-md lg:max-w-3xl"
+      className="auth-card admin-login-card w-full max-w-2xl"
       padding="xl"
       radii="lg"
       hasBorder
       hasShadow
       color="default"
     >
-      <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-center lg:gap-10">
-        <div className="flex flex-col items-center gap-3 lg:w-2/5 lg:items-start lg:border-r lg:border-(--cui-color-stroke-default) lg:pr-8">
-          <img src={synapseIcon} alt="" className="h-12 w-12" draggable={false} />
-          <Title type="h1">
-            {step === '2fa' ? localize('com_auth_2fa_title') : localize('com_auth_title')}
-          </Title>
+      <div className="flex flex-col items-stretch gap-8">
+        <div className="admin-login-brand flex items-center gap-3">
+          <img src={loginLogo} alt={localize('com_a11y_logo_alt')} className="h-14 w-14" draggable={false} />
+          <div className="flex flex-col gap-0.5">
+            <Title type="h1">Synapse</Title>
+          </div>
         </div>
-        <Container orientation="vertical" gap="lg" alignItems="center" className="w-full lg:w-3/5">
+        <Container
+          orientation="vertical"
+          gap="lg"
+          alignItems="stretch"
+          className="admin-login-form w-full"
+        >
           {generalError && <Alert type="banner" state="danger" text={generalError} />}
 
           {step === '2fa' ? (
@@ -306,6 +321,10 @@ export function AuthCard({
             </>
           ) : (
             <>
+              <div className="admin-login-heading">
+                <h2>{localize('com_auth_sign_in')}</h2>
+                <p>Enter your admin credentials to continue.</p>
+              </div>
               <TextField
                 label={localize('com_auth_email_label')}
                 placeholder={localize('com_auth_email_placeholder')}

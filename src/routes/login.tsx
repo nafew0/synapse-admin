@@ -1,7 +1,6 @@
 import { Container } from '@clickhouse/click-ui';
 import { createFileRoute } from '@tanstack/react-router';
 import ThemeSelector from '@/components/ThemeSelector';
-import { NetworkBackground } from '@/components/NetworkBackground';
 import { AuthCard } from '@/components/AuthCard';
 import { checkOpenIdFn } from '@/server';
 
@@ -28,10 +27,11 @@ function LoginPage() {
       orientation="vertical"
       alignItems="center"
       justifyContent="center"
+      className="admin-login-page"
       style={{ minHeight: '100vh', padding: '1rem', gap: '1rem', position: 'relative' }}
     >
-      <NetworkBackground />
-      <div className="relative z-10">
+      <div className="admin-login-background" aria-hidden="true" />
+      <div className="admin-login-card-shell relative z-10">
         <AuthCard redirectTo={redirect} autoRedirectSso={ssoOnly} ssoAvailable={ssoAvailable} />
       </div>
       <div className="relative z-10 sm:absolute sm:bottom-0 sm:left-0 sm:m-4">
