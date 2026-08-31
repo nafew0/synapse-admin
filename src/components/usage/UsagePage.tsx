@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '@clickhouse/click-ui';
 import { getRouteApi } from '@tanstack/react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -67,18 +67,38 @@ function DateField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const openPicker = () => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    if (typeof input.showPicker === 'function') {
+      try {
+        input.showPicker();
+        return;
+      } catch {
+        // Fall back to focus for browsers that reject showPicker in this event.
+      }
+    }
+
+    input.focus();
+  };
+
   return (
     <label
+      onClick={openPicker}
       className="admin-themed-control relative flex min-w-40 cursor-pointer flex-col gap-1 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-muted)"
     >
       <span>{label}</span>
       <span className="text-sm text-(--cui-color-text-default)">{value || 'Select date'}</span>
       <input
+        ref={inputRef}
         type="date"
         value={value}
         aria-label={label}
         onChange={(event) => onChange(event.target.value)}
-        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        className="pointer-events-none absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
       />
     </label>
   );
