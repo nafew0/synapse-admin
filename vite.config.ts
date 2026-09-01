@@ -5,9 +5,10 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { resolveViteBasePath } from './src/config/base'
 
-const config = defineConfig({
-  base: process.env.VITE_BASE_PATH || '/',
+const config = defineConfig(({ mode }) => ({
+  base: resolveViteBasePath(mode),
   plugins: [
     devtools(),
     tailwindcss(),
@@ -96,6 +97,6 @@ const config = defineConfig({
     external: ['@playwright/test', 'playwright-core', 'playwright', '@axe-core/playwright'],
     noExternal: ['@clickhouse/click-ui'],
   },
-})
+}))
 
 export default config

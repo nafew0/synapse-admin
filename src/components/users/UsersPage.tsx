@@ -4,6 +4,7 @@ import { getRouteApi } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type * as t from '@/types';
 import { SystemCapabilities } from '@/constants';
+import { normalizeBasePath } from '@/config/basePath';
 import { useCapabilities } from '@/hooks';
 import { cn, notifyError, notifySuccess } from '@/utils';
 import {
@@ -428,7 +429,7 @@ function UserRowActions({
 }
 
 function buildUserDetailHref(userId: string): string {
-  const basePath = (import.meta.env.VITE_BASE_PATH || '').replace(/\/$/, '');
+  const basePath = normalizeBasePath(import.meta.env.VITE_BASE_PATH);
   return `${basePath}/users/${encodeURIComponent(userId)}`;
 }
 

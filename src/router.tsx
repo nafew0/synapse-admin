@@ -2,12 +2,13 @@ import { QueryClient } from '@tanstack/react-query';
 import { createRouter as createTanStackRouter } from '@tanstack/react-router';
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
 import { routeTree } from './routeTree.gen';
+import { normalizeBasePath } from './config/basePath';
 
 export function getRouter() {
   const queryClient = new QueryClient();
   const router = createTanStackRouter({
     routeTree,
-    basepath: import.meta.env.VITE_BASE_PATH || '/',
+    basepath: normalizeBasePath(import.meta.env.VITE_BASE_PATH),
     context: { queryClient },
     scrollRestoration: true,
     defaultPreload: 'intent',

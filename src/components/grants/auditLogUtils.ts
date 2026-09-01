@@ -1,4 +1,5 @@
 import type { AdminAuditLogEntry, AuditAction } from '@librechat/data-schemas';
+import { normalizeBasePath } from '@/config/basePath';
 
 /** The capability a grant entry concerns now lives in `metadata.capability`
  * (other event categories omit it). Returns '' when absent or non-string. */
@@ -78,6 +79,6 @@ export function capabilityLabel(cap: string, localize: (key: string) => string):
  * `VITE_BASE_PATH` so the link resolves under subpath deployments (e.g.
  * `/adminpanel`). `basePath` is normalized to drop a trailing slash. */
 export function buildEntryPermalink(id: string, origin: string, basePath: string): string {
-  const base = basePath.replace(/\/$/, '');
+  const base = normalizeBasePath(basePath);
   return `${origin}${base}/grants?tab=audit-log&entryId=${encodeURIComponent(id)}`;
 }
