@@ -131,6 +131,59 @@ export const inviteMemberFn = createServerFn({ method: 'POST' })
     return { inviteLink: json.inviteLink ?? null };
   });
 
+const XLSX_CONTENT_TYPE =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+export const exportMembersFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      query: z.string().optional(),
+      status: memberStatusSchema.or(z.literal('all')).optional(),
+      role: memberRoleSchema.or(z.literal('all')).optional(),
+      /** Omitted by a superadmin exporting every institution at once. */
+      tenantId: z.string().optional(),
+      accountScope: z.enum(['institution', 'standalone']).optional(),
+    }),
+  )
+  .handler(async ({ data }): Promise<Response> => {
+    const params = new URLSearchParams();
+    if (data.query?.trim()) {
+      params.set('q', data.query.trim());
+    }
+    if (data.status && data.status !== 'all') {
+      params.set('status', data.status);
+    }
+    if (data.role && data.role !== 'all') {
+      params.set('role', data.role);
+    }
+    if (data.tenantId?.trim()) {
+      params.set('tenantId', data.tenantId.trim());
+    }
+    if (data.accountScope) {
+      params.set('accountScope', data.accountScope);
+    }
+    const query = params.toString();
+    const response = await apiFetch(`/api/admin/users/export.xlsx${query ? `?${query}` : ''}`, {
+      method: 'GET',
+      headers: { Accept: XLSX_CONTENT_TYPE },
+    });
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to export members');
+    }
+    /**
+     * Pass the workbook straight through instead of buffering it into a JSON
+     * server-function payload — it is binary, and a base64 round trip would both
+     * inflate it and defeat the backend's streaming read.
+     */
+    return new Response(response.body, {
+      status: 200,
+      headers: {
+        'Content-Type': XLSX_CONTENT_TYPE,
+        'Cache-Control': 'no-store',
+      },
+    });
+  });
+
 export const resendInviteFn = createServerFn({ method: 'POST' })
   .inputValidator(
     z.object({
