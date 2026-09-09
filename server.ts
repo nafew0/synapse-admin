@@ -6,12 +6,13 @@ import {
   httpRequestDurationSeconds,
   normalizeMetricsPath,
 } from './src/server/metrics';
+import { normalizeBasePath } from './src/config/basePath';
 
 const CLIENT_DIR = join(import.meta.dir, 'dist', 'client');
 const SERVER_ENTRY = new URL('./dist/server/server.js', import.meta.url);
 
 const env = process.env;
-const BASE_PATH = (env.VITE_BASE_PATH || '').replace(/\/$/, '');
+const BASE_PATH = normalizeBasePath(env.VITE_BASE_PATH);
 
 // Fail fast on a missing/short SESSION_SECRET. Otherwise the session module throws
 // lazily on the first server-function call, which Bun then surfaces as a confusing

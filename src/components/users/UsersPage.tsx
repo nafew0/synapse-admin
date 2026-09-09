@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button, Icon } from '@clickhouse/click-ui';
 import { getRouteApi } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type * as t from '@/types';
 import { SystemCapabilities } from '@/constants';
+import { normalizeBasePath } from '@/config/basePath';
 import { useCapabilities } from '@/hooks';
-import { cn, notifyError, notifySuccess } from '@/utils';
+import { cn, datedFilename, downloadBlob, notifyError, notifySuccess } from '@/utils';
 import {
+  exportMembersFn,
   getMembersFn,
   listPlatformInstitutionsFn,
   removeMemberFn,
@@ -83,6 +85,7 @@ export function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<t.InstitutionMember | null>(null);
+  const [exporting, setExporting] = useState(false);
   const isPlatformSuperadmin = user?.isPlatformSuperadmin === true;
 
   const queryInput = useMemo(
@@ -100,6 +103,33 @@ export function UsersPage() {
     }),
     [isPlatformSuperadmin, page, roleFilter, search, statusFilter, tenantFilter],
   );
+
+  /** Exports exactly what the current filters describe, so the file and the table
+   *  can never disagree about who is a member. */
+  const handleExport = useCallback(async () => {
+    setExporting(true);
+    try {
+      const response = await exportMembersFn({
+        data: {
+          query: search,
+          role: toMemberRoleFilter(roleFilter),
+          status: statusFilter,
+          /** "All institutions" and the standalone "Others" bucket both name no
+           *  single tenant; scope is carried by accountScope instead. */
+          tenantId:
+            isPlatformSuperadmin && tenantFilter !== 'all' && tenantFilter !== 'others'
+              ? tenantFilter
+              : undefined,
+          accountScope: tenantFilter === 'others' ? 'standalone' : 'institution',
+        },
+      });
+      downloadBlob(await response.blob(), datedFilename('members', 'xlsx'));
+    } catch (error) {
+      notifyError(error instanceof Error ? error.message : 'Failed to export members');
+    } finally {
+      setExporting(false);
+    }
+  }, [isPlatformSuperadmin, roleFilter, search, statusFilter, tenantFilter]);
 
   const membersQuery = useQuery({
     queryKey: ['members', queryInput],
@@ -242,6 +272,17 @@ export function UsersPage() {
             </button>
           </>
         )}
+
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exporting}
+          aria-busy={exporting}
+          className="flex items-center gap-1.5 rounded-lg border border-(--cui-color-stroke-default) px-3 py-2 text-sm text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Icon name="download" size="xs" />
+          {exporting ? 'Exporting…' : 'Export'}
+        </button>
       </section>
 
       <section className="overflow-hidden rounded-lg border border-(--cui-color-stroke-default)">
@@ -428,7 +469,7 @@ function UserRowActions({
 }
 
 function buildUserDetailHref(userId: string): string {
-  const basePath = (import.meta.env.VITE_BASE_PATH || '').replace(/\/$/, '');
+  const basePath = normalizeBasePath(import.meta.env.VITE_BASE_PATH);
   return `${basePath}/users/${encodeURIComponent(userId)}`;
 }
 

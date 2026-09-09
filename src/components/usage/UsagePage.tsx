@@ -4,6 +4,7 @@ import { getRouteApi } from '@tanstack/react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { SystemCapabilities } from '@/constants';
 import { useCapabilities } from '@/hooks';
+import { datedFilename, downloadBlob } from '@/utils';
 import {
   exportUsageCsvServerFn,
   getUsageMembersFn,
@@ -104,17 +105,6 @@ function DateField({
   );
 }
 
-function downloadBlob(blob: Blob): void {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `usage-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
 const Route = getRouteApi('/_app');
 
 export function UsagePage() {
@@ -185,7 +175,7 @@ export function UsagePage() {
     setExporting(true);
     try {
       const response = await exportUsageCsvServerFn({ data: range });
-      downloadBlob(await response.blob());
+      downloadBlob(await response.blob(), datedFilename('usage', 'csv'));
     } finally {
       setExporting(false);
     }

@@ -16,6 +16,7 @@ import type { ErrorComponentProps } from '@tanstack/react-router';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import appCss from '../styles.css?url';
 import { useLocalize } from '@/hooks';
+import { basePathHref } from '@/config/basePath';
 
 const themeScript = `(function(){
   try {
@@ -47,7 +48,7 @@ export const Route = createRootRoute({
       },
       {
         rel: 'icon',
-        href: `${(import.meta.env.VITE_BASE_PATH || '').replace(/\/$/, '')}/favicon.ico`,
+        href: `${basePathHref(import.meta.env.VITE_BASE_PATH)}favicon.ico`,
       },
     ],
   }),

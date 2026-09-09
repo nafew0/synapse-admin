@@ -33,7 +33,7 @@ import {
 import { useAnnouncement, useDebouncedFilter, useLocalize } from '@/hooks';
 import { getScopeTypeConfig, isAuditEntryId } from '@/constants';
 import { AuditLogDetailDrawer } from './AuditLogDetailDrawer';
-import { cn } from '@/utils';
+import { cn, datedFilename, downloadBlob } from '@/utils';
 
 const AUDIT_ACTIONS: readonly AuditAction[] = ['grant.assigned', 'grant.removed'] as const;
 const TARGET_TYPE_OPTIONS: readonly PrincipalType[] = [
@@ -86,17 +86,6 @@ function DatePickerCell({
       {children}
     </div>
   );
-}
-
-function downloadBlob(blob: Blob): void {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export function AuditLogTab() {
@@ -359,7 +348,7 @@ export function AuditLogTab() {
       /** The server fn streams the backend CSV through as a `Response`; turn its
        * body into a Blob for the browser download (no BFF-side buffering). */
       const response = await exportAuditLogServerFn({ data: exportFilters });
-      downloadBlob(await response.blob());
+      downloadBlob(await response.blob(), datedFilename('audit-log', 'csv'));
     } catch {
       /**
        * Surface the failure to screen readers — without this branch the

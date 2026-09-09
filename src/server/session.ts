@@ -1,6 +1,7 @@
 import { createServerOnlyFn } from '@tanstack/react-start';
 import { useSession } from '@tanstack/react-start/server';
 import type * as t from '@/types';
+import { basePathHref } from '@/config/basePath';
 
 const DEV_SECRET = 'dev-only-session-secret-minimum-32-chars!';
 
@@ -58,7 +59,7 @@ export const useAppSession = createServerOnlyFn(
       process.env.SESSION_COOKIE_SECURE !== undefined
         ? process.env.SESSION_COOKIE_SECURE === 'true'
         : process.env.NODE_ENV === 'production';
-    const sessionCookiePath = process.env.VITE_BASE_PATH || '/';
+    const sessionCookiePath = basePathHref(process.env.VITE_BASE_PATH);
 
     return useSession<t.SessionData>({
       name: 'admin-session',
