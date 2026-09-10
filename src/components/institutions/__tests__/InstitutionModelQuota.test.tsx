@@ -44,6 +44,7 @@ const policy = {
 const models = [
   {
     modelKey: 'claude-haiku-4-5',
+    modelIds: ['claude-haiku-4-5'],
     label: 'Office Assistant · Claude',
     status: 'active',
     usedTokens: 900,
@@ -55,6 +56,7 @@ const models = [
   },
   {
     modelKey: 'gpt-5.6-luna',
+    modelIds: ['openai/gpt-5.6-luna'],
     label: 'ChatGPT',
     status: 'active',
     usedTokens: 0,
@@ -65,7 +67,20 @@ const models = [
     blocked: false,
   },
   {
+    modelKey: 'gemini-3.1',
+    modelIds: ['google/gemini-3.1-flash-image'],
+    label: 'Image Generation',
+    status: 'active',
+    usedTokens: 120,
+    reservedTokens: 0,
+    limit: null,
+    remaining: null,
+    utilization: null,
+    blocked: false,
+  },
+  {
     modelKey: 'glm-4.6v',
+    modelIds: [],
     label: 'glm-4.6v',
     status: 'retired',
     usedTokens: 50,
@@ -139,6 +154,18 @@ describe('institution model quota', () => {
     expect(within(breakdown).getByText('No usage yet')).toBeInTheDocument();
   });
 
+  it('shows the full configured model id and keeps the engine key to the tooltip', async () => {
+    renderPage();
+    fireEvent.click(await screen.findByText('Usage & limits'));
+
+    const breakdown = (await screen.findByText('Model breakdown')).closest(
+      'section',
+    ) as HTMLElement;
+    const modelId = within(breakdown).getByText('google/gemini-3.1-flash-image');
+    expect(within(breakdown).queryByText('gemini-3.1')).not.toBeInTheDocument();
+    expect(modelId.closest('[title]')).toHaveAttribute('title', 'Quota key: gemini-3.1');
+  });
+
   it('marks a model the server no longer offers', async () => {
     renderPage();
     fireEvent.click(await screen.findByText('Usage & limits'));
@@ -184,6 +211,11 @@ describe('institution model quota', () => {
     const options = within(picker)
       .getAllByRole('option')
       .map((option) => option.textContent);
-    expect(options).toEqual(['Add a limit for…', 'Office Assistant · Claude', 'ChatGPT']);
+    expect(options).toEqual([
+      'Add a limit for…',
+      'Office Assistant · Claude',
+      'ChatGPT',
+      'Image Generation',
+    ]);
   });
 });

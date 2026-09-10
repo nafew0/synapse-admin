@@ -964,13 +964,18 @@ function describeModelQuota(model: t.QuotaModelRow): string {
   return `${formatTokens(model.usedTokens)} used · ${formatTokens(model.reservedTokens)} reserved · ${limit}`;
 }
 
-/** Leads with the name members see; the engine's own key is kept alongside it
- *  because that is what limits and warnings are recorded against. */
+/** Leads with the name members see, then the configured model id. The engine's
+ *  own key is a family or catch-all (`gemini-3.1`, `claude-`) rather than a
+ *  model name, so it is kept to the tooltip for anyone matching it to a limit. */
 function ModelQuotaLine({ model }: { model: t.QuotaModelRow }) {
   const note = MODEL_STATUS_NOTE[model.status];
+  const modelName = model.modelIds.length > 0 ? model.modelIds.join(', ') : model.modelKey;
   return (
-    <div className="flex justify-between gap-4 py-2 text-sm">
-      <span className="flex flex-col gap-0.5">
+    <div
+      title={`Quota key: ${model.modelKey}`}
+      className="-mx-2 flex justify-between gap-4 rounded-lg px-2 py-2 text-sm hover:bg-(--cui-color-background-hover) motion-safe:transition-colors"
+    >
+      <span className="flex min-w-0 flex-col gap-0.5">
         <span className="flex items-center gap-2 text-(--cui-color-text-default)">
           {model.label}
           {note ? (
@@ -979,11 +984,11 @@ function ModelQuotaLine({ model }: { model: t.QuotaModelRow }) {
             </span>
           ) : null}
         </span>
-        {model.label !== model.modelKey ? (
-          <span className="text-xs text-(--cui-color-text-muted)">{model.modelKey}</span>
+        {model.label !== modelName ? (
+          <span className="text-xs break-all text-(--cui-color-text-muted)">{modelName}</span>
         ) : null}
       </span>
-      <span className="text-right text-(--cui-color-text-default)">
+      <span className="shrink-0 text-right text-(--cui-color-text-default)">
         {describeModelQuota(model)}
       </span>
     </div>

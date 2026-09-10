@@ -95,6 +95,9 @@ export type QuotaModelStatus = 'active' | 'retired' | 'unmatched';
 
 export interface QuotaModelRow {
   modelKey: string;
+  /** Configured model ids drawing from this bucket; empty for retired and
+   *  unmatched rows, which have no configuration left to name them. */
+  modelIds: string[];
   label: string;
   status: QuotaModelStatus;
   usedTokens: number;
