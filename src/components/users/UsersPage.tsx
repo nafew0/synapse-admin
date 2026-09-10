@@ -24,6 +24,7 @@ import {
 } from '@/components/shared';
 import { CreateUserDialog } from './CreateUserDialog';
 import { ImportMembersDialog } from './ImportMembersDialog';
+import { ResendInvitesDialog } from './ResendInvitesDialog';
 import { UserDetailDialog } from './UserDetailDialog';
 import { ConfirmDialog } from '../access';
 
@@ -86,6 +87,7 @@ export function UsersPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<t.InstitutionMember | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [resendOpen, setResendOpen] = useState(false);
   const isPlatformSuperadmin = user?.isPlatformSuperadmin === true;
 
   const queryInput = useMemo(
@@ -275,6 +277,16 @@ export function UsersPage() {
 
         <button
           type="button"
+          onClick={() => setResendOpen(true)}
+          disabled={!canManage}
+          className="flex items-center gap-1.5 rounded-lg border border-(--cui-color-stroke-default) px-3 py-2 text-sm text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Icon name="email" size="xs" />
+          Resend invites
+        </button>
+
+        <button
+          type="button"
           onClick={handleExport}
           disabled={exporting}
           aria-busy={exporting}
@@ -374,6 +386,12 @@ export function UsersPage() {
 
       <CreateUserDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
       <ImportMembersDialog open={importOpen} onClose={() => setImportOpen(false)} />
+      <ResendInvitesDialog
+        open={resendOpen}
+        onClose={() => setResendOpen(false)}
+        platform={isPlatformSuperadmin}
+        tenantFilter={tenantFilter}
+      />
       <UserDetailDialog
         member={selectedMember}
         onClose={() => setSelectedMember(null)}

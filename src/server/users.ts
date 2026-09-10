@@ -184,6 +184,62 @@ export const exportMembersFn = createServerFn({ method: 'POST' })
     });
   });
 
+const inviteAudienceSchema = z.enum(['expired', 'pending', 'all']);
+
+export const getResendableInviteCountsFn = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({
+      tenantId: z.string().optional(),
+      accountScope: z.enum(['institution', 'standalone']).optional(),
+      platform: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data }): Promise<{ counts: t.ResendableInviteCounts }> => {
+    const base = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const params = new URLSearchParams();
+    if (data.tenantId?.trim()) {
+      params.set('tenantId', data.tenantId.trim());
+    }
+    if (data.accountScope) {
+      params.set('accountScope', data.accountScope);
+    }
+    const query = params.toString();
+    const response = await apiFetch(`${base}/invites/resendable${query ? `?${query}` : ''}`);
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to load invitation counts');
+    }
+    return (await response.json()) as { counts: t.ResendableInviteCounts };
+  });
+
+export const resendInvitesBulkFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      audience: inviteAudienceSchema,
+      tenantId: z.string().optional(),
+      accountScope: z.enum(['institution', 'standalone']).optional(),
+      platform: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data }): Promise<t.InviteResendResponse> => {
+    const base = data.platform ? '/api/platform/users' : '/api/admin/users';
+    const response = await apiFetch(`${base}/invites/resend-bulk`, {
+      method: 'POST',
+      body: JSON.stringify(
+        data.platform
+          ? {
+              audience: data.audience,
+              tenantId: data.tenantId,
+              accountScope: data.accountScope,
+            }
+          : { audience: data.audience },
+      ),
+    });
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to resend invitations');
+    }
+    return (await response.json()) as t.InviteResendResponse;
+  });
+
 export const resendInviteFn = createServerFn({ method: 'POST' })
   .inputValidator(
     z.object({
