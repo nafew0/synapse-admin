@@ -258,6 +258,7 @@ export function InstitutionDetailPage() {
         <Usage
           policy={quota.policy}
           health={quota.health}
+          models={quota.models}
           readiness={readinessQuery.data}
           readinessError={readinessQuery.isError}
         />
@@ -270,6 +271,7 @@ export function InstitutionDetailPage() {
           key={`${tenantId}:${quota.policy.version}`}
           tenantId={tenantId}
           policy={quota.policy}
+          models={quota.models}
           onSaved={() => {
             queryClient.invalidateQueries({ queryKey: ['platformInstitutionQuota', tenantId] });
             queryClient.invalidateQueries({ queryKey: ['platformInstitutionPolicies', tenantId] });
@@ -385,11 +387,19 @@ function Members({
         {members.length === 0 && <EmptyState message="No members found." />}
       </div>
       <div className="mt-4 flex items-center justify-between">
-        <Button disabled={offset === 0 || loading} onClick={() => onOffsetChange(Math.max(offset - limit, 0))} label="Previous" />
+        <Button
+          disabled={offset === 0 || loading}
+          onClick={() => onOffsetChange(Math.max(offset - limit, 0))}
+          label="Previous"
+        />
         <span className="text-xs text-(--cui-color-text-muted)">
           {total === 0 ? 0 : offset + 1}–{Math.min(offset + limit, total)} of {total}
         </span>
-        <Button disabled={offset + limit >= total || loading} onClick={() => onOffsetChange(offset + limit)} label="Next" />
+        <Button
+          disabled={offset + limit >= total || loading}
+          onClick={() => onOffsetChange(offset + limit)}
+          label="Next"
+        />
       </div>
     </Panel>
   );
@@ -478,10 +488,12 @@ function AgentAccess({
 function Usage({
   policy,
   health,
+  models,
   readiness,
   readinessError,
 }: {
   policy: t.UsagePolicy;
+  models: t.QuotaModelRow[];
   health: {
     range: { start: string; end: string; timezone: string };
     buckets: t.UsageBucketHealth[];
@@ -505,17 +517,13 @@ function Usage({
         )}
       />
       <Panel title="Model breakdown" className="md:col-span-3">
-        {health.buckets
-          .filter((bucket) => bucket.scopeType === 'model')
-          .map((bucket) => (
-            <Detail
-              key={bucket.scopeKey}
-              label={bucket.scopeKey}
-              value={`${formatTokens(bucket.usedTokens)} used · ${formatTokens(
-                bucket.reservedTokens,
-              )} reserved · ${formatTokens(bucket.remaining)} remaining`}
-            />
-          ))}
+        {models.length === 0 ? (
+          <p className="text-sm text-(--cui-color-text-muted)">
+            No models are configured for this institution.
+          </p>
+        ) : (
+          models.map((model) => <ModelQuotaLine key={model.modelKey} model={model} />)
+        )}
         <p className="mt-3 text-xs text-(--cui-color-text-muted)">
           Resets {new Date(health.range.end).toLocaleString()} ({health.range.timezone})
         </p>
@@ -580,10 +588,12 @@ function Usage({
 function PolicyEditor({
   tenantId,
   policy,
+  models,
   onSaved,
 }: {
   tenantId: string;
   policy: t.UsagePolicy;
+  models: t.QuotaModelRow[];
   onSaved: () => void;
 }) {
   const [mode, setMode] = useState(policy.mode);
@@ -592,10 +602,9 @@ function PolicyEditor({
     policy.limits.institutionTokens?.toString() ?? '',
   );
   const [memberLimit, setMemberLimit] = useState(policy.limits.memberTokens?.toString() ?? '');
-  const [modelLimits, setModelLimits] = useState(
-    policy.limits.modelTokens
-      .map((entry) => `${entry.modelKey}=${entry.maxTokens ?? ''}`)
-      .join('\n'),
+  /** Keyed by the engine's model key, in the order limits were added. */
+  const [modelLimits, setModelLimits] = useState<Array<[string, string]>>(() =>
+    policy.limits.modelTokens.map((entry) => [entry.modelKey, entry.maxTokens?.toString() ?? '']),
   );
   const [reason, setReason] = useState('');
   const [acknowledge, setAcknowledge] = useState(false);
@@ -612,14 +621,10 @@ function PolicyEditor({
           limits: {
             institutionTokens: parseLimit(institutionLimit),
             memberTokens: parseLimit(memberLimit),
-            modelTokens: modelLimits
-              .split('\n')
-              .map((line) => line.trim())
-              .filter(Boolean)
-              .map((line) => {
-                const [modelKey, rawLimit = ''] = line.split('=');
-                return { modelKey: modelKey.trim(), maxTokens: parseLimit(rawLimit) };
-              }),
+            modelTokens: modelLimits.map(([modelKey, rawLimit]) => ({
+              modelKey,
+              maxTokens: parseLimit(rawLimit),
+            })),
           },
           warningThresholds: [0.8, 0.9],
         },
@@ -692,13 +697,7 @@ function PolicyEditor({
             onChange={(event) => setMemberLimit(event.target.value)}
           />
         </Field>
-        <Field label="Model limits (one canonical-model=limit per line)">
-          <textarea
-            rows={5}
-            value={modelLimits}
-            onChange={(event) => setModelLimits(event.target.value)}
-          />
-        </Field>
+        <ModelLimitsField models={models} limits={modelLimits} onChange={setModelLimits} />
         <Field label="Change reason">
           <input value={reason} onChange={(event) => setReason(event.target.value)} />
         </Field>
@@ -751,10 +750,7 @@ function PolicyEditor({
 
 /** Human-readable diff between two policy versions. Policies are immutable, so
  *  the previous version *is* the "before" — no separate audit snapshot needed. */
-function describePolicyChanges(
-  next: t.UsagePolicy,
-  previous: t.UsagePolicy | undefined,
-): string[] {
+function describePolicyChanges(next: t.UsagePolicy, previous: t.UsagePolicy | undefined): string[] {
   if (!previous) {
     return ['Initial policy'];
   }
@@ -859,6 +855,138 @@ function Panel({
       <h2 className="mb-4 text-base font-semibold text-(--cui-color-text-default)">{title}</h2>
       {children}
     </section>
+  );
+}
+
+/**
+ * Limits are chosen from the models the server offers rather than typed, so a
+ * limit can only name a model that exists. A limit already stored against a
+ * model that is no longer offered stays listed, so it can be seen and removed.
+ */
+function ModelLimitsField({
+  models,
+  limits,
+  onChange,
+}: {
+  models: t.QuotaModelRow[];
+  limits: Array<[string, string]>;
+  onChange: (next: Array<[string, string]>) => void;
+}) {
+  const [pending, setPending] = useState('');
+  const modelByKey = useMemo(
+    () => new Map(models.map((model) => [model.modelKey, model])),
+    [models],
+  );
+  const limited = useMemo(() => new Set(limits.map(([modelKey]) => modelKey)), [limits]);
+  const available = models.filter(
+    (model) => model.status === 'active' && !limited.has(model.modelKey),
+  );
+
+  const update = (modelKey: string, value: string) =>
+    onChange(limits.map((entry) => (entry[0] === modelKey ? [modelKey, value] : entry)));
+  const remove = (modelKey: string) => onChange(limits.filter(([key]) => key !== modelKey));
+  const add = () => {
+    if (!pending) return;
+    onChange([...limits, [pending, '']]);
+    setPending('');
+  };
+
+  return (
+    <div className="mb-4 flex flex-col gap-2 text-xs text-(--cui-color-text-muted)">
+      <span>Model limits (blank means unlimited)</span>
+      {limits.length === 0 ? (
+        <p className="text-sm">No per-model limits.</p>
+      ) : (
+        limits.map(([modelKey, value]) => {
+          const model = modelByKey.get(modelKey);
+          const inactive = !model || model.status !== 'active';
+          return (
+            <div key={modelKey} className="flex items-center gap-2">
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm text-(--cui-color-text-default)">
+                  {model?.label ?? modelKey}
+                </span>
+                {inactive ? (
+                  <span>Not offered by the server — this limit applies to nothing new</span>
+                ) : null}
+              </span>
+              <input
+                aria-label={`Token limit for ${model?.label ?? modelKey}`}
+                inputMode="numeric"
+                value={value}
+                placeholder="Unlimited"
+                onChange={(event) => update(modelKey, event.target.value)}
+                className="w-36 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
+              />
+              <Button
+                type="secondary"
+                label="Remove"
+                aria-label={`Remove limit for ${model?.label ?? modelKey}`}
+                onClick={() => remove(modelKey)}
+              />
+            </div>
+          );
+        })
+      )}
+      {available.length > 0 ? (
+        <div className="flex items-center gap-2">
+          <select
+            aria-label="Model to limit"
+            value={pending}
+            onChange={(event) => setPending(event.target.value)}
+            className="admin-themed-control flex-1 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
+          >
+            <option value="">Add a limit for…</option>
+            {available.map((model) => (
+              <option key={model.modelKey} value={model.modelKey}>
+                {model.label}
+              </option>
+            ))}
+          </select>
+          <Button type="secondary" label="Add" disabled={!pending} onClick={add} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+const MODEL_STATUS_NOTE: Record<t.QuotaModelStatus, string | null> = {
+  active: null,
+  retired: 'No longer offered',
+  unmatched: 'Limit matches no model',
+};
+
+function describeModelQuota(model: t.QuotaModelRow): string {
+  const limit = model.limit == null ? 'no limit' : `${formatTokens(model.remaining)} remaining`;
+  if (model.usedTokens === 0 && model.reservedTokens === 0) {
+    return model.limit == null ? 'No usage yet' : `No usage yet · ${limit}`;
+  }
+  return `${formatTokens(model.usedTokens)} used · ${formatTokens(model.reservedTokens)} reserved · ${limit}`;
+}
+
+/** Leads with the name members see; the engine's own key is kept alongside it
+ *  because that is what limits and warnings are recorded against. */
+function ModelQuotaLine({ model }: { model: t.QuotaModelRow }) {
+  const note = MODEL_STATUS_NOTE[model.status];
+  return (
+    <div className="flex justify-between gap-4 py-2 text-sm">
+      <span className="flex flex-col gap-0.5">
+        <span className="flex items-center gap-2 text-(--cui-color-text-default)">
+          {model.label}
+          {note ? (
+            <span className="rounded-full bg-(--cui-color-background-muted) px-2 py-0.5 text-xs text-(--cui-color-text-muted)">
+              {note}
+            </span>
+          ) : null}
+        </span>
+        {model.label !== model.modelKey ? (
+          <span className="text-xs text-(--cui-color-text-muted)">{model.modelKey}</span>
+        ) : null}
+      </span>
+      <span className="text-right text-(--cui-color-text-default)">
+        {describeModelQuota(model)}
+      </span>
+    </div>
   );
 }
 

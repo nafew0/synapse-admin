@@ -86,6 +86,25 @@ export interface UsageBucketHealth {
   blocked: boolean;
 }
 
+/**
+ * - `active`: offered by the server today, shown with the name members see.
+ * - `retired`: no longer offered, but still holds usage this period.
+ * - `unmatched`: carries a limit that points at no offered or used model.
+ */
+export type QuotaModelStatus = 'active' | 'retired' | 'unmatched';
+
+export interface QuotaModelRow {
+  modelKey: string;
+  label: string;
+  status: QuotaModelStatus;
+  usedTokens: number;
+  reservedTokens: number;
+  limit: number | null;
+  remaining: number | null;
+  utilization: number | null;
+  blocked: boolean;
+}
+
 export interface UsageWarning {
   _id: string;
   scopeType: 'institution' | 'member' | 'model';
