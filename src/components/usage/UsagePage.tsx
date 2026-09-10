@@ -3,8 +3,14 @@ import { Icon } from '@clickhouse/click-ui';
 import { getRouteApi } from '@tanstack/react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { SystemCapabilities } from '@/constants';
-import { useCapabilities } from '@/hooks';
-import { datedFilename, downloadBlob } from '@/utils';
+import { useAdminScope, useCapabilities } from '@/hooks';
+import {
+  datedFilename,
+  downloadBlob,
+  formatUsageCost,
+  formatUsageCredits,
+  formatUsageNumber,
+} from '@/utils';
 import {
   exportUsageCsvServerFn,
   getUsageMembersFn,
@@ -33,30 +39,6 @@ function currentMonthStart(): string {
 function nextMonthStart(): string {
   const now = new Date();
   return isoDate(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)));
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat().format(Math.round(value));
-}
-
-/** The ledger stores cost in token credits, where 1,000,000 credits = $1 USD
- *  (see the Balance schema). Rendering the raw credit figure as "cost" reads as
- *  dollars and overstates spend a millionfold. */
-const CREDITS_PER_USD = 1_000_000;
-
-function formatCost(credits: number): string {
-  const usd = credits / CREDITS_PER_USD;
-  if (usd === 0) {
-    return '$0.00';
-  }
-  if (Math.abs(usd) < 0.01) {
-    return `$${usd.toFixed(6).replace(/0+$/, '').replace(/\.$/, '')}`;
-  }
-  return `$${usd.toFixed(2)}`;
-}
-
-function formatCredits(credits: number): string {
-  return `${new Intl.NumberFormat().format(Math.round(credits))} credits`;
 }
 
 function DateField({
@@ -115,6 +97,7 @@ export function UsagePage() {
   } = useCapabilities();
   const canRead = hasCapability(SystemCapabilities.READ_USAGE);
   const { user } = Route.useRouteContext();
+  const { canViewBillingDetail } = useAdminScope();
 
   /** Institution admins are bound to their own tenant; a platform superadmin
    *  has none and picks which institution to look at. */
@@ -280,23 +263,27 @@ export function UsagePage() {
         </button>
       </section>
 
-      <section className="grid grid-cols-1 gap-3 md:grid-cols-4">
+      <section
+        className={`grid grid-cols-1 gap-3 ${canViewBillingDetail ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
+      >
         <SummaryCard
           label="Total tokens"
-          value={formatNumber(summary.totalTokens)}
-          detail={`${formatNumber(summary.promptTokens)} prompt / ${formatNumber(summary.completionTokens)} completion`}
+          value={formatUsageNumber(summary.totalTokens)}
+          detail={`${formatUsageNumber(summary.promptTokens)} prompt / ${formatUsageNumber(summary.completionTokens)} completion`}
         />
-        <SummaryCard
-          label="Usage cost"
-          value={formatCost(summary.totalCost)}
-          detail={`${formatCredits(summary.totalCost)} · 1,000,000 credits = $1`}
-        />
+        {canViewBillingDetail && summary.totalCost != null ? (
+          <SummaryCard
+            label="Usage cost"
+            value={formatUsageCost(summary.totalCost)}
+            detail={`${formatUsageCredits(summary.totalCost)} · 1,000,000 credits = $1`}
+          />
+        ) : null}
         <SummaryCard
           label="Members with usage"
-          value={formatNumber(summary.memberCount)}
-          detail={`${formatNumber(summary.eventCount)} transaction rows`}
+          value={formatUsageNumber(summary.memberCount)}
+          detail={`${formatUsageNumber(summary.eventCount)} transaction rows`}
         />
-        <SummaryCard label="Models used" value={formatNumber(summary.modelCount)} />
+        <SummaryCard label="Models used" value={formatUsageNumber(summary.modelCount)} />
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_1fr]">
@@ -313,9 +300,11 @@ export function UsagePage() {
                   <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
                     Tokens
                   </th>
-                  <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                    Cost
-                  </th>
+                  {canViewBillingDetail ? (
+                    <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
+                      Cost
+                    </th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody>
@@ -339,11 +328,13 @@ export function UsagePage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-(--cui-color-text-default)">
-                      {formatNumber(member.totalTokens)}
+                      {formatUsageNumber(member.totalTokens)}
                     </td>
-                    <td className="px-4 py-3 text-(--cui-color-text-muted)">
-                      {formatCost(member.totalCost)}
-                    </td>
+                    {canViewBillingDetail ? (
+                      <td className="px-4 py-3 text-(--cui-color-text-muted)">
+                        {formatUsageCost(member.totalCost ?? 0)}
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>
@@ -370,7 +361,7 @@ export function UsagePage() {
                     />
                   </div>
                   <div className="w-20 text-right text-xs text-(--cui-color-text-default)">
-                    {formatNumber(point.totalTokens)}
+                    {formatUsageNumber(point.totalTokens)}
                   </div>
                 </div>
               ))}
@@ -387,24 +378,28 @@ export function UsagePage() {
             <thead>
               <tr className="border-b border-(--cui-color-stroke-default) bg-(--cui-color-background-muted)">
                 <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">Model</th>
-                <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                  Provider
-                </th>
+                {canViewBillingDetail ? (
+                  <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
+                    Provider
+                  </th>
+                ) : null}
                 <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
                   Tokens
                 </th>
                 <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
                   Members
                 </th>
-                <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                  Cost
-                </th>
+                {canViewBillingDetail ? (
+                  <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
+                    Cost
+                  </th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
               {models.map((model, index) => (
                 <tr
-                  key={`${model.providerKey ?? 'unknown'}-${model.modelKey}`}
+                  key={model.displayName ?? model.modelKey}
                   className={
                     index < models.length - 1
                       ? 'border-b border-(--cui-color-stroke-default)'
@@ -412,20 +407,24 @@ export function UsagePage() {
                   }
                 >
                   <td className="px-4 py-3 font-medium text-(--cui-color-text-default)">
-                    {model.modelKey}
+                    {model.displayName ?? model.modelKey}
                   </td>
-                  <td className="px-4 py-3 text-(--cui-color-text-muted)">
-                    {model.providerKey || 'unknown'}
-                  </td>
+                  {canViewBillingDetail ? (
+                    <td className="px-4 py-3 text-(--cui-color-text-muted)">
+                      {model.providerKey || 'unknown'}
+                    </td>
+                  ) : null}
                   <td className="px-4 py-3 text-(--cui-color-text-default)">
-                    {formatNumber(model.totalTokens)}
+                    {formatUsageNumber(model.totalTokens)}
                   </td>
                   <td className="px-4 py-3 text-(--cui-color-text-muted)">
-                    {formatNumber(model.memberCount)}
+                    {formatUsageNumber(model.memberCount)}
                   </td>
-                  <td className="px-4 py-3 text-(--cui-color-text-muted)">
-                    {formatCost(model.totalCost)}
-                  </td>
+                  {canViewBillingDetail ? (
+                    <td className="px-4 py-3 text-(--cui-color-text-muted)">
+                      {formatUsageCost(model.totalCost ?? 0)}
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

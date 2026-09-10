@@ -3,11 +3,13 @@ export interface UsageRange {
   end: string;
 }
 
+/** `totalCost` is omitted by the API for institution admins, who are never
+ *  shown spend; the field is absent from the payload, not zeroed. */
 export interface UsageSummary {
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
-  totalCost: number;
+  totalCost?: number;
   eventCount: number;
   memberCount: number;
   modelCount: number;
@@ -22,19 +24,22 @@ export interface MemberUsageRow {
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
-  totalCost: number;
+  totalCost?: number;
   eventCount: number;
   lastUsedAt?: string;
 }
 
 export interface ModelUsageRow {
+  /** The label the chat UI shows for this model; absent only when no model spec
+   *  claims it, which institution admins never see. */
+  displayName?: string;
   providerKey?: string;
   modelKey: string;
   providerModelId?: string;
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
-  totalCost: number;
+  totalCost?: number;
   eventCount: number;
   memberCount: number;
   lastUsedAt?: string;
@@ -52,14 +57,5 @@ export interface UsageTimeseriesPoint {
 export interface UserUsageResponse {
   range: UsageRange & { timezone?: string };
   summary: Omit<UsageSummary, 'memberCount' | 'modelCount'> & { lastUsedAt?: string | null };
-  models: Array<{
-    providerKey?: string;
-    modelKey: string;
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-    totalCost: number;
-    eventCount: number;
-    lastUsedAt?: string | null;
-  }>;
+  models: Array<Omit<ModelUsageRow, 'memberCount'>>;
 }

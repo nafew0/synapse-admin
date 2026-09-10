@@ -1,4 +1,5 @@
 export * from './useActiveSection';
+export * from './useAdminScope';
 export * from './useAnnouncement';
 export * from './useCapabilities';
 export * from './useCommandMenu';

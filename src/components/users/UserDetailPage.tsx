@@ -11,8 +11,8 @@ import {
 } from '@/server';
 import { Avatar, EmptyState, LoadingState } from '@/components/shared';
 import { SystemCapabilities } from '@/constants';
-import { useCapabilities } from '@/hooks';
-import { notifyError, notifySuccess } from '@/utils';
+import { useAdminScope, useCapabilities } from '@/hooks';
+import { formatUsageCost, notifyError, notifySuccess } from '@/utils';
 
 const Route = getRouteApi('/_app/users/$userId');
 const AppRoute = getRouteApi('/_app');
@@ -34,13 +34,6 @@ function formatNumber(value: number | null | undefined): string {
 
 function formatDate(value?: string | null): string {
   return value ? new Date(value).toLocaleString() : '—';
-}
-
-function formatCost(credits: number): string {
-  const usd = credits / 1_000_000;
-  if (usd === 0) return '$0.00';
-  if (Math.abs(usd) < 0.01) return `$${usd.toFixed(6).replace(/0+$/, '').replace(/\.$/, '')}`;
-  return `$${usd.toFixed(2)}`;
 }
 
 function roleLabel(role: t.MemberRole): string {
@@ -256,6 +249,7 @@ function Overview({ member, balance, latestGrant, packages }: { member: t.Instit
 }
 
 function Usage({ usage, loading, error, start, end, onStartChange, onEndChange }: { usage?: t.UserUsageResponse; loading: boolean; error?: string; start: string; end: string; onStartChange: (value: string) => void; onEndChange: (value: string) => void }) {
+  const { canViewBillingDetail: showCost } = useAdminScope();
   const invalidRange = Boolean(start && end && start > end);
   if (invalidRange) {
     return (
@@ -277,16 +271,48 @@ function Usage({ usage, loading, error, start, end, onStartChange, onEndChange }
         <DateField label="End" value={end} onChange={onEndChange} />
         <span className="pb-2 text-xs text-(--cui-color-text-muted)">Timezone: {usage.range.timezone || 'UTC'}</span>
       </div>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className={`grid gap-4 ${showCost ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
         <Metric label="Total tokens" value={formatNumber(usage.summary.totalTokens)} detail={`${formatNumber(usage.summary.promptTokens)} prompt / ${formatNumber(usage.summary.completionTokens)} completion`} />
-        <Metric label="Usage cost" value={formatCost(usage.summary.totalCost)} detail={`${formatNumber(usage.summary.totalCost)} credits`} />
+        {showCost ? (
+          <Metric label="Usage cost" value={formatUsageCost(usage.summary.totalCost ?? 0)} detail={`${formatNumber(usage.summary.totalCost)} credits`} />
+        ) : null}
         <Metric label="Events" value={formatNumber(usage.summary.eventCount)} />
         <Metric label="Last used" value={formatDate(usage.summary.lastUsedAt)} />
       </div>
       <Panel title="Model breakdown">
         {usage.models.length === 0 ? <p className="text-sm text-(--cui-color-text-muted)">No model usage in this range.</p> : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm"><thead><tr className="border-b border-(--cui-color-stroke-default) text-xs text-(--cui-color-text-muted)"><th className="px-2 py-2">Provider</th><th className="px-2 py-2">Model</th><th className="px-2 py-2 text-right">Prompt</th><th className="px-2 py-2 text-right">Completion</th><th className="px-2 py-2 text-right">Total</th><th className="px-2 py-2 text-right">Cost</th><th className="px-2 py-2 text-right">Events</th></tr></thead><tbody>{usage.models.map((model) => <tr key={`${model.providerKey}:${model.modelKey}`} className="border-b border-(--cui-color-stroke-default)"><td className="px-2 py-2">{model.providerKey || 'unknown'}</td><td className="px-2 py-2">{model.modelKey}</td><td className="px-2 py-2 text-right">{formatNumber(model.promptTokens)}</td><td className="px-2 py-2 text-right">{formatNumber(model.completionTokens)}</td><td className="px-2 py-2 text-right">{formatNumber(model.totalTokens)}</td><td className="px-2 py-2 text-right">{formatNumber(model.totalCost)}</td><td className="px-2 py-2 text-right">{formatNumber(model.eventCount)}</td></tr>)}</tbody></table>
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-(--cui-color-stroke-default) text-xs text-(--cui-color-text-muted)">
+                  {showCost ? <th className="px-2 py-2">Provider</th> : null}
+                  <th className="px-2 py-2">Model</th>
+                  <th className="px-2 py-2 text-right">Prompt</th>
+                  <th className="px-2 py-2 text-right">Completion</th>
+                  <th className="px-2 py-2 text-right">Total</th>
+                  {showCost ? <th className="px-2 py-2 text-right">Cost</th> : null}
+                  <th className="px-2 py-2 text-right">Events</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usage.models.map((model) => (
+                  <tr
+                    key={model.displayName ?? model.modelKey}
+                    className="border-b border-(--cui-color-stroke-default)"
+                  >
+                    {showCost ? <td className="px-2 py-2">{model.providerKey || 'unknown'}</td> : null}
+                    <td className="px-2 py-2">{model.displayName ?? model.modelKey}</td>
+                    <td className="px-2 py-2 text-right">{formatNumber(model.promptTokens)}</td>
+                    <td className="px-2 py-2 text-right">{formatNumber(model.completionTokens)}</td>
+                    <td className="px-2 py-2 text-right">{formatNumber(model.totalTokens)}</td>
+                    {showCost ? (
+                      <td className="px-2 py-2 text-right">{formatNumber(model.totalCost)}</td>
+                    ) : null}
+                    <td className="px-2 py-2 text-right">{formatNumber(model.eventCount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </Panel>
