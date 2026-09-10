@@ -4,6 +4,7 @@ import { createFileRoute, Outlet, useRouter, Link, redirect } from '@tanstack/re
 import type { ErrorComponentProps } from '@tanstack/react-router';
 import { useCapabilities, useCommandMenu, useLocalize } from '@/hooks';
 import { CommandMenu } from '@/components/CommandMenu';
+import { Banner } from '@/components/banner';
 import { AccessDenied } from '@/components/shared';
 import { SystemCapabilities } from '@/constants';
 import { Sidebar } from '@/components/Sidebar';
@@ -83,6 +84,7 @@ function AppLayout() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar user={user} collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
       <div className="flex min-w-0 flex-1 flex-col">
+        {user?.id && <Banner userId={user.id} />}
         <Header title={title} onSearchClick={() => setOpen(true)} />
         <main className="flex min-h-0 flex-1 flex-col overflow-auto">
           <Outlet />

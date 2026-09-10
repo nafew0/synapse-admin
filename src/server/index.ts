@@ -1,4 +1,5 @@
 export * from './auth';
+export * from './banner';
 export * from './capabilities';
 export * from './config';
 export * from './globalConfig';
