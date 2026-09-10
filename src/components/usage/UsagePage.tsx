@@ -23,9 +23,12 @@ import {
   AccessDenied,
   EmptyState,
   LoadingState,
+  Pagination,
   PermissionsUnavailable,
   SearchInput,
 } from '@/components/shared';
+
+const PAGE_SIZE = 10;
 
 function isoDate(value: Date): string {
   return value.toISOString().slice(0, 10);
@@ -108,6 +111,19 @@ export function UsagePage() {
   const [search, setSearch] = useState('');
   const [exporting, setExporting] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState('');
+  const [memberPage, setMemberPage] = useState(1);
+  const [modelPage, setModelPage] = useState(1);
+
+  /** Any filter change invalidates both page positions: page 3 of the old
+   *  result set is meaningless, and may not exist, in the new one. */
+  const withPageReset = useCallback(
+    (setter: (value: string) => void) => (value: string) => {
+      setter(value);
+      setMemberPage(1);
+      setModelPage(1);
+    },
+    [],
+  );
 
   const institutionsQuery = useQuery({
     queryKey: ['platformInstitutions', 'usage-picker'],
@@ -119,16 +135,27 @@ export function UsagePage() {
   const scopeReady = !needsInstitutionChoice || Boolean(selectedTenantId);
 
   const range = useMemo(() => ({ start, end, tenantId }), [end, start, tenantId]);
-  const listInput = useMemo(
+  const membersInput = useMemo(
     () => ({
       start,
       end,
       tenantId,
       query: search,
-      limit: 10,
-      offset: 0,
+      limit: PAGE_SIZE,
+      offset: (memberPage - 1) * PAGE_SIZE,
     }),
-    [end, search, start, tenantId],
+    [end, memberPage, search, start, tenantId],
+  );
+  const modelsInput = useMemo(
+    () => ({
+      start,
+      end,
+      tenantId,
+      query: search,
+      limit: PAGE_SIZE,
+      offset: (modelPage - 1) * PAGE_SIZE,
+    }),
+    [end, modelPage, search, start, tenantId],
   );
 
   const summaryQuery = useQuery({
@@ -137,14 +164,14 @@ export function UsagePage() {
     enabled: scopeReady,
   });
   const membersQuery = useQuery({
-    queryKey: ['usage-members', listInput],
-    queryFn: () => getUsageMembersFn({ data: listInput }),
+    queryKey: ['usage-members', membersInput],
+    queryFn: () => getUsageMembersFn({ data: membersInput }),
     placeholderData: keepPreviousData,
     enabled: scopeReady,
   });
   const modelsQuery = useQuery({
-    queryKey: ['usage-models', listInput],
-    queryFn: () => getUsageModelsFn({ data: listInput }),
+    queryKey: ['usage-models', modelsInput],
+    queryFn: () => getUsageModelsFn({ data: modelsInput }),
     placeholderData: keepPreviousData,
     enabled: scopeReady,
   });
@@ -186,7 +213,7 @@ export function UsagePage() {
         aria-label="Institution"
         className="admin-themed-control rounded border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-2 py-1 text-sm text-(--cui-color-text-default)"
         value={selectedTenantId}
-        onChange={(event) => setSelectedTenantId(event.target.value)}
+        onChange={(event) => withPageReset(setSelectedTenantId)(event.target.value)}
       >
         <option value="">Select an institution…</option>
         {(institutionsQuery.data?.institutions ?? []).map((institution) => (
@@ -224,9 +251,7 @@ export function UsagePage() {
 
   if (summaryQuery.isError) {
     return (
-      <EmptyState
-        message={summaryQuery.error.message || 'Failed to load institution usage.'}
-      />
+      <EmptyState message={summaryQuery.error.message || 'Failed to load institution usage.'} />
     );
   }
 
@@ -238,17 +263,19 @@ export function UsagePage() {
   const members = membersQuery.data?.members ?? [];
   const models = modelsQuery.data?.models ?? [];
   const points = timeseriesQuery.data?.points ?? [];
+  const memberPages = Math.max(1, Math.ceil((membersQuery.data?.total ?? 0) / PAGE_SIZE));
+  const modelPages = Math.max(1, Math.ceil((modelsQuery.data?.total ?? 0) / PAGE_SIZE));
   const maxPointTokens = Math.max(...points.map((point) => point.totalTokens), 1);
 
   return (
     <div className="flex flex-1 flex-col gap-6 overflow-auto p-6">
       {institutionPicker}
       <section className="flex flex-wrap items-end gap-3">
-        <DateField label="Period start" value={start} onChange={setStart} />
-        <DateField label="Period end" value={end} onChange={setEnd} />
+        <DateField label="Period start" value={start} onChange={withPageReset(setStart)} />
+        <DateField label="Period end" value={end} onChange={withPageReset(setEnd)} />
         <SearchInput
           value={search}
-          onChange={setSearch}
+          onChange={withPageReset(setSearch)}
           placeholder="Search members or models"
           className="min-w-70 flex-1"
         />
@@ -291,54 +318,63 @@ export function UsagePage() {
           {members.length === 0 ? (
             <EmptyState message="No member usage found for this period." />
           ) : (
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-(--cui-color-stroke-default) bg-(--cui-color-background-muted)">
-                  <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                    Member
-                  </th>
-                  <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                    Tokens
-                  </th>
-                  {canViewBillingDetail ? (
-                    <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                      Cost
-                    </th>
-                  ) : null}
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member, index) => (
-                  <tr
-                    key={member.userId}
-                    className={
-                      index < members.length - 1
-                        ? 'border-b border-(--cui-color-stroke-default)'
-                        : undefined
-                    }
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-medium text-(--cui-color-text-default)">
-                          {member.name}
-                        </span>
-                        <span className="text-xs text-(--cui-color-text-muted)">
-                          {member.email || 'No email'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-(--cui-color-text-default)">
-                      {formatUsageNumber(member.totalTokens)}
-                    </td>
-                    {canViewBillingDetail ? (
-                      <td className="px-4 py-3 text-(--cui-color-text-muted)">
-                        {formatUsageCost(member.totalCost ?? 0)}
-                      </td>
-                    ) : null}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-(--cui-color-stroke-default) bg-(--cui-color-background-muted)">
+                      <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
+                        Member
+                      </th>
+                      <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
+                        Tokens
+                      </th>
+                      {canViewBillingDetail ? (
+                        <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
+                          Cost
+                        </th>
+                      ) : null}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {members.map((member, index) => (
+                      <tr
+                        key={member.userId}
+                        className={
+                          index < members.length - 1
+                            ? 'border-b border-(--cui-color-stroke-default)'
+                            : undefined
+                        }
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-medium text-(--cui-color-text-default)">
+                              {member.name}
+                            </span>
+                            <span className="text-xs text-(--cui-color-text-muted)">
+                              {member.email || 'No email'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-(--cui-color-text-default)">
+                          {formatUsageNumber(member.totalTokens)}
+                        </td>
+                        {canViewBillingDetail ? (
+                          <td className="px-4 py-3 text-(--cui-color-text-muted)">
+                            {formatUsageCost(member.totalCost ?? 0)}
+                          </td>
+                        ) : null}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination
+                currentPage={memberPage}
+                totalPages={memberPages}
+                onPageChange={setMemberPage}
+              />
+            </>
           )}
         </Panel>
 
@@ -374,61 +410,70 @@ export function UsagePage() {
         {models.length === 0 ? (
           <EmptyState message="No model usage found for this period." />
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-(--cui-color-stroke-default) bg-(--cui-color-background-muted)">
-                <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">Model</th>
-                {canViewBillingDetail ? (
-                  <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                    Provider
-                  </th>
-                ) : null}
-                <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                  Tokens
-                </th>
-                <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                  Members
-                </th>
-                {canViewBillingDetail ? (
-                  <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                    Cost
-                  </th>
-                ) : null}
-              </tr>
-            </thead>
-            <tbody>
-              {models.map((model, index) => (
-                <tr
-                  key={model.displayName ?? model.modelKey}
-                  className={
-                    index < models.length - 1
-                      ? 'border-b border-(--cui-color-stroke-default)'
-                      : undefined
-                  }
-                >
-                  <td className="px-4 py-3 font-medium text-(--cui-color-text-default)">
-                    {model.displayName ?? model.modelKey}
-                  </td>
-                  {canViewBillingDetail ? (
-                    <td className="px-4 py-3 text-(--cui-color-text-muted)">
-                      {model.providerKey || 'unknown'}
-                    </td>
-                  ) : null}
-                  <td className="px-4 py-3 text-(--cui-color-text-default)">
-                    {formatUsageNumber(model.totalTokens)}
-                  </td>
-                  <td className="px-4 py-3 text-(--cui-color-text-muted)">
-                    {formatUsageNumber(model.memberCount)}
-                  </td>
-                  {canViewBillingDetail ? (
-                    <td className="px-4 py-3 text-(--cui-color-text-muted)">
-                      {formatUsageCost(model.totalCost ?? 0)}
-                    </td>
-                  ) : null}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-(--cui-color-stroke-default) bg-(--cui-color-background-muted)">
+                    <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">Model</th>
+                    {canViewBillingDetail ? (
+                      <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
+                        Provider
+                      </th>
+                    ) : null}
+                    <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
+                      Tokens
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
+                      Members
+                    </th>
+                    {canViewBillingDetail ? (
+                      <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
+                        Cost
+                      </th>
+                    ) : null}
+                  </tr>
+                </thead>
+                <tbody>
+                  {models.map((model, index) => (
+                    <tr
+                      key={model.displayName ?? model.modelKey}
+                      className={
+                        index < models.length - 1
+                          ? 'border-b border-(--cui-color-stroke-default)'
+                          : undefined
+                      }
+                    >
+                      <td className="px-4 py-3 font-medium text-(--cui-color-text-default)">
+                        {model.displayName ?? model.modelKey}
+                      </td>
+                      {canViewBillingDetail ? (
+                        <td className="px-4 py-3 text-(--cui-color-text-muted)">
+                          {model.providerKey || 'unknown'}
+                        </td>
+                      ) : null}
+                      <td className="px-4 py-3 text-(--cui-color-text-default)">
+                        {formatUsageNumber(model.totalTokens)}
+                      </td>
+                      <td className="px-4 py-3 text-(--cui-color-text-muted)">
+                        {formatUsageNumber(model.memberCount)}
+                      </td>
+                      {canViewBillingDetail ? (
+                        <td className="px-4 py-3 text-(--cui-color-text-muted)">
+                          {formatUsageCost(model.totalCost ?? 0)}
+                        </td>
+                      ) : null}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              currentPage={modelPage}
+              totalPages={modelPages}
+              onPageChange={setModelPage}
+            />
+          </>
         )}
       </Panel>
     </div>
@@ -446,15 +491,7 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function SummaryCard({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail?: string;
-}) {
+function SummaryCard({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
     <div className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-panel) p-4">
       <p className="text-xs text-(--cui-color-text-muted)">{label}</p>
