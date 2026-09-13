@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Button, Icon } from '@clickhouse/click-ui';
 import { getRouteApi } from '@tanstack/react-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type * as t from '@/types';
 import { SystemCapabilities } from '@/constants';
 import { normalizeBasePath } from '@/config/basePath';
-import { useCapabilities } from '@/hooks';
+import { useCapabilities, useDebouncedFilter } from '@/hooks';
 import { cn, datedFilename, downloadBlob, notifyError, notifySuccess } from '@/utils';
 import {
   exportMembersFn,
@@ -77,11 +77,13 @@ export function UsersPage() {
   const canRead = hasCapability(SystemCapabilities.READ_USERS);
   const canManage = hasCapability(SystemCapabilities.MANAGE_USERS);
 
-  const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<t.RoleFilter>('all');
   const [statusFilter, setStatusFilter] = useState<t.StatusFilter>('all');
   const [tenantFilter, setTenantFilter] = useState('all');
   const [page, setPage] = useState(1);
+  /** The input follows every keystroke; the query key follows only the settled
+   *  value, so typing a name issues one request rather than one per letter. */
+  const search = useDebouncedFilter('', () => setPage(1));
   const [inviteOpen, setInviteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<t.InstitutionMember | null>(null);
@@ -92,7 +94,7 @@ export function UsersPage() {
     () => ({
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
-      query: search,
+      query: search.debouncedValue,
       role: toMemberRoleFilter(roleFilter),
       status: statusFilter,
       platform: isPlatformSuperadmin,
@@ -101,7 +103,7 @@ export function UsersPage() {
         | 'institution'
         | 'standalone',
     }),
-    [isPlatformSuperadmin, page, roleFilter, search, statusFilter, tenantFilter],
+    [isPlatformSuperadmin, page, roleFilter, search.debouncedValue, statusFilter, tenantFilter],
   );
 
   /** Exports exactly what the current filters describe, so the file and the table
@@ -111,7 +113,7 @@ export function UsersPage() {
     try {
       const response = await exportMembersFn({
         data: {
-          query: search,
+          query: search.debouncedValue,
           role: toMemberRoleFilter(roleFilter),
           status: statusFilter,
           /** "All institutions" and the standalone "Others" bucket both name no
@@ -129,11 +131,15 @@ export function UsersPage() {
     } finally {
       setExporting(false);
     }
-  }, [isPlatformSuperadmin, roleFilter, search, statusFilter, tenantFilter]);
+  }, [isPlatformSuperadmin, roleFilter, search.debouncedValue, statusFilter, tenantFilter]);
 
   const membersQuery = useQuery({
     queryKey: ['members', queryInput],
     queryFn: () => getMembersFn({ data: queryInput }),
+    /** Keeps the current rows on screen while a new filter loads. Without it
+     *  every filter change drops to the full-page loading state, which unmounts
+     *  the search box mid-word and takes its focus with it. */
+    placeholderData: keepPreviousData,
     enabled: canRead,
   });
 
@@ -193,11 +199,8 @@ export function UsersPage() {
 
       <section className="flex flex-wrap items-center gap-3">
         <SearchInput
-          value={search}
-          onChange={(value) => {
-            setSearch(value);
-            setPage(1);
-          }}
+          value={search.value}
+          onChange={search.onChange}
           placeholder="Search members"
           className="min-w-70 flex-1"
         />
@@ -336,7 +339,11 @@ export function UsersPage() {
                         </span>
                       </div>
                       {member.kind !== 'invite' ? (
-                        <UserRowActions member={member} canManage={canManage} platform={isPlatformSuperadmin} />
+                        <UserRowActions
+                          member={member}
+                          canManage={canManage}
+                          platform={isPlatformSuperadmin}
+                        />
                       ) : null}
                     </div>
                   </td>
@@ -434,7 +441,10 @@ function UserRowActions({
 
   return (
     <>
-      <div className="flex shrink-0 items-center gap-2" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="flex shrink-0 items-center gap-2"
+        onClick={(event) => event.stopPropagation()}
+      >
         <a
           href={buildUserDetailHref(member.id)}
           className="rounded-lg border border-(--cui-color-stroke-default) px-3 py-1.5 text-xs text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover)"

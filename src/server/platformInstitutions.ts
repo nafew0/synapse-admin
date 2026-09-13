@@ -92,6 +92,7 @@ export const getPlatformInstitutionQuotaFn = createServerFn({ method: 'GET' })
         buckets: t.UsageBucketHealth[];
         warnings: t.UsageWarning[];
       };
+      models: t.QuotaModelRow[];
     }> => {
       const response = await apiFetch(
         `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/quota`,
@@ -104,6 +105,7 @@ export const getPlatformInstitutionQuotaFn = createServerFn({ method: 'GET' })
           buckets: t.UsageBucketHealth[];
           warnings: t.UsageWarning[];
         };
+        models: t.QuotaModelRow[];
       };
     },
   );
