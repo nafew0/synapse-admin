@@ -91,6 +91,44 @@ export interface InstitutionImportJob {
   updatedAt?: string;
 }
 
+export type InviteAudience = 'expired' | 'pending' | 'all';
+
+export interface ResendableInviteCounts {
+  expired: number;
+  pending: number;
+  all: number;
+}
+
+export type InviteResendOutcome = 'sent' | 'link_only' | 'skipped_cooldown' | 'failed';
+
+export interface InviteResendResult {
+  inviteId: string;
+  email: string;
+  outcome: InviteResendOutcome;
+  inviteLink?: string;
+  error?: string;
+}
+
+export interface InviteResendSummary {
+  total: number;
+  sent: number;
+  linkOnly: number;
+  skipped: number;
+  failed: number;
+}
+
+export interface InviteResendResponse {
+  summary: InviteResendSummary;
+  results: InviteResendResult[];
+}
+
+export interface ResendInvitesDialogProps {
+  open: boolean;
+  onClose: () => void;
+  platform: boolean;
+  tenantFilter: string;
+}
+
 export interface CreateUserDialogProps {
   open: boolean;
   onClose: () => void;

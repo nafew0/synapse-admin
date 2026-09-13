@@ -34,6 +34,7 @@ vi.mock('@/hooks/useCapabilities', () => ({
 vi.mock('../CreateUserDialog', () => ({ CreateUserDialog: () => null }));
 vi.mock('../ImportMembersDialog', () => ({ ImportMembersDialog: () => null }));
 vi.mock('../UserDetailDialog', () => ({ UserDetailDialog: () => null }));
+vi.mock('../ResendInvitesDialog', () => ({ ResendInvitesDialog: () => null }));
 vi.mock('../../access', () => ({ ConfirmDialog: () => null }));
 
 const pending = vi.hoisted(() => ({ release: [] as Array<() => void> }));
