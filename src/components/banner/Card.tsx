@@ -2,7 +2,7 @@ import { Button, Icon } from '@clickhouse/click-ui';
 import type * as t from '@/types';
 import { CATEGORY_LABEL_KEYS } from './labels';
 import { useLocalize } from '@/hooks';
-import { cn } from '@/utils';
+import { cn, linkProps } from '@/utils';
 
 const NODES: [number, number][] = [
   [20, 70],
@@ -71,7 +71,7 @@ function Network() {
 }
 
 /** Floating card in the top-right corner, matching the chat app's card. */
-export function Card({ banner, category, message, linkHref, onDismiss }: t.BannerViewProps) {
+export function Card({ banner, category, message, link, onDismiss }: t.BannerViewProps) {
   const localize = useLocalize();
   const canDismiss = banner.display !== 'always';
 
@@ -112,13 +112,11 @@ export function Card({ banner, category, message, linkHref, onDismiss }: t.Banne
         <p className="text-sm leading-relaxed text-(--cui-color-text-muted) [&_a]:underline">
           {message}
         </p>
-        {(canDismiss || linkHref) && (
+        {(canDismiss || link) && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            {linkHref && (
+            {link && (
               <a
-                href={linkHref}
-                target="_blank"
-                rel="noopener noreferrer"
+                {...linkProps(link)}
                 onClick={canDismiss ? onDismiss : undefined}
                 className="synapse-banner-cta inline-flex h-8 items-center rounded-md px-3 text-sm font-medium no-underline"
               >

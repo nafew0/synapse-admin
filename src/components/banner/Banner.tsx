@@ -2,18 +2,27 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type * as t from '@/types';
 import { getBannerFn, markBannerSeenFn, dismissBannerFn } from '@/server';
-import { renderInlineMarkup, toSafeHref } from '@/utils';
-import { getApiBaseUrl } from '@/server/utils/url';
+import { renderInlineMarkup, resolveLink } from '@/utils';
+import { normalizeBasePath } from '@/config/basePath';
 import { CATEGORY_LABEL_KEYS } from './labels';
 import { Card } from './Card';
 import { Bar } from './Bar';
 
 const bannerQueryKey = (userId: string) => ['banner', userId];
 
+/** `null` during server rendering; the banner only renders in the browser. */
+function adminLinkBase(): t.LinkBase | null {
+  if (typeof window === 'undefined') return null;
+  return {
+    origin: window.location.origin,
+    basePath: normalizeBasePath(import.meta.env.VITE_BASE_PATH),
+  };
+}
+
 /**
- * The announcement configured with `npm run update-banner`, rendered as the
- * same floating card or top bar as the chat app. Seen/dismissed state is
- * shared with the chat app per user.
+ * The admin-panel announcement configured with `npm run update-banner --
+ * --app admin`. It is separate from the chat app's banner and is rendered as
+ * a floating card or a top bar.
  */
 export function Banner({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
@@ -42,19 +51,19 @@ export function Banner({ userId }: { userId: string }) {
     markSeen(banner.bannerId);
   }, [banner, markSeen]);
 
-  const chatBaseUrl = getApiBaseUrl();
+  const linkBase = useMemo(adminLinkBase, []);
   const message = useMemo(
-    () => (banner ? renderInlineMarkup(banner.message, chatBaseUrl) : null),
-    [banner, chatBaseUrl],
+    () => (banner && linkBase ? renderInlineMarkup(banner.message, linkBase) : null),
+    [banner, linkBase],
   );
 
-  if (!banner) return null;
+  if (!banner || !linkBase) return null;
 
   const props: t.BannerViewProps = {
     banner,
     message,
     category: CATEGORY_LABEL_KEYS[banner.category] ? banner.category : 'update',
-    linkHref: toSafeHref(banner.linkUrl ?? null, chatBaseUrl),
+    link: resolveLink(banner.linkUrl ?? null, linkBase),
     onDismiss: () => dismiss(banner.bannerId),
   };
   return banner.type === 'popup' ? <Card {...props} /> : <Bar {...props} />;

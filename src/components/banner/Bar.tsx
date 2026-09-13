@@ -2,10 +2,10 @@ import { Icon } from '@clickhouse/click-ui';
 import type * as t from '@/types';
 import { CATEGORY_LABEL_KEYS } from './labels';
 import { useLocalize } from '@/hooks';
-import { cn } from '@/utils';
+import { cn, linkProps } from '@/utils';
 
 /** Slim bar above the header, matching the chat app's top bar. */
-export function Bar({ banner, category, message, linkHref, onDismiss }: t.BannerViewProps) {
+export function Bar({ banner, category, message, link, onDismiss }: t.BannerViewProps) {
   const localize = useLocalize();
   const canDismiss = banner.display !== 'always';
 
@@ -30,11 +30,9 @@ export function Bar({ banner, category, message, linkHref, onDismiss }: t.Banner
       <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
         {banner.title && <strong className="font-semibold">{banner.title}</strong>}
         <span className="text-(--cui-color-text-muted) [&_a]:underline">{message}</span>
-        {linkHref && (
+        {link && (
           <a
-            href={linkHref}
-            target="_blank"
-            rel="noopener noreferrer"
+            {...linkProps(link)}
             className="synapse-banner-link font-medium whitespace-nowrap underline underline-offset-4"
           >
             {`${banner.linkLabel || localize('com_banner_learn_more')} →`}

@@ -1,21 +1,38 @@
 import { createElement, Fragment } from 'react';
 import type { ReactNode } from 'react';
+import type * as t from '@/types';
 
 const INLINE_TAGS = new Set(['b', 'strong', 'i', 'em', 'code', 'span']);
 const SAFE_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
 
-/** Resolves `href` against `base` and drops anything that is not http(s) or mailto. */
-export function toSafeHref(href: string | null, base: string): string | null {
+/**
+ * Resolves a banner link. Root-relative paths (`/users`) are admin-panel pages,
+ * so they get the deployment base path; anything that is not http(s) or mailto
+ * is dropped.
+ */
+export function resolveLink(href: string | null, base: t.LinkBase): t.ResolvedLink | null {
   if (!href) return null;
+  const isRootPath = href.startsWith('/') && !href.startsWith('//');
   try {
-    const url = new URL(href, base);
-    return SAFE_PROTOCOLS.has(url.protocol) ? url.href : null;
+    const url = new URL(isRootPath ? `${base.basePath}${href}` : href, `${base.origin}/`);
+    if (!SAFE_PROTOCOLS.has(url.protocol)) return null;
+    return { href: url.href, external: url.origin !== base.origin };
   } catch {
     return null;
   }
 }
 
-function convertNode(node: Node, key: string, base: string): ReactNode {
+/** Anchor props that open external links in a new tab and keep admin links in place. */
+export function linkProps(link: t.ResolvedLink): {
+  href: string;
+  target?: string;
+  rel?: string;
+} {
+  if (!link.external) return { href: link.href };
+  return { href: link.href, target: '_blank', rel: 'noopener noreferrer' };
+}
+
+function convertNode(node: Node, key: string, base: t.LinkBase): ReactNode {
   if (node.nodeType === Node.TEXT_NODE) return node.textContent;
   if (node.nodeType !== Node.ELEMENT_NODE) return null;
 
@@ -29,9 +46,9 @@ function convertNode(node: Node, key: string, base: string): ReactNode {
   if (INLINE_TAGS.has(tag)) return createElement(tag, { key }, children);
   if (tag !== 'a') return createElement(Fragment, { key }, children);
 
-  const href = toSafeHref(element.getAttribute('href'), base);
-  if (!href) return createElement(Fragment, { key }, children);
-  return createElement('a', { key, href, target: '_blank', rel: 'noopener noreferrer' }, children);
+  const link = resolveLink(element.getAttribute('href'), base);
+  if (!link) return createElement(Fragment, { key }, children);
+  return createElement('a', { key, ...linkProps(link) }, children);
 }
 
 /**
@@ -39,7 +56,7 @@ function convertNode(node: Node, key: string, base: string): ReactNode {
  * links) as React elements instead of injecting markup. Everything else is
  * reduced to its text. `DOMParser` documents are inert, so nothing executes.
  */
-export function renderInlineMarkup(html: string, base: string): ReactNode[] {
+export function renderInlineMarkup(html: string, base: t.LinkBase): ReactNode[] {
   if (typeof DOMParser === 'undefined') {
     return [html.replace(/<[^>]*>/g, '')];
   }

@@ -26,10 +26,6 @@ vi.mock('@clickhouse/click-ui', () => ({
   ),
 }));
 
-vi.mock('@/server/utils/url', () => ({
-  getApiBaseUrl: () => 'https://synapse.bdren.net.bd',
-}));
-
 const baseBanner: t.Banner = {
   bannerId: 'gemini-38',
   type: 'banner',
@@ -37,8 +33,8 @@ const baseBanner: t.Banner = {
   message: 'Faster answers at a <b>lower</b> cost.',
   category: 'feature',
   display: 'once',
-  linkLabel: 'Try it',
-  linkUrl: '/c/new',
+  linkLabel: 'Open Users',
+  linkUrl: '/users',
 };
 
 function renderBanner() {
@@ -64,7 +60,7 @@ describe('Banner (admin panel, bar)', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders the same content as the chat app, with links pointing at the chat app', async () => {
+  it('renders the admin banner, with links to admin pages opening in the same tab', async () => {
     server.getBannerFn.mockResolvedValue(baseBanner);
     renderBanner();
 
@@ -72,10 +68,9 @@ describe('Banner (admin panel, bar)', () => {
     expect(region).toHaveTextContent('New');
     expect(region).toHaveTextContent('Gemini 3.8 Flash is here');
     expect(region.querySelector('b')).toHaveTextContent('lower');
-    expect(screen.getByRole('link', { name: 'Try it →' })).toHaveAttribute(
-      'href',
-      'https://synapse.bdren.net.bd/c/new',
-    );
+    const link = screen.getByRole('link', { name: 'Open Users →' });
+    expect(link).toHaveAttribute('href', `${window.location.origin}/users`);
+    expect(link).not.toHaveAttribute('target');
   });
 
   it('records a once banner as seen exactly once', async () => {
@@ -119,16 +114,16 @@ describe('Banner (admin panel, floating card)', () => {
     server.dismissBannerFn.mockResolvedValue(undefined);
   });
 
-  it('renders the card with its call to action pointing at the chat app', async () => {
+  it('renders the card with its call to action', async () => {
     server.getBannerFn.mockResolvedValue(cardBanner);
     renderBanner();
 
     const card = await screen.findByRole('region', { name: 'Announcement' });
     expect(card.tagName).toBe('SECTION');
     expect(screen.getByRole('heading', { name: 'Gemini 3.8 Flash is here' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Try it' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Open Users' })).toHaveAttribute(
       'href',
-      'https://synapse.bdren.net.bd/c/new',
+      `${window.location.origin}/users`,
     );
     await waitFor(() => expect(server.markBannerSeenFn).toHaveBeenCalledTimes(1));
   });

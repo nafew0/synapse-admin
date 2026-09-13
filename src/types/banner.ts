@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 
 /**
  * Mirrors `TBanner` from `librechat-data-provider`; the published package this
- * panel depends on predates the category/display fields.
+ * panel depends on predates the banner fields. Only `app: 'admin'` banners
+ * reach this panel.
  */
 export type BannerCategory = 'feature' | 'update' | 'maintenance' | 'outage';
 
@@ -22,10 +23,22 @@ export interface Banner {
   linkUrl?: string;
 }
 
+/** Where relative banner links resolve: the admin panel's own origin and base path. */
+export interface LinkBase {
+  origin: string;
+  basePath: string;
+}
+
+export interface ResolvedLink {
+  href: string;
+  /** Opens in a new tab when it leaves the admin panel. */
+  external: boolean;
+}
+
 export interface BannerViewProps {
   banner: Banner;
   category: BannerCategory;
   message: ReactNode;
-  linkHref: string | null;
+  link: ResolvedLink | null;
   onDismiss: () => void;
 }

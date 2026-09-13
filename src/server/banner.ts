@@ -12,10 +12,10 @@ async function recordBannerView(bannerId: string, action: 'seen' | 'dismiss'): P
   if (!response.ok) await extractApiError(response, 'Failed to update banner');
 }
 
-/** The same announcement the chat app shows, already filtered for this user's seen/dismissed state. */
+/** The admin-panel announcement (separate from the chat app's), filtered for this user's seen/dismissed state. */
 export const getBannerFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<t.Banner | null> => {
-    const response = await apiFetch('/api/banner');
+    const response = await apiFetch('/api/admin/banner');
     if (!response.ok) await extractApiError(response, 'Failed to fetch banner');
     return response.json();
   },

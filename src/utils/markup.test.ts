@@ -1,27 +1,43 @@
 import { createElement, Fragment } from 'react';
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import { renderInlineMarkup, toSafeHref } from './markup';
+import type * as t from '@/types';
+import { renderInlineMarkup, resolveLink } from './markup';
 
-const BASE = 'https://synapse.bdren.net.bd';
+const BASE: t.LinkBase = { origin: 'https://admin.synapse.bdren.net.bd', basePath: '' };
+const SUBPATH: t.LinkBase = { origin: 'https://synapse.bdren.net.bd', basePath: '/admin' };
 
 const renderMarkup = (html: string) =>
   render(createElement(Fragment, null, renderInlineMarkup(html, BASE))).container;
 
-describe('toSafeHref', () => {
-  it('resolves chat-app paths against the chat base URL', () => {
-    expect(toSafeHref('/c/new', BASE)).toBe('https://synapse.bdren.net.bd/c/new');
+describe('resolveLink', () => {
+  it('treats root paths as admin-panel pages that stay in the same tab', () => {
+    expect(resolveLink('/users', BASE)).toEqual({
+      href: 'https://admin.synapse.bdren.net.bd/users',
+      external: false,
+    });
   });
 
-  it('keeps http(s) and mailto links', () => {
-    expect(toSafeHref('https://bdren.net.bd/news', BASE)).toBe('https://bdren.net.bd/news');
-    expect(toSafeHref('mailto:support@bdren.net.bd', BASE)).toBe('mailto:support@bdren.net.bd');
+  it('adds the deployment base path to admin-panel pages', () => {
+    expect(resolveLink('/users', SUBPATH)).toEqual({
+      href: 'https://synapse.bdren.net.bd/admin/users',
+      external: false,
+    });
+  });
+
+  it('marks other sites as external', () => {
+    expect(resolveLink('https://bdren.net.bd/news', BASE)).toEqual({
+      href: 'https://bdren.net.bd/news',
+      external: true,
+    });
+    expect(resolveLink('mailto:support@bdren.net.bd', BASE)?.external).toBe(true);
   });
 
   it('rejects script and data URLs', () => {
-    expect(toSafeHref('javascript:alert(1)', BASE)).toBeNull();
-    expect(toSafeHref('data:text/html,<script>alert(1)</script>', BASE)).toBeNull();
-    expect(toSafeHref(null, BASE)).toBeNull();
+    expect(resolveLink('javascript:alert(1)', BASE)).toBeNull();
+    expect(resolveLink('data:text/html,<script>alert(1)</script>', BASE)).toBeNull();
+    expect(resolveLink('//evil.example/x', BASE)?.external).toBe(true);
+    expect(resolveLink(null, BASE)).toBeNull();
   });
 });
 
@@ -33,11 +49,15 @@ describe('renderInlineMarkup', () => {
     expect(container.querySelector('br')).not.toBeNull();
   });
 
-  it('opens safe links in a new tab and resolves relative paths', () => {
-    const link = renderMarkup('See <a href="/c/new">the model menu</a>').querySelector('a');
-    expect(link).toHaveAttribute('href', `${BASE}/c/new`);
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  it('keeps admin links in the same tab and opens other sites in a new one', () => {
+    const container = renderMarkup(
+      'Open <a href="/users">Users</a> or read <a href="https://bdren.net.bd/news">the news</a>',
+    );
+    const [internal, external] = container.querySelectorAll('a');
+    expect(internal).toHaveAttribute('href', `${BASE.origin}/users`);
+    expect(internal).not.toHaveAttribute('target');
+    expect(external).toHaveAttribute('target', '_blank');
+    expect(external).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('reduces unsafe or unknown markup to text', () => {
