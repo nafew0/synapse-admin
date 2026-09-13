@@ -3,6 +3,7 @@
 @theme {
   --z-sticky: 10; /* sticky table/section headers (in-tree) */
   --z-floating: 20; /* sidebar, content toolbars (in-tree) */
+  --z-banner: 30; /* floating announcement card, below drawers and modals */
   --z-overlay: 60; /* drawer / modal overlay + content */
   --z-command-overlay: 69; /* command menu backdrop */
   --z-command: 70; /* command menu panel */
@@ -1075,4 +1076,205 @@ body > div:has(+ .modal-frost) {
 .badge-user {
   background-color: var(--cui-color-feedback-user-bg);
   color: var(--cui-color-feedback-user-fg);
+}
+
+/*
+ * Announcement banner — mirrors the chat app's bar (client/src/style.css lc-banner-*)
+ * so the same announcement looks the same in both apps. Brand gradients and the
+ * chat app's status tones have no click-ui token, hence plain CSS.
+ */
+.synapse-banner {
+  position: relative;
+}
+
+.synapse-banner-feature {
+  background: linear-gradient(90deg, rgb(50 138 138 / 0.11), rgb(245 135 31 / 0.09));
+  @variant dark {
+    background: linear-gradient(90deg, rgb(50 138 138 / 0.28), rgb(247 148 30 / 0.14));
+  }
+}
+
+.synapse-banner-feature::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1px;
+  background: linear-gradient(90deg, #328a8a, #f5871f);
+  opacity: 0.7;
+}
+
+.synapse-banner-update {
+  background: rgb(50 138 138 / 0.09);
+  @variant dark {
+    background: rgb(50 138 138 / 0.2);
+  }
+}
+
+.synapse-banner-maintenance {
+  background: #fffbeb;
+  @variant dark {
+    background: #451a03;
+  }
+}
+
+.synapse-banner-outage {
+  background: #fef2f2;
+  @variant dark {
+    background: #450a0a;
+  }
+}
+
+.synapse-banner-chip-feature {
+  background: #f5871f;
+  color: #ffffff;
+}
+
+.synapse-banner-chip-update {
+  background: linear-gradient(135deg, #328a8a, #134f54);
+  color: #ffffff;
+}
+
+.synapse-banner-chip-maintenance {
+  background: rgb(199 82 9);
+  color: #ffffff;
+  @variant dark {
+    background: #92400e;
+  }
+}
+
+.synapse-banner-chip-outage {
+  background: rgb(224 47 31);
+  color: #ffffff;
+  @variant dark {
+    background: #991b1b;
+  }
+}
+
+.synapse-banner-link {
+  color: rgb(27 102 103);
+  @variant dark {
+    color: rgb(127 211 205);
+  }
+}
+
+.synapse-banner-card {
+  box-shadow:
+    0 18px 44px rgb(19 79 84 / 0.18),
+    0 0 0 1px var(--cui-color-stroke-default);
+  @variant dark {
+    box-shadow:
+      0 18px 44px rgb(0 0 0 / 0.55),
+      0 0 0 1px var(--cui-color-stroke-default);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .synapse-banner-card {
+    animation: synapse-banner-card-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+@keyframes synapse-banner-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.synapse-banner-card-feature {
+  background: linear-gradient(135deg, #328a8a, #134f54);
+  @variant dark {
+    background: linear-gradient(135deg, #1d6a6a, #0a3336);
+  }
+}
+
+.synapse-banner-card-update {
+  background: linear-gradient(135deg, #3b9696, #1b5f63);
+  @variant dark {
+    background: linear-gradient(135deg, #1f5f5f, #0b2f31);
+  }
+}
+
+.synapse-banner-card-maintenance {
+  background: linear-gradient(135deg, #e08a12, #9a4a0b);
+  @variant dark {
+    background: linear-gradient(135deg, #b45309, #5c2a06);
+  }
+}
+
+.synapse-banner-card-outage {
+  background: linear-gradient(135deg, #e0452f, #8f1d1d);
+  @variant dark {
+    background: linear-gradient(135deg, #b91c1c, #5a1010);
+  }
+}
+
+.synapse-network-edge {
+  stroke: rgb(255 255 255 / 0.28);
+  stroke-width: 1;
+}
+
+.synapse-network-node {
+  fill: rgb(255 255 255 / 0.75);
+}
+
+.synapse-network-accent {
+  fill: #f7941e;
+}
+
+.synapse-network-ring {
+  fill: none;
+  stroke: rgb(247 148 30 / 0.55);
+  stroke-width: 1.5;
+}
+
+.synapse-banner-card-close {
+  color: rgb(255 255 255 / 0.85);
+}
+
+.synapse-banner-card-close:hover,
+.synapse-banner-card-close:focus-visible {
+  background: rgb(255 255 255 / 0.16);
+  color: #ffffff;
+}
+
+.synapse-banner-eyebrow-feature {
+  color: rgb(194 97 15);
+  @variant dark {
+    color: rgb(251 162 77);
+  }
+}
+
+.synapse-banner-eyebrow-update {
+  color: rgb(27 102 103);
+  @variant dark {
+    color: rgb(127 211 205);
+  }
+}
+
+.synapse-banner-eyebrow-maintenance {
+  color: #b45309;
+  @variant dark {
+    color: #fcd34d;
+  }
+}
+
+.synapse-banner-eyebrow-outage {
+  color: #b91c1c;
+  @variant dark {
+    color: #fca5a5;
+  }
+}
+
+.synapse-banner-cta {
+  background: #f5871f;
+  color: #ffffff;
+}
+
+.synapse-banner-cta:hover {
+  background: #e8730c;
 }
