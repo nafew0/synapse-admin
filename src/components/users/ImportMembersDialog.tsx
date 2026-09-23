@@ -3,7 +3,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type * as t from '@/types';
 import { FormDialog } from '@/components/shared';
 import { createMemberImportFn, dryRunMemberImportFn } from '@/server';
-import { notifyError, notifySuccess } from '@/utils';
+import { downloadBlob, notifyError, notifySuccess } from '@/utils';
+
+const MEMBER_IMPORT_TEMPLATE =
+  '\uFEFFemail,name,role\nmember1@your-institution.edu.bd,Full Name,USER\nadmin1@your-institution.edu.bd,Full Name,INSTITUTION_ADMIN\n';
+
+function downloadMemberImportTemplate() {
+  downloadBlob(
+    new Blob([MEMBER_IMPORT_TEMPLATE], { type: 'text/csv;charset=utf-8' }),
+    'member-import-template.csv',
+  );
+}
 
 export function ImportMembersDialog({ open, onClose }: t.ImportMembersDialogProps) {
   const queryClient = useQueryClient();
@@ -89,7 +99,10 @@ export function ImportMembersDialog({ open, onClose }: t.ImportMembersDialogProp
       onClose={resetAndClose}
     >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="member-import-file" className="text-sm font-medium text-(--cui-color-text-default)">
+        <label
+          htmlFor="member-import-file"
+          className="text-sm font-medium text-(--cui-color-text-default)"
+        >
           CSV file
         </label>
         <input
@@ -106,16 +119,16 @@ export function ImportMembersDialog({ open, onClose }: t.ImportMembersDialogProp
 
       <p className="text-xs text-(--cui-color-text-muted)">
         Required column: <code>email</code>. Optional: <code>name</code> and <code>role</code> —
-        leave a cell blank to omit it. <code>role</code> must be exactly{' '}
-        <code>INSTITUTION_ADMIN</code> to grant institution admin; anything else becomes a regular
-        member.{' '}
-        <a
-          href="/sample-member-import.csv"
-          download
-          className="underline text-(--cui-color-text-link)"
+        leave a cell blank to omit it. Accepted roles: <code>USER</code>,{' '}
+        <code>INSTITUTION_ADMIN</code> (blank = USER). Max 1000 rows. Save as CSV (Excel:{' '}
+        <em>CSV UTF-8</em>).{' '}
+        <button
+          type="button"
+          onClick={downloadMemberImportTemplate}
+          className="text-(--cui-color-text-link) underline"
         >
           Download a sample CSV
-        </a>
+        </button>
       </p>
 
       {summary ? (
@@ -140,7 +153,10 @@ export function ImportMembersDialog({ open, onClose }: t.ImportMembersDialogProp
             </thead>
             <tbody>
               {results.map((row) => (
-                <tr key={`${row.rowNumber}-${row.email || 'empty'}`} className="border-b border-(--cui-color-stroke-default)">
+                <tr
+                  key={`${row.rowNumber}-${row.email || 'empty'}`}
+                  className="border-b border-(--cui-color-stroke-default)"
+                >
                   <td className="px-3 py-2">{row.rowNumber}</td>
                   <td className="px-3 py-2">{row.email || '—'}</td>
                   <td className="px-3 py-2">{row.action}</td>
