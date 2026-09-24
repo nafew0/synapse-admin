@@ -966,6 +966,8 @@
   "com_access_create_group": "Create group",
   "com_access_create_role": "Create role",
   "com_access_groups_empty": "No groups found",
+  "com_access_group_managed_badge": "Managed: all active tenant members",
+  "com_access_group_managed_desc": "Membership follows the institution's active members automatically. This group cannot be edited or deleted, and members cannot be added or removed by hand.",
   "com_access_roles_empty": "No roles found",
   "com_access_roles_error": "Failed to load roles",
   "com_access_permissions_load_error": "Unable to load permissions for this role.",

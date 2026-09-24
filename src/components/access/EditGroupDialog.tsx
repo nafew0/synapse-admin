@@ -19,12 +19,15 @@ import {
   UserSearchInline,
 } from '@/components/shared';
 import { cn, notifySuccess, notifyError } from '@/utils';
+import { ManagedGroupBadge } from './ManagedGroupBadge';
 import { useLocalize } from '@/hooks';
 
 type EditGroupTab = 'details' | 'members';
 
 export function EditGroupDialog({ group, canManage, onClose }: t.EditGroupDialogProps) {
   const localize = useLocalize();
+  const managed = !!group?.managedKind;
+  const editable = canManage && !managed;
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<EditGroupTab>('details');
   const [name, setName] = useState(group?.name ?? '');
@@ -137,6 +140,14 @@ export function EditGroupDialog({ group, canManage, onClose }: t.EditGroupDialog
         className="modal-frost max-w-2xl!"
       >
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {managed && (
+            <div className="flex flex-col gap-2 rounded-lg border border-(--cui-color-stroke-default) px-3 py-2">
+              <ManagedGroupBadge />
+              <p className="text-xs text-(--cui-color-text-muted)">
+                {localize('com_access_group_managed_desc')}
+              </p>
+            </div>
+          )}
           <Tabs
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as EditGroupTab)}
@@ -166,8 +177,8 @@ export function EditGroupDialog({ group, canManage, onClose }: t.EditGroupDialog
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={localize('com_access_group_name_placeholder')}
-                    disabled={!canManage}
-                    readOnly={!canManage}
+                    disabled={!editable}
+                    readOnly={!editable}
                     autoFocus
                     className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default) placeholder:text-(--cui-color-text-disabled) disabled:cursor-not-allowed disabled:opacity-50"
                   />
@@ -185,8 +196,8 @@ export function EditGroupDialog({ group, canManage, onClose }: t.EditGroupDialog
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder={localize('com_access_group_desc_placeholder')}
-                    disabled={!canManage}
-                    readOnly={!canManage}
+                    disabled={!editable}
+                    readOnly={!editable}
                     className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default) placeholder:text-(--cui-color-text-disabled) disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
@@ -199,7 +210,7 @@ export function EditGroupDialog({ group, canManage, onClose }: t.EditGroupDialog
               className={cn(activeTab !== 'members' && 'hidden')}
             >
               <div className="flex flex-col gap-4 pt-5">
-                {canManage && (
+                {editable && (
                   <UserSearchInline
                     existingIds={existingIds}
                     onAdd={addUser}
@@ -243,7 +254,7 @@ export function EditGroupDialog({ group, canManage, onClose }: t.EditGroupDialog
                   fetching={membersQuery.isFetching}
                   removalIds={removalIds}
                   onRemove={stageRemoval}
-                  canManage={canManage}
+                  canManage={editable}
                   total={total}
                   currentPage={page}
                   totalPages={totalPages}
@@ -269,7 +280,7 @@ export function EditGroupDialog({ group, canManage, onClose }: t.EditGroupDialog
               type="primary"
               label={localize('com_ui_save')}
               disabled={
-                !canManage || !name.trim() || (!detailsDirty && !membersDirty) || mutation.isPending
+                !editable || !name.trim() || (!detailsDirty && !membersDirty) || mutation.isPending
               }
             />
           </div>
