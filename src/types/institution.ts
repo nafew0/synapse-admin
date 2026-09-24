@@ -202,16 +202,38 @@ export interface PlatformAgentAccessAgent {
   enabled: boolean;
 }
 
-export interface PlatformAgentAccessGroup {
-  id: string;
+export interface PlatformAgentAccessAudience {
+  groupId: string;
   name: string;
-  description?: string;
-  source?: string;
-  memberCount: number;
+  activeMemberCount: number;
+  enrolledMemberCount: number;
+  missingMemberCount: number;
+  staleMemberCount: number;
+  inSync: boolean;
 }
 
 export interface PlatformAgentAccessResponse {
   agents: PlatformAgentAccessAgent[];
-  groups: PlatformAgentAccessGroup[];
-  selectedGroupId: string | null;
+  /** The tenant's managed all-active-members group; null until an agent is first enabled. */
+  audience: PlatformAgentAccessAudience | null;
+}
+
+export interface PlatformAgentAccessUpdateResult {
+  tenantId: string;
+  agentId: string;
+  enabled: boolean;
+  audienceGroupId: string;
+  activeMemberCount: number;
+  delegatedAgentCount: number;
+  audienceCreated?: boolean;
+}
+
+export interface PlatformAgentAccessReconcileResult {
+  tenantId: string;
+  audienceGroupId: string;
+  dryRun: boolean;
+  added: number;
+  removed: number;
+  unchanged: number;
+  activeMemberCount: number;
 }

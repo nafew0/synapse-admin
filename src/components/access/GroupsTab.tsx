@@ -1,7 +1,6 @@
 import { Button } from '@clickhouse/click-ui';
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import type { AdminGroup } from '@librechat/data-schemas';
 import type * as t from '@/types';
 import {
   LoadingState,
@@ -15,6 +14,7 @@ import { cn, notifySuccess, notifyError } from '@/utils';
 import { useCapabilities, useLocalize } from '@/hooks';
 import { EditGroupDialog } from './EditGroupDialog';
 import { SystemCapabilities } from '@/constants';
+import { ManagedGroupBadge } from './ManagedGroupBadge';
 import { ConfirmDialog } from './ConfirmDialog';
 
 export function GroupsTab({ onCreateGroup }: t.GroupsTabProps) {
@@ -22,8 +22,8 @@ export function GroupsTab({ onCreateGroup }: t.GroupsTabProps) {
   const queryClient = useQueryClient();
   const { hasCapability } = useCapabilities();
   const canManage = hasCapability(SystemCapabilities.MANAGE_GROUPS);
-  const [editTarget, setEditTarget] = useState<AdminGroup | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<AdminGroup | null>(null);
+  const [editTarget, setEditTarget] = useState<t.AccessGroup | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<t.AccessGroup | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -52,7 +52,7 @@ export function GroupsTab({ onCreateGroup }: t.GroupsTabProps) {
   const totalPages = Math.ceil(total / GROUPS_PAGE_SIZE);
 
   const deleteMutation = useMutation({
-    mutationFn: (group: AdminGroup) => deleteGroupFn({ data: { id: group.id } }),
+    mutationFn: (group: t.AccessGroup) => deleteGroupFn({ data: { id: group.id } }),
     onSuccess: (_data, group) => {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
       queryClient.invalidateQueries({ queryKey: ['availableScopes'] });
@@ -116,8 +116,11 @@ export function GroupsTab({ onCreateGroup }: t.GroupsTabProps) {
                 onClick={() => setEditTarget(group)}
                 className="-my-2 -ml-2 min-w-0 flex-1 cursor-pointer rounded py-3 pl-3 text-left outline-none focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-(--cui-color-outline)"
               >
-                <div className="text-sm font-medium text-(--cui-color-text-default) hover:underline">
-                  {group.name}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-(--cui-color-text-default) hover:underline">
+                    {group.name}
+                  </span>
+                  {group.managedKind && <ManagedGroupBadge />}
                 </div>
                 {group.description && (
                   <div className="truncate text-xs text-(--cui-color-text-muted)">
@@ -126,7 +129,7 @@ export function GroupsTab({ onCreateGroup }: t.GroupsTabProps) {
                 )}
               </button>
 
-              {canManage && (
+              {canManage && !group.managedKind && (
                 <TrashButton
                   onClick={() => setDeleteTarget(group)}
                   ariaLabel={`${localize('com_ui_delete')} ${group.name}`}

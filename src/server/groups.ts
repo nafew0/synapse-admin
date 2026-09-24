@@ -8,7 +8,7 @@
 import { z } from 'zod';
 import { queryOptions } from '@tanstack/react-query';
 import { createServerFn } from '@tanstack/react-start';
-import type { AdminGroup, AdminMember } from '@librechat/data-schemas';
+import type { AdminMember } from '@librechat/data-schemas';
 import type * as t from '@/types';
 import { apiFetch, extractApiError } from './utils/api';
 
@@ -22,11 +22,12 @@ interface RawGroup {
   avatar?: string;
   memberIds?: string[];
   source: string;
+  managedKind?: t.GroupManagedKind;
   createdAt?: string;
   updatedAt?: string;
 }
 
-function toAdminGroup(raw: RawGroup): AdminGroup {
+function toAdminGroup(raw: RawGroup): t.AccessGroup {
   return {
     id: raw._id,
     name: raw.name,
@@ -34,6 +35,7 @@ function toAdminGroup(raw: RawGroup): AdminGroup {
     memberCount: raw.memberIds?.length ?? 0,
     topMembers: [],
     isActive: true,
+    ...(raw.managedKind ? { managedKind: raw.managedKind } : {}),
   };
 }
 
@@ -62,7 +64,7 @@ export const getGroupsFn = createServerFn({ method: 'GET' })
       data,
     }: {
       data: { search?: string; limit?: number; offset?: number };
-    }): Promise<{ groups: AdminGroup[]; total: number }> => {
+    }): Promise<{ groups: t.AccessGroup[]; total: number }> => {
       const params = new URLSearchParams();
       if (data.search) params.set('search', data.search);
       if (data.limit != null) params.set('limit', String(data.limit));
@@ -78,7 +80,7 @@ export const getGroupsFn = createServerFn({ method: 'GET' })
   );
 
 export const groupsQueryOptions = (page = 1, search = '') =>
-  queryOptions<{ groups: AdminGroup[]; total: number }>({
+  queryOptions<{ groups: t.AccessGroup[]; total: number }>({
     queryKey: ['groups', page, search],
     queryFn: () =>
       getGroupsFn({
@@ -91,7 +93,7 @@ export const groupsQueryOptions = (page = 1, search = '') =>
     staleTime: 30_000,
   });
 
-export const allGroupsQueryOptions = queryOptions<AdminGroup[]>({
+export const allGroupsQueryOptions = queryOptions<t.AccessGroup[]>({
   queryKey: ['groups', 'all'],
   queryFn: () => getGroupsFn({ data: { limit: ALL_GROUPS_LIMIT } }).then((r) => r.groups),
   staleTime: 30_000,

@@ -126,6 +126,7 @@ vi.mock('@/server', () => ({
   createPlatformInstitutionPolicyFn: vi.fn(),
   revokePlatformInstitutionAdminFn: vi.fn(),
   updatePlatformInstitutionAgentAccessFn: vi.fn(),
+  reconcilePlatformInstitutionAgentAccessFn: vi.fn(),
 }));
 
 const { InstitutionDetailPage } = await import('../InstitutionDetailPage');

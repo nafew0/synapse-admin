@@ -1,6 +1,10 @@
 import type { AdminGroup } from '@librechat/data-schemas';
 import type { Role, RolePermissions } from './role';
 
+/** System-managed group kinds; the backend owns their membership. */
+export type GroupManagedKind = 'tenant_all_active_members';
+
+export type AccessGroup = AdminGroup & { managedKind?: GroupManagedKind };
 
 export interface AccessPageProps {
   activeTab: 'groups' | 'roles';
@@ -8,7 +12,6 @@ export interface AccessPageProps {
   canReadRoles: boolean;
   canReadGroups: boolean;
 }
-
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -37,7 +40,7 @@ export interface CreateRoleDialogProps {
 }
 
 export interface EditGroupDialogProps {
-  group: AdminGroup | null;
+  group: AccessGroup | null;
   canManage: boolean;
   onClose: () => void;
 }
@@ -51,7 +54,6 @@ export interface EditRoleDialogProps {
 export interface GroupsTabProps {
   onCreateGroup: () => void;
 }
-
 
 export interface RolePermissionsPanelProps {
   permissions: RolePermissions;

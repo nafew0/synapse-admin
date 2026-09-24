@@ -20,7 +20,10 @@ vi.mock('./utils/api', () => ({
 import {
   assignPlatformInstitutionAdminFn,
   createPlatformInstitutionFn,
+  getPlatformInstitutionAgentAccessFn,
   listPlatformInstitutionsFn,
+  reconcilePlatformInstitutionAgentAccessFn,
+  updatePlatformInstitutionAgentAccessFn,
 } from './platformInstitutions';
 
 function jsonResponse(status: number, body: unknown): Response {
@@ -91,5 +94,75 @@ describe('platform institution server functions', () => {
         name: 'Admin User',
       }),
     });
+  });
+
+  it('loads tenant agent access without a group selector', async () => {
+    apiFetch.mockResolvedValueOnce(jsonResponse(200, { agents: [], audience: null }));
+
+    const result = await getPlatformInstitutionAgentAccessFn({ data: { tenantId: 'tenant a' } });
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/platform/institutions/tenant%20a/agent-access');
+    expect(result).toEqual({ agents: [], audience: null });
+  });
+
+  it('patches agent access with only the agent and enabled flag', async () => {
+    apiFetch.mockResolvedValueOnce(
+      jsonResponse(200, {
+        tenantId: 'tenant-a',
+        agentId: 'agent-1',
+        enabled: true,
+        audienceGroupId: 'group-1',
+        activeMemberCount: 3,
+        delegatedAgentCount: 2,
+      }),
+    );
+
+    await updatePlatformInstitutionAgentAccessFn({
+      data: { tenantId: 'tenant-a', agentId: 'agent-1', enabled: true },
+    });
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/platform/institutions/tenant-a/agent-access', {
+      method: 'PATCH',
+      body: JSON.stringify({ agentId: 'agent-1', enabled: true }),
+    });
+  });
+
+  it('surfaces agent access update errors', async () => {
+    apiFetch.mockResolvedValueOnce(jsonResponse(409, { error: 'Conflict' }));
+    extractApiError.mockRejectedValueOnce(new Error('Conflict'));
+
+    await expect(
+      updatePlatformInstitutionAgentAccessFn({
+        data: { tenantId: 'tenant-a', agentId: 'agent-1', enabled: false },
+      }),
+    ).rejects.toThrow('Conflict');
+    expect(extractApiError).toHaveBeenCalledWith(
+      expect.any(Response),
+      'Failed to update agent access',
+    );
+  });
+
+  it('posts member reconciliation for the tenant audience', async () => {
+    apiFetch.mockResolvedValueOnce(
+      jsonResponse(200, {
+        tenantId: 'tenant-a',
+        audienceGroupId: 'group-1',
+        dryRun: false,
+        added: 2,
+        removed: 1,
+        unchanged: 5,
+        activeMemberCount: 7,
+      }),
+    );
+
+    const result = await reconcilePlatformInstitutionAgentAccessFn({
+      data: { tenantId: 'tenant-a' },
+    });
+
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/api/platform/institutions/tenant-a/agent-access/reconcile',
+      { method: 'POST' },
+    );
+    expect(result.added).toBe(2);
   });
 });

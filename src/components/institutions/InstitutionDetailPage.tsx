@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@clickhouse/click-ui';
+import { Button, Switch } from '@clickhouse/click-ui';
 import { Link, getRouteApi } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -11,6 +11,7 @@ import {
   getPlatformInstitutionQuotaReadinessFn,
   listPlatformInstitutionPoliciesFn,
   previewPlatformInstitutionPolicyFn,
+  reconcilePlatformInstitutionAgentAccessFn,
   revokePlatformInstitutionAdminFn,
   updatePlatformInstitutionAgentAccessFn,
 } from '@/server';
@@ -47,7 +48,6 @@ export function InstitutionDetailPage() {
   const [tab, setTab] = useState<Tab>('overview');
   const [memberQuery, setMemberQuery] = useState('');
   const [memberOffset, setMemberOffset] = useState(0);
-  const [agentGroupId, setAgentGroupId] = useState('');
   const memberLimit = 25;
   const institutionQuery = useQuery({
     queryKey: ['platformInstitution', tenantId],
@@ -98,24 +98,12 @@ export function InstitutionDetailPage() {
     queryFn: () => listPlatformInstitutionPoliciesFn({ data: { tenantId } }),
     enabled: tab === 'history',
   });
+  const agentAccessKey = ['platformInstitutionAgentAccess', tenantId];
   const agentAccessQuery = useQuery({
-    queryKey: ['platformInstitutionAgentAccess', tenantId, agentGroupId],
-    queryFn: () =>
-      getPlatformInstitutionAgentAccessFn({
-        data: { tenantId, groupId: agentGroupId || undefined },
-      }),
+    queryKey: agentAccessKey,
+    queryFn: () => getPlatformInstitutionAgentAccessFn({ data: { tenantId } }),
     enabled: tab === 'agents',
   });
-  useEffect(() => {
-    const groups = agentAccessQuery.data?.groups ?? [];
-    if (groups.length === 0) {
-      setAgentGroupId('');
-      return;
-    }
-    setAgentGroupId((current) =>
-      current && groups.some((group) => group.id === current) ? current : groups[0].id,
-    );
-  }, [agentAccessQuery.data]);
   const revokeAdminMutation = useMutation({
     mutationFn: (admin: t.InstitutionMember) =>
       revokePlatformInstitutionAdminFn({ data: { tenantId, userId: admin.id } }),
@@ -128,16 +116,24 @@ export function InstitutionDetailPage() {
   });
   const agentAccessMutation = useMutation({
     mutationFn: (input: { agentId: string; enabled: boolean }) =>
-      updatePlatformInstitutionAgentAccessFn({
-        data: { tenantId, groupId: agentGroupId, ...input },
-      }),
-    onSuccess: () => {
-      notifySuccess('Agent access updated');
-      queryClient.invalidateQueries({
-        queryKey: ['platformInstitutionAgentAccess', tenantId, agentGroupId],
-      });
+      updatePlatformInstitutionAgentAccessFn({ data: { tenantId, ...input } }),
+    onSuccess: (result) => {
+      notifySuccess(
+        result.enabled
+          ? `Agent enabled for ${result.activeMemberCount} active members`
+          : 'Agent disabled for all members',
+      );
     },
     onError: (error: Error) => notifyError(error.message),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: agentAccessKey }),
+  });
+  const reconcileMutation = useMutation({
+    mutationFn: () => reconcilePlatformInstitutionAgentAccessFn({ data: { tenantId } }),
+    onSuccess: (result) => {
+      notifySuccess(`Members reconciled: ${result.added} added, ${result.removed} removed`);
+    },
+    onError: (error: Error) => notifyError(error.message),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: agentAccessKey }),
   });
 
   if (!user?.isPlatformSuperadmin) {
@@ -246,12 +242,17 @@ export function InstitutionDetailPage() {
       {tab === 'agents' && (
         <AgentAccess
           data={agentAccessQuery.data}
-          loading={agentAccessQuery.isLoading || agentAccessQuery.isFetching}
+          loading={agentAccessQuery.isLoading}
+          refreshing={agentAccessQuery.isFetching}
           error={agentAccessQuery.isError ? agentAccessQuery.error?.message : undefined}
-          groupId={agentGroupId}
-          updating={agentAccessMutation.isPending}
-          onGroupChange={setAgentGroupId}
+          pendingAgentId={
+            agentAccessMutation.isPending ? agentAccessMutation.variables?.agentId : undefined
+          }
+          updating={agentAccessMutation.isPending || reconcileMutation.isPending}
+          reconciling={reconcileMutation.isPending}
+          mutationError={agentAccessMutation.error?.message ?? reconcileMutation.error?.message}
           onToggle={(agentId, enabled) => agentAccessMutation.mutate({ agentId, enabled })}
+          onReconcile={() => reconcileMutation.mutate()}
         />
       )}
       {tab === 'usage' && (
@@ -408,80 +409,127 @@ function Members({
 function AgentAccess({
   data,
   loading,
+  refreshing,
   error,
-  groupId,
+  pendingAgentId,
   updating,
-  onGroupChange,
+  reconciling,
+  mutationError,
   onToggle,
+  onReconcile,
 }: {
   data?: t.PlatformAgentAccessResponse;
   loading: boolean;
+  refreshing: boolean;
   error?: string;
-  groupId: string;
+  pendingAgentId?: string;
   updating: boolean;
-  onGroupChange: (value: string) => void;
+  reconciling: boolean;
+  mutationError?: string;
   onToggle: (agentId: string, enabled: boolean) => void;
+  onReconcile: () => void;
 }) {
   if (loading) return <LoadingState />;
   if (error) return <EmptyState message={error} />;
 
-  const groups = data?.groups ?? [];
   const agents = data?.agents ?? [];
-
-  if (groups.length === 0) {
-    return (
-      <Panel title="Agent access">
-        <EmptyState message="No groups are associated with this institution. Create or sync an institution group first." />
-      </Panel>
-    );
-  }
-  if (agents.length === 0) {
-    return (
-      <Panel title="Agent access">
-        <EmptyState message="No user-facing agents are registered. Run the agent sync script first." />
-      </Panel>
-    );
-  }
+  const audience = data?.audience ?? null;
+  const locked = updating || refreshing;
 
   return (
-    <Panel title="Agent access">
+    <Panel title="Available to all active members">
       <p className="mb-4 text-sm text-(--cui-color-text-muted)">
-        Grant the selected institution group access to a registered agent. Office Assistant’s
-        internal specialist agents are enabled automatically when its access is granted.
+        New members receive access automatically; suspended and removed members lose access. Office
+        Assistant’s internal specialist agents are enabled together with it.
       </p>
-      <label className="mb-4 block max-w-xl text-sm text-(--cui-color-text-default)">
-        Institution group
-        <select
-          value={groupId}
-          onChange={(event) => onGroupChange(event.target.value)}
-          className="mt-2 block w-full rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
-        >
-          {groups.map((group) => (
-            <option key={group.id} value={group.id}>
-              {group.name} ({group.memberCount} members)
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="divide-y divide-(--cui-color-stroke-default)">
-        {agents.map((agent) => (
-          <div key={agent.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-            <div>
-              <p className="text-sm font-medium text-(--cui-color-text-default)">{agent.name}</p>
-              <p className="text-xs text-(--cui-color-text-muted)">
-                {agent.description || agent.id}
-              </p>
+      {audience ? (
+        <AudienceStatus
+          audience={audience}
+          reconciling={reconciling}
+          disabled={locked}
+          onReconcile={onReconcile}
+        />
+      ) : (
+        <p className="mb-4 text-xs text-(--cui-color-text-muted)">
+          No members are enrolled yet. Enabling an agent enrolls every active member.
+        </p>
+      )}
+      {mutationError && (
+        <p role="alert" className="mb-4 text-sm text-(--cui-color-text-danger)">
+          {mutationError}
+        </p>
+      )}
+      {agents.length === 0 ? (
+        <EmptyState message="No user-facing agents are registered. Run the agent sync script first." />
+      ) : (
+        <div className="divide-y divide-(--cui-color-stroke-default)">
+          {agents.map((agent) => (
+            <div key={agent.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div>
+                <p className="text-sm font-medium text-(--cui-color-text-default)">{agent.name}</p>
+                <p className="text-xs text-(--cui-color-text-muted)">
+                  {agent.description || agent.id}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-(--cui-color-text-muted)">
+                  {agentStatusLabel(agent, pendingAgentId)}
+                </span>
+                <Switch
+                  checked={agent.enabled}
+                  disabled={locked}
+                  aria-label={`${agent.name} access for all active members`}
+                  onCheckedChange={(enabled) => onToggle(agent.id, enabled)}
+                />
+              </div>
             </div>
-            <Button
-              type={agent.enabled ? 'secondary' : 'primary'}
-              label={agent.enabled ? 'Revoke access' : 'Grant access'}
-              disabled={updating || !groupId}
-              onClick={() => onToggle(agent.id, !agent.enabled)}
-            />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </Panel>
+  );
+}
+
+function agentStatusLabel(agent: t.PlatformAgentAccessAgent, pendingAgentId?: string) {
+  if (pendingAgentId === agent.id) return 'Saving…';
+  return agent.enabled ? 'Enabled' : 'Disabled';
+}
+
+function AudienceStatus({
+  audience,
+  reconciling,
+  disabled,
+  onReconcile,
+}: {
+  audience: t.PlatformAgentAccessAudience;
+  reconciling: boolean;
+  disabled: boolean;
+  onReconcile: () => void;
+}) {
+  return (
+    <div className="mb-4">
+      <div className="grid gap-x-6 md:grid-cols-2">
+        <Detail label="Active members" value={String(audience.activeMemberCount)} />
+        <Detail label="Enrolled members" value={String(audience.enrolledMemberCount)} />
+      </div>
+      {!audience.inSync && (
+        <div
+          role="status"
+          className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-(--cui-color-feedback-warning-bg) px-3 py-2 text-sm text-(--cui-color-feedback-warning-fg)"
+        >
+          <span>
+            Enrolled members do not match active members ({audience.missingMemberCount} missing,{' '}
+            {audience.staleMemberCount} stale).
+          </span>
+          <Button
+            type="secondary"
+            label={reconciling ? 'Reconciling…' : 'Reconcile members'}
+            disabled={disabled}
+            onClick={onReconcile}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
