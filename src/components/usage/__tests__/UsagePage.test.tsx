@@ -129,9 +129,9 @@ describe('UsagePage', () => {
     renderPage();
 
     await screen.findByText('Office Assistant');
-    expect(screen.queryByRole('columnheader', { name: 'Cost' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('columnheader', { name: 'Provider' })).not.toBeInTheDocument();
-    expect(screen.queryByText('Usage cost')).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'com_usage_cost' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'com_usage_provider' })).not.toBeInTheDocument();
+    expect(screen.queryByText('com_usage_cost')).not.toBeInTheDocument();
   });
 
   it('keeps cost and provider for a platform superadmin', async () => {
@@ -139,8 +139,8 @@ describe('UsagePage', () => {
     renderPage();
 
     await screen.findByText('Office Assistant');
-    expect(screen.getAllByRole('columnheader', { name: 'Cost' }).length).toBeGreaterThan(0);
-    expect(screen.getByRole('columnheader', { name: 'Provider' })).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: 'com_usage_cost' }).length).toBeGreaterThan(0);
+    expect(screen.getByRole('columnheader', { name: 'com_usage_provider' })).toBeInTheDocument();
   });
 
   it('shows no pagination when every model fits on one page', async () => {
@@ -170,7 +170,7 @@ describe('UsagePage', () => {
     fireEvent.click(screen.getByText('next page'));
     await waitFor(() => expect(lastModelsOffset()).toBe(10));
 
-    fireEvent.change(screen.getByPlaceholderText('Search members or models'), {
+    fireEvent.change(screen.getByPlaceholderText('com_usage_search'), {
       target: { value: 'office' },
     });
     await waitFor(() => expect(lastModelsOffset()).toBe(0));

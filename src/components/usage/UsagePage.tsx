@@ -36,6 +36,7 @@ import {
   EmptyState,
   Pagination,
   TrendChart,
+  RoleChip,
   ShareBar,
   Delta,
   Card,
@@ -582,22 +583,5 @@ function DataTable({
         <tbody>{children}</tbody>
       </table>
     </div>
-  );
-}
-
-function RoleChip({ role }: { role?: string }) {
-  const localize = useLocalize();
-  const isAdmin = role === 'INSTITUTION_ADMIN' || role === 'ADMIN';
-  return (
-    <span
-      className={cn(
-        'rounded-md px-2 py-0.5 text-xs font-semibold',
-        isAdmin
-          ? 'bg-(--syn-brand-tint) text-(--syn-brand-ink)'
-          : 'bg-(--syn-neutral-bg) text-(--syn-neutral-fg)',
-      )}
-    >
-      {localize(isAdmin ? 'com_role_admin' : 'com_role_member')}
-    </span>
   );
 }

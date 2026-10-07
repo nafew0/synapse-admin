@@ -29,3 +29,4 @@ export {
 } from './charts';
 export { Card } from './Card';
 export { RangePicker } from './RangePicker';
+export { InitialsAvatar, RoleChip, StatusChip } from './Chips';

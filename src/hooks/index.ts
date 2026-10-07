@@ -6,6 +6,7 @@ export * from './useCommandMenu';
 export * from './useDebouncedFilter';
 export * from './useHighlightRef';
 export * from './useLocalize';
+export * from './useMemberActions';
 export * from './useMemberSummary';
 export * from './useProfileMutations';
 export * from './useReorderVoiceover';

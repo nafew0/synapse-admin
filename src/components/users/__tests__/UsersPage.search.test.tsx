@@ -33,7 +33,7 @@ vi.mock('@/hooks/useCapabilities', () => ({
 
 vi.mock('../CreateUserDialog', () => ({ CreateUserDialog: () => null }));
 vi.mock('../ImportMembersDialog', () => ({ ImportMembersDialog: () => null }));
-vi.mock('../UserDetailDialog', () => ({ UserDetailDialog: () => null }));
+vi.mock('../MemberPanel', () => ({ MemberPanel: () => null }));
 vi.mock('../ResendInvitesDialog', () => ({ ResendInvitesDialog: () => null }));
 vi.mock('../../access', () => ({ ConfirmDialog: () => null }));
 
@@ -101,7 +101,7 @@ describe('UsersPage search', () => {
 
   it('keeps the search box mounted and focused while the next result loads', async () => {
     renderPage();
-    const input = await screen.findByPlaceholderText('Search members');
+    const input = await screen.findByPlaceholderText('com_members_search');
 
     vi.useFakeTimers();
     input.focus();
@@ -111,14 +111,14 @@ describe('UsersPage search', () => {
     });
 
     expect(pending.release).toHaveLength(1);
-    expect(screen.getByPlaceholderText('Search members')).toBe(input);
+    expect(screen.getByPlaceholderText('com_members_search')).toBe(input);
     expect(document.activeElement).toBe(input);
     expect(input).toHaveValue('a');
   });
 
   it('queries once per settled search, not once per letter', async () => {
     renderPage();
-    const input = await screen.findByPlaceholderText('Search members');
+    const input = await screen.findByPlaceholderText('com_members_search');
     const initialCalls = vi.mocked(getMembersFn).mock.calls.length;
 
     vi.useFakeTimers();
