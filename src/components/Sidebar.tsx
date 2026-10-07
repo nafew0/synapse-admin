@@ -25,7 +25,8 @@ import {
   useLocalize,
 } from '@/hooks';
 import { useTheme } from '@/contexts/ThemeContext';
-import synapseIcon from '@/assets/synapse-icon.svg';
+import synapseDarkLogo from '@/assets/synapse-logo-dark.svg';
+import synapseLogo from '@/assets/synapse-logo.svg';
 import { SettingsDialog } from './SettingsDialog';
 import { SystemCapabilities } from '@/constants';
 import { getInitials, cn } from '@/utils';
@@ -177,7 +178,12 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
         )}
       >
         <div className="flex h-16 shrink-0 items-center gap-2.5 px-3.5">
-          <img src={synapseIcon} alt={localize('com_a11y_logo_alt')} className="h-9 w-9 shrink-0" />
+          <img
+            src={resolvedTheme === 'dark' ? synapseDarkLogo : synapseLogo}
+            alt={localize('com_a11y_logo_alt')}
+            className="h-10 w-10 shrink-0"
+            draggable={false}
+          />
           {!collapsed ? (
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-[15px] font-bold text-(--cui-color-text-default)">
