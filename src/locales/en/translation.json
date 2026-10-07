@@ -1412,5 +1412,8 @@
   "com_members_select_package": "Select package",
   "com_members_grant": "Grant",
   "com_members_resend_verification": "Resend verification",
-  "com_members_full_usage": "Full usage and credit history"
+  "com_members_full_usage": "Full usage and credit history",
+  "com_groups_no_description": "No description",
+  "com_groups_member_count": "{{count}} members",
+  "com_groups_intro": "Organise members into groups. The managed group always contains every active member."
 }
