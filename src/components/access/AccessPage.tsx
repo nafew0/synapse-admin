@@ -21,7 +21,7 @@ export function AccessPage({
     <div
       role="region"
       aria-label={localize(canReadRoles ? 'com_nav_access' : 'com_nav_groups')}
-      className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col overflow-hidden px-6 pt-4"
+      className="flex min-h-0 w-full flex-1 flex-col overflow-hidden px-6 pt-4"
     >
       {!canReadRoles && canReadGroups ? (
         <p className="m-0 text-sm text-(--cui-color-text-muted)">{localize('com_groups_intro')}</p>

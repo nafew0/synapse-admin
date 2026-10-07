@@ -91,7 +91,7 @@ function QuickLinks({ isPlatformSuperadmin }: { isPlatformSuperadmin: boolean })
       aria-label={localize('com_nav_dashboard')}
       className="flex flex-1 flex-col overflow-auto"
     >
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6">
+      <div className="flex w-full flex-col gap-8 p-6">
         <section aria-label={localize('com_dash_quick_links')}>
           <h2 className="mb-3 text-sm font-medium text-(--cui-color-text-muted)">
             {localize('com_dash_quick_links')}

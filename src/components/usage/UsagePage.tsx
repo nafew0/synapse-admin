@@ -519,7 +519,7 @@ export function UsagePage() {
 function PageFrame({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-1 flex-col overflow-auto">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 p-6">{children}</div>
+      <div className="flex w-full flex-col gap-5 p-6">{children}</div>
     </div>
   );
 }

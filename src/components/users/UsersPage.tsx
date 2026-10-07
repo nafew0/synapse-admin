@@ -181,7 +181,7 @@ export function UsersPage() {
 
   return (
     <div className="flex flex-1 flex-col overflow-auto">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-6">
+      <div className="flex w-full flex-col gap-4 p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SeatLine summary={data.summary} isPlatformSuperadmin={isPlatformSuperadmin} />
           <div className="flex flex-wrap gap-2">

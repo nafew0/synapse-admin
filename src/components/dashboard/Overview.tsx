@@ -74,7 +74,7 @@ export function Overview() {
 
   return (
     <div className="flex flex-1 flex-col overflow-auto">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 p-6">
+      <div className="flex w-full flex-col gap-5 p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <p className="m-0 text-sm text-(--cui-color-text-muted)">
             {localize('com_dash_range_line', {
