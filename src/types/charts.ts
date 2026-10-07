@@ -96,3 +96,11 @@ export interface LegendItem {
   label: string;
   color: string;
 }
+
+export interface WeekdayAverage {
+  /** 0 = Sunday … 6 = Saturday. */
+  weekday: number;
+  average: number;
+  /** How many of this weekday fell in the range; 0 means no data, not no usage. */
+  days: number;
+}

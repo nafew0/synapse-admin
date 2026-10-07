@@ -7,6 +7,7 @@ import {
   presetRange,
   previousRange,
   rollingAverage,
+  weekdayAverages,
 } from './trend';
 
 describe('date ranges', () => {
@@ -68,5 +69,20 @@ describe('series helpers', () => {
     expect(percentChange(90, 100)).toBe(-10);
     expect(percentChange(5, 0)).toBeNull();
     expect(percentChange(5, undefined)).toBeNull();
+  });
+});
+
+describe('weekdayAverages', () => {
+  it('averages each weekday and skips the day still in progress', () => {
+    const series = [
+      { day: '2026-09-27', value: 10 },
+      { day: '2026-09-28', value: 20 },
+      { day: '2026-10-04', value: 30 },
+      { day: '2026-10-05', value: 2 },
+    ];
+    const averages = weekdayAverages(series, ['2026-10-05']);
+    expect(averages[0]).toEqual({ weekday: 0, average: 20, days: 2 });
+    expect(averages[1]).toEqual({ weekday: 1, average: 20, days: 1 });
+    expect(averages[2]).toEqual({ weekday: 2, average: 0, days: 0 });
   });
 });

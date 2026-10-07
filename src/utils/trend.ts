@@ -124,3 +124,34 @@ export function formatRelativeTime(value: string | null | undefined, now = Date.
   }
   return new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' }).format(then);
 }
+
+/**
+ * Average value per weekday (index 0 = Sunday) across a daily series. Days
+ * listed in `skip` (normally today, still in progress) are left out so a
+ * partial day doesn't drag its weekday down.
+ */
+export function weekdayAverages(series: t.TrendDatum[], skip: string[] = []): t.WeekdayAverage[] {
+  const skipped = new Set(skip);
+  const sums = new Array<number>(7).fill(0);
+  const counts = new Array<number>(7).fill(0);
+  for (const datum of series) {
+    if (skipped.has(datum.day)) {
+      continue;
+    }
+    const weekday = new Date(parseDay(datum.day)).getUTCDay();
+    sums[weekday] += datum.value;
+    counts[weekday] += 1;
+  }
+  return sums.map((sum, weekday) => ({
+    weekday,
+    average: counts[weekday] > 0 ? sum / counts[weekday] : 0,
+    days: counts[weekday],
+  }));
+}
+
+export function formatWeekday(weekday: number, style: 'short' | 'long' = 'short'): string {
+  /** 2023-01-01 was a Sunday, so adding the weekday index lands on that weekday. */
+  return new Intl.DateTimeFormat(undefined, { weekday: style, timeZone: 'UTC' }).format(
+    new Date(Date.UTC(2023, 0, 1 + weekday)),
+  );
+}

@@ -37,7 +37,7 @@ import {
 } from '@/components/shared';
 import { CreateUserDialog } from '@/components/users';
 import { SystemCapabilities } from '@/constants';
-import { InviteFollowUp } from './InviteFollowUp';
+import { WeekdayUsage } from './WeekdayUsage';
 
 const TOP_ROWS = 5;
 const ICON_SIZE = 16;
@@ -244,7 +244,7 @@ export function Overview() {
               </div>
             )}
           </Card>
-          <InviteFollowUp canManage={canManage} />
+          <WeekdayUsage series={series.tokens} />
         </section>
       </div>
       <CreateUserDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
