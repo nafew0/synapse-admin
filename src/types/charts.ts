@@ -57,6 +57,8 @@ export interface ShareBarProps {
   value: number;
   max: number;
   className?: string;
+  /** Grow the fill from empty on first render, starting after this many ms. */
+  growDelay?: number;
 }
 
 export interface StatTileProps {

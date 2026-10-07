@@ -373,8 +373,24 @@ code {
   animation-delay: calc(var(--syn-delay, 0ms) + 150ms);
 }
 
+@keyframes syn-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.syn-bar-grow {
+  transform-origin: left center;
+  animation: syn-bar-grow 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--syn-delay, 0ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .syn-icon-pop,
+  .syn-bar-grow,
   .syn-line-draw {
     animation: none;
   }

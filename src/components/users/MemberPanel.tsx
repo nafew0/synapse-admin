@@ -12,7 +12,13 @@ import {
   notifyError,
   presetRange,
 } from '@/utils';
-import { InitialsAvatar, StatusChip, RoleChip, ShareBar } from '@/components/shared';
+import {
+  BAR_STAGGER_MS,
+  InitialsAvatar,
+  StatusChip,
+  RoleChip,
+  ShareBar,
+} from '@/components/shared';
 import { useMemberActions, useLocalize } from '@/hooks';
 import { getUserCreditsFn, getUserUsageFn } from '@/server';
 import { ConfirmDialog } from '@/components/access';
@@ -243,10 +249,15 @@ function UserDetails({
         {models.length === 0 ? (
           <span className="text-xs text-(--cui-color-text-muted)">{localize('com_dash_no_usage')}</span>
         ) : (
-          models.slice(0, 5).map((model) => (
+          models.slice(0, 5).map((model, order) => (
             <div key={model.modelKey} className="grid grid-cols-[7.5rem_1fr_3rem] items-center gap-2.5 text-xs">
               <span className="truncate font-semibold">{model.displayName ?? model.modelKey}</span>
-              <ShareBar value={model.totalTokens} max={topModel} className="h-2" />
+              <ShareBar
+                value={model.totalTokens}
+                max={topModel}
+                className="h-2"
+                growDelay={order * BAR_STAGGER_MS}
+              />
               <span className="text-right font-semibold tabular-nums">{formatCompact(model.totalTokens)}</span>
             </div>
           ))

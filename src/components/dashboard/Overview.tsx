@@ -32,6 +32,7 @@ import {
   Meter,
   Card,
   TILE_STAGGER_MS,
+  BAR_STAGGER_MS,
 } from '@/components/shared';
 import { CreateUserDialog } from '@/components/users';
 import { SystemCapabilities } from '@/constants';
@@ -169,7 +170,7 @@ export function Overview() {
               <EmptyRow text={localize('com_dash_no_usage')} />
             ) : (
               <ul className="m-0 flex list-none flex-col gap-4 p-0">
-                {(models.data?.models ?? []).map((model) => (
+                {(models.data?.models ?? []).map((model, order) => (
                   <li key={model.modelKey} className="flex flex-col gap-1.5">
                     <div className="flex justify-between gap-3 text-[13px]">
                       <span className="truncate font-semibold">{model.displayName ?? model.modelKey}</span>
@@ -178,7 +179,12 @@ export function Overview() {
                         {totalTokens > 0 ? ` · ${Math.round((model.totalTokens / totalTokens) * 100)}%` : ''}
                       </span>
                     </div>
-                    <ShareBar value={model.totalTokens} max={topModelTokens} className="h-2" />
+                    <ShareBar
+                      value={model.totalTokens}
+                      max={topModelTokens}
+                      className="h-2"
+                      growDelay={300 + order * BAR_STAGGER_MS}
+                    />
                     <span className="text-xs text-(--cui-color-text-muted)">
                       {localize('com_dash_model_line', {
                         members: formatUsageNumber(model.memberCount),

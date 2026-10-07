@@ -27,6 +27,7 @@ export {
   Delta,
   TrendChart,
   TILE_STAGGER_MS,
+  BAR_STAGGER_MS,
 } from './charts';
 export { Card } from './Card';
 export { RangePicker } from './RangePicker';

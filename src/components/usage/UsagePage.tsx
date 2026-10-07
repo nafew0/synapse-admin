@@ -38,6 +38,7 @@ import {
   TrendChart,
   RoleChip,
   ShareBar,
+  BAR_STAGGER_MS,
   Delta,
   Card,
 } from '@/components/shared';
@@ -424,7 +425,7 @@ export function UsagePage() {
               ]}
               numericFrom={canViewBillingDetail ? 3 : 2}
             >
-              {models.map((model) => (
+              {models.map((model, order) => (
                 <tr key={model.displayName ?? model.modelKey} className="border-t border-(--cui-color-stroke-muted)">
                   <td className="py-3 pr-4 font-semibold">{model.displayName ?? model.modelKey}</td>
                   {canViewBillingDetail ? (
@@ -432,7 +433,12 @@ export function UsagePage() {
                   ) : null}
                   <td className="w-1/4 pr-6">
                     <div className="flex items-center gap-3">
-                      <ShareBar value={model.totalTokens} max={topModel} className="h-2" />
+                      <ShareBar
+                        value={model.totalTokens}
+                        max={topModel}
+                        className="h-2"
+                        growDelay={order * BAR_STAGGER_MS}
+                      />
                       <span className="w-10 shrink-0 text-right text-(--cui-color-text-muted)">
                         {summary.totalTokens > 0
                           ? `${Math.round((model.totalTokens / summary.totalTokens) * 100)}%`
