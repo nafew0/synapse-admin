@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
-import type { KeyboardEvent, PointerEvent } from 'react';
+import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react';
 import type * as t from '@/types';
 import { rollingAverage } from '@/utils';
 import { useLocalize } from '@/hooks';
 
 const VIEW_WIDTH = 1000;
+const AVERAGE_DELAY_MS = 350;
 const AXIS_LABEL_COUNT = 5;
 
 function niceCeiling(value: number): number {
@@ -116,6 +117,8 @@ export function TrendChart({
     setActive(next[event.key]);
   };
 
+  /** A new series (metric switch, new range) redraws instead of snapping in place. */
+  const drawKey = `${label}:${data[0].day}:${data.length}`;
   const activeDatum = active == null ? null : data[active];
   const activeAverage = active == null ? null : geometry.averages[active];
   const flip = active != null && active > (data.length - 1) * 0.6;
@@ -149,10 +152,11 @@ export function TrendChart({
           <div className="absolute inset-x-0 top-1/2 border-t border-(--syn-track)" />
           <div className="absolute inset-x-0 bottom-0 border-t border-(--cui-color-stroke-default)" />
           <svg
+            key={drawKey}
             aria-hidden="true"
             viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
             preserveAspectRatio="none"
-            className="absolute inset-0 h-full w-full overflow-visible"
+            className="syn-reveal absolute inset-0 h-full w-full overflow-visible"
           >
             <path d={geometry.area} style={{ fill: 'var(--syn-chart-1)', fillOpacity: 0.14 }} />
             <path
@@ -163,6 +167,15 @@ export function TrendChart({
               vectorEffect="non-scaling-stroke"
               style={{ stroke: 'var(--syn-chart-1)' }}
             />
+          </svg>
+          <svg
+            key={`${drawKey}-average`}
+            aria-hidden="true"
+            viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+            preserveAspectRatio="none"
+            className="syn-reveal absolute inset-0 h-full w-full overflow-visible"
+            style={{ '--syn-delay': `${AVERAGE_DELAY_MS}ms` } as CSSProperties}
+          >
             <path
               d={geometry.average}
               fill="none"

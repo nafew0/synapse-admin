@@ -388,8 +388,25 @@ code {
   animation-delay: var(--syn-delay, 0ms);
 }
 
+/* Reveals a chart left to right. A clip, not a stroke dash, so it also works
+   with non-scaling strokes and draws the filled area together with its line. */
+@keyframes syn-reveal {
+  from {
+    clip-path: inset(-4px 100% -4px -4px);
+  }
+  to {
+    clip-path: inset(-4px -4px -4px -4px);
+  }
+}
+
+.syn-reveal {
+  animation: syn-reveal 1400ms cubic-bezier(0.33, 1, 0.68, 1) both;
+  animation-delay: var(--syn-delay, 0ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .syn-icon-pop,
+  .syn-reveal,
   .syn-bar-grow,
   .syn-line-draw {
     animation: none;
