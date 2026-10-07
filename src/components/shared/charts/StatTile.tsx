@@ -1,13 +1,20 @@
+import type { CSSProperties } from 'react';
 import type * as t from '@/types';
 import { percentChange } from '@/utils';
 import { useLocalize } from '@/hooks';
 
-export function StatTile({ label, value, icon, detail, children }: t.StatTileProps) {
+export const TILE_STAGGER_MS = 90;
+
+export function StatTile({ label, value, icon, detail, children, index = 0 }: t.StatTileProps) {
   return (
     <div className="flex min-w-0 flex-col gap-2.5 rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-4">
       <div className="flex items-center gap-2 text-(--cui-color-text-muted)">
         {icon ? (
-          <span aria-hidden="true" className="flex shrink-0">
+          <span
+            aria-hidden="true"
+            className="syn-icon-pop flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-(--syn-brand-tint) text-(--syn-brand-ink)"
+            style={{ '--syn-delay': `${index * TILE_STAGGER_MS}ms` } as CSSProperties}
+          >
             {icon}
           </span>
         ) : null}

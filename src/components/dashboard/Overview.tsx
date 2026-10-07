@@ -31,6 +31,7 @@ import {
   Delta,
   Meter,
   Card,
+  TILE_STAGGER_MS,
 } from '@/components/shared';
 import { CreateUserDialog } from '@/components/users';
 import { SystemCapabilities } from '@/constants';
@@ -106,19 +107,21 @@ export function Overview() {
             label={localize('com_dash_tokens_used')}
             value={formatCompact(totalTokens)}
             icon={<Layers size={ICON_SIZE} />}
+            index={0}
             detail={<Delta current={totalTokens} previous={before?.totalTokens} suffix={comparedTo} />}
           >
-            <Sparkline values={series.tokens.map((datum) => datum.value)} />
+            <Sparkline values={series.tokens.map((datum) => datum.value)} delay={0} />
           </StatTile>
           <StatTile
             label={localize('com_dash_requests')}
             value={formatUsageNumber(current?.eventCount ?? 0)}
             icon={<Activity size={ICON_SIZE} />}
+            index={1}
             detail={
               <Delta current={current?.eventCount ?? 0} previous={before?.eventCount} suffix={comparedTo} />
             }
           >
-            <Sparkline values={series.requests.map((datum) => datum.value)} />
+            <Sparkline values={series.requests.map((datum) => datum.value)} delay={TILE_STAGGER_MS} />
           </StatTile>
           <AdoptionTile
             used={current?.memberCount ?? 0}
@@ -260,6 +263,7 @@ function AdoptionTile({
       label={localize('com_dash_members_using')}
       value={formatUsageNumber(used)}
       icon={<UserCheck size={ICON_SIZE} />}
+      index={2}
       detail={
         active != null ? (
           <span className="flex flex-col gap-2">
@@ -283,7 +287,7 @@ function AdoptionTile({
 function SeatsTile({ seats }: { seats: t.InstitutionSeatSummary | undefined }) {
   const localize = useLocalize();
   if (!seats) {
-    return <StatTile label={localize('com_dash_seats')} value="—" icon={<IdCard size={ICON_SIZE} />} />;
+    return <StatTile label={localize('com_dash_seats')} value="—" icon={<IdCard size={ICON_SIZE} />} index={3} />;
   }
   const used = seats.activeMembers + seats.pendingInvites;
   const max = seats.maxActiveMembers;
@@ -304,6 +308,7 @@ function SeatsTile({ seats }: { seats: t.InstitutionSeatSummary | undefined }) {
       label={localize('com_dash_seats')}
       value={formatUsageNumber(used)}
       icon={<IdCard size={ICON_SIZE} />}
+      index={3}
       detail={
         <span className="flex flex-col gap-2">
           <span>

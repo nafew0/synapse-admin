@@ -1,10 +1,11 @@
+import type { CSSProperties } from 'react';
 import type * as t from '@/types';
 import { cn } from '@/utils';
 
 const WIDTH = 112;
 const HEIGHT = 40;
 
-export function Sparkline({ values, className }: t.SparklineProps) {
+export function Sparkline({ values, className, delay = 0 }: t.SparklineProps) {
   if (values.length < 2) {
     return null;
   }
@@ -26,12 +27,14 @@ export function Sparkline({ values, className }: t.SparklineProps) {
     >
       <polyline
         points={points}
+        pathLength={1}
+        className="syn-line-draw"
         fill="none"
         strokeWidth={2}
         strokeLinejoin="round"
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
-        style={{ stroke: 'var(--syn-chart-1)' }}
+        style={{ stroke: 'var(--syn-chart-1)', '--syn-delay': `${delay}ms` } as CSSProperties}
       />
     </svg>
   );

@@ -336,6 +336,50 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
+/* Dashboard entrance motion: tile icons pop in, sparklines draw left to right.
+   Kept to transform/opacity/stroke so it stays cheap, and off for reduced motion. */
+@keyframes syn-icon-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(4px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes syn-line-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.syn-icon-pop {
+  animation: syn-icon-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--syn-delay, 0ms);
+}
+
+.syn-line-draw {
+  stroke-dasharray: 1;
+  animation: syn-line-draw 900ms ease-out both;
+  animation-delay: calc(var(--syn-delay, 0ms) + 150ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .syn-icon-pop,
+  .syn-line-draw {
+    animation: none;
+  }
+}
+
 .user-dropdown [role='menuitem'] {
   width: 100%;
   box-sizing: border-box;

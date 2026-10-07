@@ -35,6 +35,8 @@ export interface TrendChartProps {
 export interface SparklineProps {
   values: number[];
   className?: string;
+  /** Entrance delay in ms, to stagger with the tile it sits in. */
+  delay?: number;
 }
 
 export interface MeterSegment {
@@ -63,6 +65,8 @@ export interface StatTileProps {
   icon?: ReactNode;
   detail?: ReactNode;
   children?: ReactNode;
+  /** Position in a row of tiles; staggers the icon's entrance. */
+  index?: number;
 }
 
 export interface DeltaProps {

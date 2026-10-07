@@ -26,6 +26,7 @@ export {
   StatTile,
   Delta,
   TrendChart,
+  TILE_STAGGER_MS,
 } from './charts';
 export { Card } from './Card';
 export { RangePicker } from './RangePicker';
