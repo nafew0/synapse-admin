@@ -9,6 +9,7 @@ import {
   formatUsageNumber,
   notifySuccess,
   formatCompact,
+  modelRowKey,
   notifyError,
   presetRange,
 } from '@/utils';
@@ -250,7 +251,7 @@ function UserDetails({
           <span className="text-xs text-(--cui-color-text-muted)">{localize('com_dash_no_usage')}</span>
         ) : (
           models.slice(0, 5).map((model, order) => (
-            <div key={model.modelKey} className="grid grid-cols-[7.5rem_1fr_3rem] items-center gap-2.5 text-xs">
+            <div key={modelRowKey(model)} className="grid grid-cols-[7.5rem_1fr_3rem] items-center gap-2.5 text-xs">
               <span className="truncate font-semibold">{model.displayName ?? model.modelKey}</span>
               <ShareBar
                 value={model.totalTokens}

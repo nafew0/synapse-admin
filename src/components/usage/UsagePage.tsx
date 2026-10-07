@@ -21,6 +21,7 @@ import {
   formatDayLabel,
   datedFilename,
   formatCompact,
+  modelRowKey,
   presetRange,
   downloadBlob,
   fillDaily,
@@ -426,7 +427,7 @@ export function UsagePage() {
               numericFrom={canViewBillingDetail ? 3 : 2}
             >
               {models.map((model, order) => (
-                <tr key={model.displayName ?? model.modelKey} className="border-t border-(--cui-color-stroke-muted)">
+                <tr key={modelRowKey(model)} className="border-t border-(--cui-color-stroke-muted)">
                   <td className="py-3 pr-4 font-semibold">{model.displayName ?? model.modelKey}</td>
                   {canViewBillingDetail ? (
                     <td className="pr-4 text-(--cui-color-text-muted)">{model.providerKey || '—'}</td>

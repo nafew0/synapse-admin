@@ -8,6 +8,7 @@ import {
   previousRange,
   formatDayLabel,
   formatCompact,
+  modelRowKey,
   presetRange,
   fillDaily,
 } from '@/utils';
@@ -171,7 +172,7 @@ export function Overview() {
             ) : (
               <ul className="m-0 flex list-none flex-col gap-4 p-0">
                 {(models.data?.models ?? []).map((model, order) => (
-                  <li key={model.modelKey} className="flex flex-col gap-1.5">
+                  <li key={modelRowKey(model)} className="flex flex-col gap-1.5">
                     <div className="flex justify-between gap-3 text-[13px]">
                       <span className="truncate font-semibold">{model.displayName ?? model.modelKey}</span>
                       <span className="shrink-0 text-(--cui-color-text-muted) tabular-nums">

@@ -3,6 +3,19 @@
  *  dollars and overstates spend a millionfold. */
 const CREDITS_PER_USD = 1_000_000;
 
+/**
+ * Rows are merged server-side by the label members see, so several rows can
+ * share one underlying model id (two specs, or two providers, on one model).
+ * React keys must combine all three or rows get reused under the wrong name.
+ */
+export function modelRowKey(row: {
+  displayName?: string;
+  providerKey?: string;
+  modelKey: string;
+}): string {
+  return [row.displayName ?? '', row.providerKey ?? '', row.modelKey].join('|');
+}
+
 export function formatUsageNumber(value: number): string {
   return new Intl.NumberFormat().format(Math.round(value));
 }
