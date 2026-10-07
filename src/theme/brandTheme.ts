@@ -105,5 +105,5 @@ function patchInPlace(theme: Record<string, unknown>, accentHex: string): void {
   }
 }
 
-patchInPlace(themes.dark as unknown as Record<string, unknown>, '#fba24d');
+patchInPlace(themes.dark as unknown as Record<string, unknown>, '#f5871f');
 patchInPlace(themes.light as unknown as Record<string, unknown>, '#f5871f');

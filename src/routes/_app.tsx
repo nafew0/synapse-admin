@@ -23,6 +23,16 @@ const ROUTE_TITLE_KEYS: Record<string, string> = {
 };
 
 
+/** Institution admins manage members and groups; the platform-wide names describe a superadmin's view. */
+function scopedTitleKey(
+  route: string,
+  scope: { isPlatformSuperadmin: boolean; canManageRoles: boolean },
+): string {
+  if (route === '/users' && !scope.isPlatformSuperadmin) return 'com_nav_members';
+  if (route === '/access' && !scope.canManageRoles) return 'com_nav_groups';
+  return ROUTE_TITLE_KEYS[route];
+}
+
 export const Route = createFileRoute('/_app')({
   beforeLoad: async ({ location }) => {
     const result = await verifyAdminTokenFn();
@@ -49,7 +59,7 @@ function AppLayout() {
   const { open, setOpen } = useCommandMenu();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     const stored = localStorage.getItem('admin-panel:sidebar-collapsed');
-    return stored !== null ? stored === 'true' : true;
+    return stored !== null ? stored === 'true' : false;
   });
   const pathname = router.state.location.pathname;
 
@@ -78,7 +88,14 @@ function AppLayout() {
   const matchedKey = Object.keys(ROUTE_TITLE_KEYS).find((route) =>
     route === '/' ? pathname === '/' : pathname.startsWith(route),
   );
-  const title = matchedKey ? localize(ROUTE_TITLE_KEYS[matchedKey]) : undefined;
+  const title = matchedKey
+    ? localize(
+        scopedTitleKey(matchedKey, {
+          isPlatformSuperadmin: user?.isPlatformSuperadmin === true,
+          canManageRoles: hasCapability(SystemCapabilities.MANAGE_ROLES),
+        }),
+      )
+    : undefined;
 
   return (
     <div className="flex h-screen overflow-hidden">

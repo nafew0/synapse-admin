@@ -1,6 +1,8 @@
 export interface UsageRange {
   start: string;
   end: string;
+  /** The institution's timezone, in which day boundaries were resolved. */
+  timezone?: string;
 }
 
 /** `totalCost` is omitted by the API for institution admins, who are never
