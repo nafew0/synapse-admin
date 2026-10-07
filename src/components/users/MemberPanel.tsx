@@ -51,7 +51,7 @@ export function MemberPanel({ member, onClose, canManage, platform }: t.MemberPa
     return (
       <aside
         aria-label={localize('com_members_panel')}
-        className="flex min-h-60 flex-[1_1_20rem] items-center justify-center rounded-xl border border-dashed border-(--cui-color-stroke-default) p-6 text-center text-sm text-(--cui-color-text-muted)"
+        className="flex min-h-60 flex-[1_1_24rem] items-center justify-center rounded-xl border border-dashed border-(--cui-color-stroke-default) p-6 text-center text-sm text-(--cui-color-text-muted)"
       >
         {localize('com_members_panel_empty')}
       </aside>
@@ -63,7 +63,7 @@ export function MemberPanel({ member, onClose, canManage, platform }: t.MemberPa
   return (
     <aside
       aria-label={localize('com_members_panel')}
-      className="flex max-w-full flex-[1_1_20rem] flex-col gap-4 self-start rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-5"
+      className="flex max-w-full flex-[1_1_24rem] flex-col gap-5 self-start rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-6"
     >
       <div className="flex items-start gap-3">
         <InitialsAvatar label={member.name || member.email} invite={isInvite} size="lg" />

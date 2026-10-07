@@ -219,7 +219,7 @@ export function UsersPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-start gap-4">
+        <div className="flex flex-wrap items-start gap-6">
           <section
             aria-label={localize('com_members_list')}
             className="min-w-0 flex-[999_1_36rem] overflow-hidden rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface)"

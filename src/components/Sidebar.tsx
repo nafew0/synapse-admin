@@ -164,7 +164,7 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
         aria-label={localize('com_a11y_admin_panel')}
         className={cn(
           'sticky top-0 z-(--z-floating) flex h-screen shrink-0 flex-col overflow-hidden border-r border-(--cui-color-stroke-default) bg-(--syn-surface) transition-[width] duration-200 motion-reduce:transition-none',
-          collapsed ? 'w-16' : 'w-64',
+          collapsed ? 'w-16' : 'w-56',
         )}
       >
         <div className="flex h-16 shrink-0 items-center gap-2.5 px-3.5">
