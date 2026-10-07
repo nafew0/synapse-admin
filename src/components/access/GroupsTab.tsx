@@ -2,6 +2,7 @@ import { Button } from '@clickhouse/click-ui';
 import { Network, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import type { CSSProperties } from 'react';
 import type * as t from '@/types';
 import {
   LoadingState,
@@ -10,6 +11,7 @@ import {
   Pagination,
   TrashButton,
   ShareBar,
+  TILE_STAGGER_MS,
 } from '@/components/shared';
 import { deleteGroupFn, groupsQueryOptions, GROUPS_PAGE_SIZE } from '@/server';
 import { cn, notifySuccess, notifyError } from '@/utils';
@@ -115,7 +117,7 @@ export function GroupsTab({ onCreateGroup }: t.GroupsTabProps) {
             isFetching && 'opacity-60 transition-opacity',
           )}
         >
-          {groups.map((group) => (
+          {groups.map((group, order) => (
             <li
               key={group.id}
               className="flex flex-col gap-3 rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-4"
@@ -123,7 +125,8 @@ export function GroupsTab({ onCreateGroup }: t.GroupsTabProps) {
               <div className="flex items-start gap-3">
                 <span
                   aria-hidden="true"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-(--syn-brand-tint) text-(--syn-brand-ink)"
+                  className="syn-icon-pop flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-(--syn-brand-tint) text-(--syn-brand-ink)"
+                  style={{ '--syn-delay': `${order * TILE_STAGGER_MS}ms` } as CSSProperties}
                 >
                   {group.managedKind ? <RefreshCw size={17} /> : <Network size={17} />}
                 </span>

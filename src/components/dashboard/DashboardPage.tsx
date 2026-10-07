@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { Link, getRouteApi } from '@tanstack/react-router';
 import { Building2, ChartColumn, CircleHelp, KeyRound, Settings2, ShieldCheck } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import type * as t from '@/types';
 import { useCapabilities, useLocalize } from '@/hooks';
+import { TILE_STAGGER_MS } from '@/components/shared';
 import { SystemCapabilities } from '@/constants';
 import { Overview } from './Overview';
 
@@ -97,7 +99,7 @@ function QuickLinks({ isPlatformSuperadmin }: { isPlatformSuperadmin: boolean })
             {localize('com_dash_quick_links')}
           </h2>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {visibleLinks.map((link) => {
+            {visibleLinks.map((link, order) => {
               const LinkIcon = link.icon;
               return (
                 <Link
@@ -107,7 +109,8 @@ function QuickLinks({ isPlatformSuperadmin }: { isPlatformSuperadmin: boolean })
                 >
                   <span
                     aria-hidden="true"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-(--syn-brand-tint) text-(--syn-brand-ink)"
+                    className="syn-icon-pop flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-(--syn-brand-tint) text-(--syn-brand-ink)"
+                    style={{ '--syn-delay': `${order * TILE_STAGGER_MS}ms` } as CSSProperties}
                   >
                     <LinkIcon size={18} strokeWidth={1.9} />
                   </span>

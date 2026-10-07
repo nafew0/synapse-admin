@@ -16,6 +16,7 @@ import {
   Sun,
   Users,
 } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import type * as t from '@/types';
 import {
   useStripAriaExpanded,
@@ -96,6 +97,9 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
   ];
 }
 
+const NAV_ICON_OFFSET_MS = 80;
+const NAV_ICON_STAGGER_MS = 55;
+
 function getUserInitials(user?: { name?: string; email?: string } | null): string {
   if (user?.name) return getInitials(user.name);
   if (user?.email) return user.email[0].toUpperCase();
@@ -127,6 +131,11 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
   )
     .map((section) => ({ ...section, items: section.items.filter(isVisible) }))
     .filter((section) => section.items.length > 0);
+
+  /** Entrance order across all sections, so icons pop in top to bottom. */
+  const iconOrder = new Map(
+    sections.flatMap((section) => section.items).map((item, order) => [item.path, order]),
+  );
 
   const isActive = (path: string) =>
     path === '/' ? currentPath === '/' : currentPath.startsWith(path);
@@ -219,7 +228,17 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
                         : 'font-medium text-(--cui-color-text-muted) hover:bg-(--cui-color-background-hover) hover:text-(--cui-color-text-default)',
                     )}
                   >
-                    <NavIcon aria-hidden="true" size={18} strokeWidth={1.9} className="shrink-0" />
+                    <NavIcon
+                      aria-hidden="true"
+                      size={18}
+                      strokeWidth={1.9}
+                      className="syn-icon-pop shrink-0"
+                      style={
+                        {
+                          '--syn-delay': `${NAV_ICON_OFFSET_MS + (iconOrder.get(item.path) ?? 0) * NAV_ICON_STAGGER_MS}ms`,
+                        } as CSSProperties
+                      }
+                    />
                     {!collapsed ? <span className="flex-1 truncate">{label}</span> : null}
                     {badge && !collapsed ? (
                       <span
