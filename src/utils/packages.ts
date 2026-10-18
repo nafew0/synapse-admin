@@ -34,8 +34,10 @@ export function formatTaka(value: number): string {
   return `৳${value.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 }
 
+/** Cents normally; amounts under a cent keep four decimals so a small package never reads "$0.00". */
 export function formatUsd(value: number): string {
-  return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const digits = value !== 0 && Math.abs(value) < 0.01 ? 4 : 2;
+  return `$${value.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
 }
 
 /** A package key from its name: lowercase, hyphenated, at most 40 characters. */

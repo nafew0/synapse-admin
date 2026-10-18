@@ -33,6 +33,8 @@ describe('formatting', () => {
   it('formats taka and dollars', () => {
     expect(formatTaka(2500)).toBe('৳2,500');
     expect(formatUsd(2.4390243)).toBe('$2.44');
+    expect(formatUsd(0.0040650406)).toBe('$0.0041');
+    expect(formatUsd(0)).toBe('$0.00');
   });
 
   it('derives a key from a package name', () => {
