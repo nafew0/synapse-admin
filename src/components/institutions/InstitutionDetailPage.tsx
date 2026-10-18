@@ -538,7 +538,7 @@ function AudienceStatus({
   );
 }
 
-function Usage({
+export function Usage({
   policy,
   health,
   models,
@@ -649,16 +649,19 @@ function Usage({
   );
 }
 
-function PolicyEditor({
+export function PolicyEditor({
   tenantId,
   policy,
   models,
   onSaved,
+  creditOnly = false,
 }: {
   tenantId: string;
   policy: t.UsagePolicy;
   models: t.QuotaModelRow[];
   onSaved: () => void;
+  /** Accounts metered only in credits edit the mode alone: their limits come from packages. */
+  creditOnly?: boolean;
 }) {
   const [mode, setMode] = useState(policy.mode);
   const [timezone, setTimezone] = useState(policy.timezone);
@@ -742,26 +745,30 @@ function PolicyEditor({
             <option value="enforce">Enforce</option>
           </select>
         </Field>
-        <Field label="Institution timezone">
-          <input value={timezone} onChange={(event) => setTimezone(event.target.value)} />
-        </Field>
-        <Field label="Institution token limit (blank = unlimited)">
-          <input
-            type="number"
-            min={0}
-            value={institutionLimit}
-            onChange={(event) => setInstitutionLimit(event.target.value)}
-          />
-        </Field>
-        <Field label="Per-member token limit (blank = unlimited)">
-          <input
-            type="number"
-            min={0}
-            value={memberLimit}
-            onChange={(event) => setMemberLimit(event.target.value)}
-          />
-        </Field>
-        <ModelLimitsField models={models} limits={modelLimits} onChange={setModelLimits} />
+        {!creditOnly && (
+          <>
+            <Field label="Institution timezone">
+              <input value={timezone} onChange={(event) => setTimezone(event.target.value)} />
+            </Field>
+            <Field label="Institution token limit (blank = unlimited)">
+              <input
+                type="number"
+                min={0}
+                value={institutionLimit}
+                onChange={(event) => setInstitutionLimit(event.target.value)}
+              />
+            </Field>
+            <Field label="Per-member token limit (blank = unlimited)">
+              <input
+                type="number"
+                min={0}
+                value={memberLimit}
+                onChange={(event) => setMemberLimit(event.target.value)}
+              />
+            </Field>
+            <ModelLimitsField models={models} limits={modelLimits} onChange={setModelLimits} />
+          </>
+        )}
         <Field label="Change reason">
           <input value={reason} onChange={(event) => setReason(event.target.value)} />
         </Field>
@@ -862,7 +869,7 @@ function describePolicyChanges(next: t.UsagePolicy, previous: t.UsagePolicy | un
   return changes.length > 0 ? changes : ['No effective limit changes'];
 }
 
-function History({ policies }: { policies: t.UsagePolicy[] }) {
+export function History({ policies }: { policies: t.UsagePolicy[] }) {
   if (policies.length === 0) {
     return (
       <Panel title="Policy history">

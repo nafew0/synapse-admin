@@ -91,11 +91,15 @@ export type CreditMemberUsage = {
   month: CreditMeter;
 };
 
-/** An institution on usage packages, as the platform console shows it. */
+/** An institution, or the individuals account, on usage packages, as the platform console shows it. */
 export type CreditConsole = {
   enforced: boolean;
+  /** `false` for the individuals account, which has no shared pool. */
+  pooled?: boolean;
+  /** Everyone who used the allowance this month; `members` lists the busiest of them. */
+  memberTotal?: number;
   institutionPackage: string | null;
   defaultMemberPackage: string | null;
-  institution: { week: CreditMeter; month: CreditMeter };
+  institution: { week: CreditMeter; month: CreditMeter } | null;
   members: CreditMemberUsage[];
 };

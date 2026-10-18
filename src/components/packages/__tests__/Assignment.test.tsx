@@ -32,7 +32,7 @@ const server = vi.hoisted(() => ({
 
 vi.mock('@/server', () => server);
 
-import { InstitutionPackageCard, MemberPackageCard } from '../Assignment';
+import { InstitutionPackageCard, MemberPackageCard, TrialPackageCard } from '../Assignment';
 
 const pkg = (overrides: Partial<t.UsagePackage>): t.UsagePackage => ({
   key: 'standard',
@@ -171,5 +171,43 @@ describe('MemberPackageCard', () => {
     await waitFor(() =>
       expect(server.clearUserUsagePackageFn).toHaveBeenCalledWith({ data: { userId: 'u1' } }),
     );
+  });
+});
+
+describe('TrialPackageCard', () => {
+  it('offers member packages and sets the trial on the individuals account', async () => {
+    renderWithClient(<TrialPackageCard current={null} />);
+    const trial = await screen.findByLabelText('Trial package');
+    expect(optionNames(trial)).toEqual([
+      'No trial: individuals are not metered',
+      'Standard · ৳600/month · $1.71/week',
+    ]);
+    fireEvent.change(trial, { target: { value: 'standard' } });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() =>
+      expect(server.setInstitutionUsagePackageFn).toHaveBeenCalledWith({
+        data: { tenantId: '__individuals__', packageKey: null, memberPackageKey: 'standard' },
+      }),
+    );
+  });
+
+  it('clears the trial when set back to none', async () => {
+    renderWithClient(<TrialPackageCard current="standard" />);
+    fireEvent.change(await screen.findByLabelText('Trial package'), { target: { value: '' } });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() =>
+      expect(server.clearInstitutionUsagePackageFn).toHaveBeenCalledWith({
+        data: { tenantId: '__individuals__' },
+      }),
+    );
+  });
+});
+
+describe('MemberPackageCard for a standalone user', () => {
+  it('falls back to the trial package rather than an institution default', async () => {
+    renderWithClient(<MemberPackageCard userId="u1" current={null} standalone />);
+    const own = await screen.findByLabelText('Member package');
+    expect(optionNames(own)[0]).toBe('Use the trial package');
+    expect(screen.getByText(/replaces the trial package/)).toBeInTheDocument();
   });
 });

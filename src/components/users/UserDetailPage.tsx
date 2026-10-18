@@ -198,7 +198,11 @@ export function UserDetailPage() {
             packages={packages}
           />
           {isPlatform && member.kind === 'user' ? (
-            <MemberPackageCard userId={userId} current={member.usagePackage} />
+            <MemberPackageCard
+              userId={userId}
+              current={member.usagePackage}
+              standalone={member.accountScope === 'standalone'}
+            />
           ) : null}
         </>
       )}

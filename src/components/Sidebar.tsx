@@ -15,6 +15,7 @@ import {
   Settings2,
   ShieldCheck,
   Sun,
+  UserRound,
   Users,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
@@ -59,6 +60,12 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
           path: '/users',
           icon: Users,
           capability: SystemCapabilities.READ_USERS,
+        },
+        {
+          labelKey: 'com_nav_individuals',
+          path: '/individuals',
+          icon: UserRound,
+          superadminOnly: true,
         },
         {
           labelKey: canManageRoles ? 'com_nav_access' : 'com_nav_groups',

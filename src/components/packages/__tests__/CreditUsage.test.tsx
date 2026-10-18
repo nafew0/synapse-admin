@@ -71,4 +71,23 @@ describe('CreditUsage', () => {
     render(<CreditUsage credits={{ ...credits, members: [] }} />);
     expect(screen.getByText(/No member has used the allowance/)).toBeInTheDocument();
   });
+
+  it('shows individuals without a pool, with the trial package and how many used it', () => {
+    render(
+      <CreditUsage
+        credits={{
+          ...credits,
+          pooled: false,
+          institution: null,
+          institutionPackage: null,
+          defaultMemberPackage: 'Trial',
+          memberTotal: 140,
+        }}
+      />,
+    );
+    expect(screen.getByText(/Trial package: Trial\. 140 used Synapse this month\./)).toBeInTheDocument();
+    expect(screen.getByText('Busiest individuals')).toBeInTheDocument();
+    expect(screen.queryByText('Usage allowance')).not.toBeInTheDocument();
+    expect(screen.queryByText('৳120 of ৳10,500')).not.toBeInTheDocument();
+  });
 });

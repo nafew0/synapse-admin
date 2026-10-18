@@ -9,7 +9,7 @@ import {
   setInstitutionUsagePackageFn,
   clearInstitutionUsagePackageFn,
 } from '@/server';
-import { formatTaka, formatUsd, notifyError, notifySuccess } from '@/utils';
+import { formatTaka, formatUsd, notifyError, notifySuccess, INDIVIDUAL_ACCOUNT } from '@/utils';
 import { Card, LoadingState } from '@/components/shared';
 import { PACKAGES_QUERY_KEY } from './keys';
 import { useLocalize } from '@/hooks';
@@ -163,6 +163,63 @@ export function InstitutionPackageCard({
   );
 }
 
+/** The package everyone outside an institution gets until they are assigned their own. */
+export function TrialPackageCard({ current }: { current?: string | null }) {
+  const localize = useLocalize();
+  const queryClient = useQueryClient();
+  const packagesQuery = usePackages();
+  const [trial, setTrial] = useState(current ?? '');
+
+  useEffect(() => setTrial(current ?? ''), [current]);
+
+  const save = useMutation({
+    mutationFn: () =>
+      trial
+        ? setInstitutionUsagePackageFn({
+            data: { tenantId: INDIVIDUAL_ACCOUNT, packageKey: null, memberPackageKey: trial },
+          })
+        : clearInstitutionUsagePackageFn({ data: { tenantId: INDIVIDUAL_ACCOUNT } }),
+    onSuccess: () => {
+      notifySuccess(localize('com_assign_saved'));
+      queryClient.invalidateQueries({ queryKey: ['platformInstitutionQuota', INDIVIDUAL_ACCOUNT] });
+    },
+    onError: (error: Error) => notifyError(error.message),
+  });
+
+  return (
+    <Card
+      title={localize('com_assign_trial_title')}
+      description={localize('com_assign_trial_description')}
+      action={
+        <Button
+          type="primary"
+          label={localize('com_ui_save')}
+          disabled={trial === (current ?? '') || save.isPending}
+          onClick={() => save.mutate()}
+        />
+      }
+    >
+      {packagesQuery.isLoading ? (
+        <LoadingState />
+      ) : (
+        <PackageSelect
+          id="trial-package"
+          label={localize('com_assign_trial_label')}
+          value={trial}
+          scope="member"
+          packages={packagesQuery.data?.packages ?? []}
+          noneLabel={localize('com_assign_none_trial')}
+          disabled={save.isPending}
+          onChange={setTrial}
+        />
+      )}
+      <p className="m-0 text-[13px] text-(--cui-color-text-muted)">
+        {localize('com_assign_trial_note')}
+      </p>
+    </Card>
+  );
+}
+
 /** A date input value (YYYY-MM-DD) as the end of that day in local time, as an ISO instant. */
 function endOfDay(date: string): string | null {
   if (!date) return null;
@@ -173,9 +230,12 @@ function endOfDay(date: string): string | null {
 export function MemberPackageCard({
   userId,
   current,
+  standalone = false,
 }: {
   userId: string;
   current?: t.MemberUsagePackage | null;
+  /** A person outside any institution falls back to the trial package, not an institution default. */
+  standalone?: boolean;
 }) {
   const localize = useLocalize();
   const queryClient = useQueryClient();
@@ -211,7 +271,9 @@ export function MemberPackageCard({
   return (
     <Card
       title={localize('com_assign_member_title')}
-      description={localize('com_assign_member_description')}
+      description={localize(
+        standalone ? 'com_assign_member_description_standalone' : 'com_assign_member_description',
+      )}
       className="md:col-span-2"
       action={
         <Button
@@ -232,7 +294,7 @@ export function MemberPackageCard({
             value={key}
             scope="member"
             packages={packagesQuery.data?.packages ?? []}
-            noneLabel={localize('com_assign_use_default')}
+            noneLabel={localize(standalone ? 'com_assign_use_trial' : 'com_assign_use_default')}
             disabled={save.isPending}
             onChange={setKey}
           />

@@ -16,6 +16,7 @@ import { Route as AppUsersRouteImport } from './routes/_app/users'
 import { Route as AppUsageRouteImport } from './routes/_app/usage'
 import { Route as AppPackagesRouteImport } from './routes/_app/packages'
 import { Route as AppInstitutionsRouteImport } from './routes/_app/institutions'
+import { Route as AppIndividualsRouteImport } from './routes/_app/individuals'
 import { Route as AppHelpRouteImport } from './routes/_app/help'
 import { Route as AppGrantsRouteImport } from './routes/_app/grants'
 import { Route as AppAgentsRouteImport } from './routes/_app/agents'
@@ -57,6 +58,11 @@ const AppPackagesRoute = AppPackagesRouteImport.update({
 const AppInstitutionsRoute = AppInstitutionsRouteImport.update({
   id: '/institutions',
   path: '/institutions',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIndividualsRoute = AppIndividualsRouteImport.update({
+  id: '/individuals',
+  path: '/individuals',
   getParentRoute: () => AppRoute,
 } as any)
 const AppHelpRoute = AppHelpRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/agents': typeof AppAgentsRoute
   '/grants': typeof AppGrantsRoute
   '/help': typeof AppHelpRoute
+  '/individuals': typeof AppIndividualsRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
   '/packages': typeof AppPackagesRoute
   '/usage': typeof AppUsageRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/agents': typeof AppAgentsRoute
   '/grants': typeof AppGrantsRoute
   '/help': typeof AppHelpRoute
+  '/individuals': typeof AppIndividualsRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
   '/packages': typeof AppPackagesRoute
   '/usage': typeof AppUsageRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/_app/agents': typeof AppAgentsRoute
   '/_app/grants': typeof AppGrantsRoute
   '/_app/help': typeof AppHelpRoute
+  '/_app/individuals': typeof AppIndividualsRoute
   '/_app/institutions': typeof AppInstitutionsRouteWithChildren
   '/_app/packages': typeof AppPackagesRoute
   '/_app/usage': typeof AppUsageRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/agents'
     | '/grants'
     | '/help'
+    | '/individuals'
     | '/institutions'
     | '/packages'
     | '/usage'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/agents'
     | '/grants'
     | '/help'
+    | '/individuals'
     | '/institutions'
     | '/packages'
     | '/usage'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/_app/agents'
     | '/_app/grants'
     | '/_app/help'
+    | '/_app/individuals'
     | '/_app/institutions'
     | '/_app/packages'
     | '/_app/usage'
@@ -257,6 +269,13 @@ declare module '@tanstack/react-router' {
       path: '/institutions'
       fullPath: '/institutions'
       preLoaderRoute: typeof AppInstitutionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/individuals': {
+      id: '/_app/individuals'
+      path: '/individuals'
+      fullPath: '/individuals'
+      preLoaderRoute: typeof AppIndividualsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/help': {
@@ -347,6 +366,7 @@ interface AppRouteChildren {
   AppAgentsRoute: typeof AppAgentsRoute
   AppGrantsRoute: typeof AppGrantsRoute
   AppHelpRoute: typeof AppHelpRoute
+  AppIndividualsRoute: typeof AppIndividualsRoute
   AppInstitutionsRoute: typeof AppInstitutionsRouteWithChildren
   AppPackagesRoute: typeof AppPackagesRoute
   AppUsageRoute: typeof AppUsageRoute
@@ -360,6 +380,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAgentsRoute: AppAgentsRoute,
   AppGrantsRoute: AppGrantsRoute,
   AppHelpRoute: AppHelpRoute,
+  AppIndividualsRoute: AppIndividualsRoute,
   AppInstitutionsRoute: AppInstitutionsRouteWithChildren,
   AppPackagesRoute: AppPackagesRoute,
   AppUsageRoute: AppUsageRoute,

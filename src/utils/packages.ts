@@ -1,5 +1,8 @@
 import type * as t from '@/types';
 
+/** The quota account of users outside any institution, as the API names it. */
+export const INDIVIDUAL_ACCOUNT = '__individuals__';
+
 /** One credit is one millionth of a US dollar, the unit the quota engine enforces. */
 export const CREDITS_PER_USD = 1_000_000;
 

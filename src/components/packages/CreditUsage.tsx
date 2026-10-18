@@ -63,33 +63,68 @@ function WindowMeter({ title, meter }: { title: string; meter: t.CreditMeter }) 
   );
 }
 
-/** An institution on usage packages: its pooled allowance and its busiest members, in taka. */
-export function CreditUsage({ credits }: { credits: t.CreditConsole }) {
+/** The individuals account: no shared pool, only each person against their own or the trial package. */
+function IndividualsSummary({ credits }: { credits: t.CreditConsole }) {
   const localize = useLocalize();
   return (
+    <Card
+      title={localize('com_credit_individuals_title')}
+      description={localize('com_credit_individuals_description', {
+        trial: credits.defaultMemberPackage ?? localize('com_credit_none'),
+        count: String(credits.memberTotal ?? credits.members.length),
+      })}
+    >
+      {!credits.enforced && (
+        <p className="m-0 text-[13px] text-(--cui-color-text-muted)">
+          {localize('com_credit_not_enforced')}
+        </p>
+      )}
+    </Card>
+  );
+}
+
+function PoolSummary({
+  credits,
+  pool,
+}: {
+  credits: t.CreditConsole;
+  pool: { week: t.CreditMeter; month: t.CreditMeter };
+}) {
+  const localize = useLocalize();
+  return (
+    <Card
+      title={localize('com_credit_institution_title')}
+      description={localize('com_credit_institution_description', {
+        pool: credits.institutionPackage ?? localize('com_credit_none'),
+        member: credits.defaultMemberPackage ?? localize('com_credit_none'),
+      })}
+    >
+      {!credits.enforced && (
+        <p className="m-0 text-[13px] text-(--cui-color-text-muted)">
+          {localize('com_credit_not_enforced')}
+        </p>
+      )}
+      <div className="grid gap-4 md:grid-cols-2">
+        <WindowMeter title={localize('com_credit_this_week')} meter={pool.week} />
+        <WindowMeter title={localize('com_credit_this_month')} meter={pool.month} />
+      </div>
+    </Card>
+  );
+}
+
+/** An account on usage packages: an institution's pool, or the individuals, and the busiest members, in taka. */
+export function CreditUsage({ credits }: { credits: t.CreditConsole }) {
+  const localize = useLocalize();
+  const individuals = credits.institution == null;
+  return (
     <div className="flex flex-col gap-4">
+      {credits.institution == null ? (
+        <IndividualsSummary credits={credits} />
+      ) : (
+        <PoolSummary credits={credits} pool={credits.institution} />
+      )}
       <Card
-        title={localize('com_credit_institution_title')}
-        description={localize('com_credit_institution_description', {
-          pool: credits.institutionPackage ?? localize('com_credit_none'),
-          member: credits.defaultMemberPackage ?? localize('com_credit_none'),
-        })}
-      >
-        {!credits.enforced && (
-          <p className="m-0 text-[13px] text-(--cui-color-text-muted)">
-            {localize('com_credit_not_enforced')}
-          </p>
-        )}
-        <div className="grid gap-4 md:grid-cols-2">
-          <WindowMeter title={localize('com_credit_this_week')} meter={credits.institution.week} />
-          <WindowMeter
-            title={localize('com_credit_this_month')}
-            meter={credits.institution.month}
-          />
-        </div>
-      </Card>
-      <Card
-        title={localize('com_credit_members_title')}
+        title={localize(individuals ? 'com_credit_individuals_members' : 'com_credit_members_title')}
         description={localize('com_credit_members_description')}
       >
         {credits.members.length === 0 ? (

@@ -98,6 +98,8 @@ export const getPlatformInstitutionQuotaFn = createServerFn({ method: 'GET' })
       models: t.QuotaModelRow[];
       /** Set once the institution is on usage packages. */
       credits?: t.CreditConsole | null;
+      /** The packages the account holds; for individuals, `memberPackageKey` is the trial. */
+      usagePackage?: t.InstitutionUsagePackage | null;
     }> => {
       const response = await apiFetch(
         `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/quota`,
@@ -112,6 +114,7 @@ export const getPlatformInstitutionQuotaFn = createServerFn({ method: 'GET' })
         };
         models: t.QuotaModelRow[];
         credits?: t.CreditConsole | null;
+        usagePackage?: t.InstitutionUsagePackage | null;
       };
     },
   );
