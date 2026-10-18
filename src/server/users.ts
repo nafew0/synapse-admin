@@ -22,20 +22,12 @@ const listMembersInput = z.object({
   accountScope: z.enum(['all', 'institution', 'standalone']).optional(),
 });
 
-export const listStandaloneCreditPackagesFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<{ currency: string; list: t.CreditPackage[] }> => {
-    const response = await apiFetch('/api/platform/users/standalone/packages');
-    if (!response.ok) await extractApiError(response, 'Failed to fetch individual packages');
-    return (await response.json()) as { currency: string; list: t.CreditPackage[] };
-  },
-);
-
 export const createStandaloneInviteFn = createServerFn({ method: 'POST' })
   .inputValidator(
     z.object({
       email: z.string().email(),
       username: z.string().trim().min(2).max(80).optional(),
-      creditPackageId: z.string().min(1),
+      usagePackageKey: z.string().trim().min(1).optional(),
     }),
   )
   .handler(async ({ data }): Promise<t.StandaloneInviteResponse> => {
@@ -116,7 +108,7 @@ export const inviteMemberFn = createServerFn({ method: 'POST' })
       name: z.string().trim().min(1),
       email: z.string().email(),
       role: memberRoleSchema,
-      creditPackageId: z.string().min(1).optional(),
+      usagePackageKey: z.string().trim().min(1).optional(),
     }),
   )
   .handler(async ({ data }): Promise<{ inviteLink?: string | null }> => {

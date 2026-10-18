@@ -1,23 +1,17 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { Button } from '@clickhouse/click-ui';
 import { Link, getRouteApi } from '@tanstack/react-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type * as t from '@/types';
-import {
-  getUserCreditsFn,
-  getUserDetailFn,
-  getUserUsageFn,
-  grantCreditsFn,
-} from '@/server';
+import { getUserDetailFn, getUserUsageFn } from '@/server';
 import { Avatar, EmptyState, LoadingState } from '@/components/shared';
 import { MemberPackageCard } from '@/components/packages';
 import { SystemCapabilities } from '@/constants';
 import { useAdminScope, useCapabilities } from '@/hooks';
-import { formatUsageCost, modelRowKey, notifyError, notifySuccess } from '@/utils';
+import { formatUsageCost, modelRowKey } from '@/utils';
 
 const Route = getRouteApi('/_app/users/$userId');
 const AppRoute = getRouteApi('/_app');
-type Tab = 'overview' | 'usage' | 'credits';
+type Tab = 'overview' | 'usage';
 
 function monthStart(): string {
   const now = new Date();
@@ -100,15 +94,12 @@ function DateField({
 export function UserDetailPage() {
   const { user } = AppRoute.useRouteContext();
   const { userId } = Route.useParams();
-  const queryClient = useQueryClient();
   const { hasCapability, isLoading: capabilitiesLoading, isError: capabilitiesError } = useCapabilities();
   const isPlatform = user?.isPlatformSuperadmin === true;
   const canRead = hasCapability(SystemCapabilities.READ_USERS);
-  const canManage = hasCapability(SystemCapabilities.MANAGE_USERS);
   const [tab, setTab] = useState<Tab>('overview');
   const [start, setStart] = useState(monthStart);
   const [end, setEnd] = useState(monthEnd);
-  const [packageId, setPackageId] = useState('');
 
   const detailQuery = useQuery({
     queryKey: ['user-detail', userId, isPlatform],
@@ -121,21 +112,6 @@ export function UserDetailPage() {
     // The API treats the end date as inclusive, so equal dates are valid.
     enabled: tab === 'usage' && (!start || !end || start <= end),
   });
-  const creditsQuery = useQuery({
-    queryKey: ['user-credits', userId, isPlatform],
-    queryFn: () => getUserCreditsFn({ data: { userId, platform: isPlatform } }),
-    enabled: tab === 'overview' || tab === 'credits',
-  });
-  const grantMutation = useMutation({
-    mutationFn: () => grantCreditsFn({ data: { userId, packageId, platform: isPlatform } }),
-    onSuccess: () => {
-      setPackageId('');
-      queryClient.invalidateQueries({ queryKey: ['user-credits', userId, isPlatform] });
-      notifySuccess('Credits granted');
-    },
-    onError: (error: Error) => notifyError(error.message),
-  });
-
   if (capabilitiesLoading) return null;
   if (capabilitiesError || !canRead) {
     return <EmptyState message="Administrator access is required to view user details." />;
@@ -146,9 +122,6 @@ export function UserDetailPage() {
   }
 
   const member = detailQuery.data.member;
-  const grants = creditsQuery.data?.grants ?? [];
-  const packages = creditsQuery.data?.packages?.list ?? [];
-  const latestGrant = grants[0];
 
   return (
     <div className="flex flex-1 flex-col gap-5 overflow-auto p-6">
@@ -173,7 +146,7 @@ export function UserDetailPage() {
       </header>
 
       <nav className="flex flex-wrap gap-2 border-b border-(--cui-color-stroke-default) pb-3">
-        {(['overview', 'usage', 'credits'] as const).map((item) => (
+        {(['overview', 'usage'] as const).map((item) => (
           <button
             key={item}
             type="button"
@@ -184,19 +157,14 @@ export function UserDetailPage() {
                 : 'rounded-lg px-3 py-2 text-sm text-(--cui-color-text-muted) hover:bg-(--cui-color-background-hover)'
             }
           >
-            {item === 'usage' ? 'Usage & model breakdown' : item === 'credits' ? 'Credit & grant history' : 'Overview'}
+            {item === 'usage' ? 'Usage & model breakdown' : 'Overview'}
           </button>
         ))}
       </nav>
 
       {tab === 'overview' && (
         <>
-          <Overview
-            member={member}
-            balance={creditsQuery.data?.balance ?? 0}
-            latestGrant={latestGrant}
-            packages={packages}
-          />
+          <Overview member={member} />
           {isPlatform && member.kind === 'user' ? (
             <MemberPackageCard
               userId={userId}
@@ -217,28 +185,13 @@ export function UserDetailPage() {
           onEndChange={setEnd}
         />
       )}
-      {tab === 'credits' && (
-        <Credits
-          balance={creditsQuery.data?.balance ?? 0}
-          grants={grants}
-          packages={packages}
-          packageId={packageId}
-          canManage={canManage}
-          loading={creditsQuery.isLoading}
-          packagesLoading={creditsQuery.isLoading}
-          granting={grantMutation.isPending}
-          onPackageChange={setPackageId}
-          onGrant={() => grantMutation.mutate()}
-        />
-      )}
     </div>
   );
 }
 
-function Overview({ member, balance, latestGrant, packages }: { member: t.InstitutionMember; balance: number; latestGrant?: t.CreditGrant; packages: t.CreditPackage[] }) {
-  const latestPackage = packages.find((pkg) => pkg.id === latestGrant?.packageId);
+function Overview({ member }: { member: t.InstitutionMember }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-4">
       <Panel title="Profile">
         <Detail label="Username" value={member.username} />
         <Detail label="Email" value={member.email} />
@@ -246,13 +199,6 @@ function Overview({ member, balance, latestGrant, packages }: { member: t.Instit
         <Detail label="Role" value={roleLabel(member.role)} />
         <Detail label="Institution" value={member.institutionName || member.tenantId || 'Others'} />
         <Detail label="Created" value={formatDate(member.createdAt)} />
-      </Panel>
-      <Panel title="Plan & balance">
-        <Detail label="Current balance" value={`${formatNumber(balance)} credits`} />
-        <Detail label="Latest package" value={latestPackage?.label || latestGrant?.packageId || 'No package grant recorded'} />
-        <Detail label="Package ID" value={latestGrant?.packageId} />
-        <Detail label="Latest grant" value={latestGrant ? `${formatNumber(latestGrant.credits)} credits` : '—'} />
-        <Detail label="Package price" value={latestGrant ? `${latestGrant.price} ${latestGrant.currency}` : '—'} />
       </Panel>
     </div>
   );
@@ -326,16 +272,6 @@ function Usage({ usage, loading, error, start, end, onStartChange, onEndChange }
           </div>
         )}
       </Panel>
-    </div>
-  );
-}
-
-function Credits({ balance, grants, packages, packageId, canManage, loading, packagesLoading, granting, onPackageChange, onGrant }: { balance: number; grants: t.CreditGrant[]; packages: t.CreditPackage[]; packageId: string; canManage: boolean; loading: boolean; packagesLoading: boolean; granting: boolean; onPackageChange: (value: string) => void; onGrant: () => void }) {
-  return (
-    <div className="flex flex-col gap-4">
-      <Panel title="Current balance"><p className="text-2xl font-semibold text-(--cui-color-text-default)">{formatNumber(balance)} credits</p></Panel>
-      {canManage && <Panel title="Grant credits"><div className="flex flex-wrap gap-2"><select value={packageId} onChange={(event) => onPackageChange(event.target.value)} disabled={packagesLoading || granting} className="admin-themed-control min-w-64 rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"><option value="">{packagesLoading ? 'Loading packages…' : 'Select package'}</option>{packages.map((pkg) => <option key={pkg.id} value={pkg.id}>{pkg.label} · {formatNumber(pkg.credits)} credits</option>)}</select><Button label="Grant" disabled={!packageId || granting} onClick={onGrant} /></div></Panel>}
-      <Panel title="Grant history">{loading ? <LoadingState /> : grants.length === 0 ? <p className="text-sm text-(--cui-color-text-muted)">No grants recorded.</p> : <div className="divide-y divide-(--cui-color-stroke-default)">{grants.map((grant) => <div key={grant._id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"><div><p className="font-medium text-(--cui-color-text-default)">{grant.packageId}</p><p className="text-xs text-(--cui-color-text-muted)">{formatDate(grant.createdAt)} · {grant.source}</p></div><div className="text-right"><p>{formatNumber(grant.credits)} credits</p><p className="text-xs text-(--cui-color-text-muted)">{grant.price} {grant.currency}</p></div></div>)}</div>}</Panel>
     </div>
   );
 }

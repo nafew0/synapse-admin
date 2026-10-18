@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createStandaloneInviteFn, listStandaloneCreditPackagesFn } from '@/server';
+import { createStandaloneInviteFn, listUsagePackagesFn } from '@/server';
+import { PACKAGES_QUERY_KEY } from '@/components/packages/keys';
 import { EmptyState, FormDialog, LoadingState } from '@/components/shared';
-import { notifyError, notifySuccess } from '@/utils';
+import { formatTaka, notifyError, notifySuccess } from '@/utils';
 
 export function InviteIndividualUserDialog({
   open,
@@ -14,22 +15,25 @@ export function InviteIndividualUserDialog({
   const queryClient = useQueryClient();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
-  const [packageId, setPackageId] = useState('');
+  /** Empty means the individuals' trial package. */
+  const [packageKey, setPackageKey] = useState('');
   const [error, setError] = useState('');
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState(false);
 
   const packagesQuery = useQuery({
-    queryKey: ['standaloneCreditPackages'],
-    queryFn: listStandaloneCreditPackagesFn,
+    queryKey: [...PACKAGES_QUERY_KEY, false],
+    queryFn: () => listUsagePackagesFn({ data: {} }),
     enabled: open,
   });
-  const packages = packagesQuery.data?.list ?? [];
+  const packages = (packagesQuery.data?.packages ?? []).filter(
+    (pkg) => pkg.active && pkg.scopes.includes('member'),
+  );
 
   const resetAndClose = () => {
     setEmail('');
     setUsername('');
-    setPackageId('');
+    setPackageKey('');
     setError('');
     setInviteLink(null);
     setConfirmation(false);
@@ -42,7 +46,7 @@ export function InviteIndividualUserDialog({
         data: {
           email: email.trim(),
           username: username.trim() || undefined,
-          creditPackageId: packageId,
+          usagePackageKey: packageKey || undefined,
         },
       }),
     onSuccess: (result) => {
@@ -73,14 +77,10 @@ export function InviteIndividualUserDialog({
       setError('Username must be between 2 and 80 characters');
       return;
     }
-    if (!packageId) {
-      setError('Select an individual package');
-      return;
-    }
     mutation.mutate();
   };
 
-  const unavailable = packagesQuery.isError || packagesQuery.isLoading || packages.length === 0;
+  const unavailable = packagesQuery.isError || packagesQuery.isLoading;
 
   return (
     <FormDialog
@@ -94,20 +94,13 @@ export function InviteIndividualUserDialog({
       onSubmit={submit}
       onClose={resetAndClose}
     >
-      {inviteLink ? (
-        <InviteLinkPanel email={email} inviteLink={inviteLink} />
-      ) : confirmation ? (
-        <p className="text-sm text-(--cui-color-text-default)">
-          The invitation email was sent to <strong>{email}</strong>. They can choose a different
-          username during registration.
-        </p>
-      ) : packagesQuery.isLoading ? (
-        <LoadingState />
-      ) : packagesQuery.isError ? (
-        <EmptyState message="Individual packages could not be loaded. Try again later." />
-      ) : packages.length === 0 ? (
-        <EmptyState message="No individual packages are available. Create or activate a package before inviting a user." />
-      ) : (
+      <DialogBody
+        email={email}
+        inviteLink={inviteLink}
+        confirmation={confirmation}
+        loading={packagesQuery.isLoading}
+        failed={packagesQuery.isError}
+      >
         <div className="flex flex-col gap-4">
           <Field label="Email address" htmlFor="individual-user-email">
             <input
@@ -130,25 +123,61 @@ export function InviteIndividualUserDialog({
               className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
             />
           </Field>
-          <Field label="Individual package" htmlFor="individual-user-package">
+          <Field label="Usage package" htmlFor="individual-user-package">
             <select
               id="individual-user-package"
-              value={packageId}
-              onChange={(e) => setPackageId(e.target.value)}
+              value={packageKey}
+              onChange={(e) => setPackageKey(e.target.value)}
               className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
             >
-              <option value="">Select a package</option>
+              <option value="">Trial package (default)</option>
               {packages.map((pkg) => (
-                <option key={pkg.id} value={pkg.id}>
-                  {pkg.label || pkg.name || pkg.id} — {pkg.credits.toLocaleString()} credits
+                <option key={pkg.key} value={pkg.key}>
+                  {pkg.name} — {formatTaka(pkg.monthlyCredit)}/month
                 </option>
               ))}
             </select>
           </Field>
         </div>
-      )}
+      </DialogBody>
     </FormDialog>
   );
+}
+
+/** What the dialog shows: the result once sent, the load state of the packages, else the form. */
+function DialogBody({
+  email,
+  inviteLink,
+  confirmation,
+  loading,
+  failed,
+  children,
+}: {
+  email: string;
+  inviteLink: string | null;
+  confirmation: boolean;
+  loading: boolean;
+  failed: boolean;
+  children: ReactNode;
+}) {
+  if (inviteLink) {
+    return <InviteLinkPanel email={email} inviteLink={inviteLink} />;
+  }
+  if (confirmation) {
+    return (
+      <p className="text-sm text-(--cui-color-text-default)">
+        The invitation email was sent to <strong>{email}</strong>. They can choose a different
+        username during registration.
+      </p>
+    );
+  }
+  if (loading) {
+    return <LoadingState />;
+  }
+  if (failed) {
+    return <EmptyState message="Usage packages could not be loaded. Try again later." />;
+  }
+  return <>{children}</>;
 }
 
 function InviteLinkPanel({ email, inviteLink }: { email: string; inviteLink: string }) {

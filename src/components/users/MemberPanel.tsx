@@ -21,7 +21,7 @@ import {
   ShareBar,
 } from '@/components/shared';
 import { useMemberActions, useLocalize } from '@/hooks';
-import { getUserCreditsFn, getUserUsageFn } from '@/server';
+import { getUserUsageFn } from '@/server';
 import { ConfirmDialog } from '@/components/access';
 
 const DETAIL_RANGE = '30d';
@@ -213,29 +213,20 @@ function UserDetails({
   actions: ReturnType<typeof useMemberActions>;
 }) {
   const localize = useLocalize();
-  const [packageId, setPackageId] = useState('');
   const range = useMemo(() => presetRange(DETAIL_RANGE), []);
   const usage = useQuery({
     queryKey: ['user-usage', member.id, platform, range],
     queryFn: () => getUserUsageFn({ data: { userId: member.id, platform, ...range } }),
   });
-  const credits = useQuery({
-    queryKey: ['user-credits', member.id, platform],
-    queryFn: () => getUserCreditsFn({ data: { userId: member.id, platform } }),
-  });
 
   const models = usage.data?.models ?? [];
   const topModel = models[0]?.totalTokens ?? 0;
-  const packages = credits.data?.packages?.list ?? [];
-  const latestGrant = credits.data?.grants[0];
-  const latestPackage = packages.find((pkg) => pkg.id === latestGrant?.packageId);
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <Figure label={localize('com_members_tokens_30d')} value={formatCompact(usage.data?.summary.totalTokens ?? 0)} />
         <Figure label={localize('com_usage_requests')} value={formatUsageNumber(usage.data?.summary.eventCount ?? 0)} />
-        <Figure label={localize('com_members_credits')} value={formatUsageNumber(credits.data?.balance ?? 0)} />
       </div>
 
       <div className="flex flex-col gap-2.5">
@@ -270,12 +261,6 @@ function UserDetails({
           ...(platform ? [[localize('com_usage_institution'), member.institutionName || member.tenantId || '—'] as [string, string]] : []),
           [localize('com_members_joined'), formatDate(member.createdAt)],
           [localize('com_members_sign_in'), member.provider || '—'],
-          [
-            localize('com_members_latest_credits'),
-            latestGrant
-              ? `+${formatUsageNumber(latestGrant.credits)} · ${formatDate(latestGrant.createdAt)}${latestPackage ? ` · ${latestPackage.label}` : ''}`
-              : '—',
-          ],
         ]}
       />
 
@@ -293,30 +278,6 @@ function UserDetails({
               <option value="INSTITUTION_ADMIN">{localize('com_members_role_institution_admin')}</option>
             </select>
           </label>
-          <div className="flex flex-col gap-1.5 text-[13px] font-semibold">
-            <label htmlFor={`grant-${member.id}`}>{localize('com_members_grant_credits')}</label>
-            <div className="flex gap-2">
-              <select
-                id={`grant-${member.id}`}
-                value={packageId}
-                onChange={(event) => setPackageId(event.target.value)}
-                className="admin-themed-control h-10 min-w-0 flex-1 rounded-lg border border-(--cui-color-stroke-default) bg-(--syn-surface) px-2.5 text-sm font-normal text-(--cui-color-text-default)"
-              >
-                <option value="">{localize('com_members_select_package')}</option>
-                {packages.map((pkg) => (
-                  <option key={pkg.id} value={pkg.id}>
-                    {pkg.label}
-                  </option>
-                ))}
-              </select>
-              <PanelButton
-                disabled={!packageId || actions.busy}
-                onClick={() => actions.grantCredits.mutate(packageId, { onSuccess: () => setPackageId('') })}
-              >
-                {localize('com_members_grant')}
-              </PanelButton>
-            </div>
-          </div>
           {platform && member.tenantId && !member.emailVerified ? (
             <PanelButton disabled={actions.busy} onClick={() => actions.resendVerification.mutate()}>
               {localize('com_members_resend_verification')}

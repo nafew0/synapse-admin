@@ -713,7 +713,7 @@ export const parseImportedYaml = createServerFn({ method: 'POST' })
     // librechat-data-provider schema predates fields already supported by the
     // API/runtime (the source schema includes these fields, but an older
     // installed package may not expose them at runtime).
-    const supportedRuntimeKeys = new Set(['creditPackages', 'langfuse']);
+    const supportedRuntimeKeys = new Set(['langfuse']);
     const unknownRootKeys = Object.keys(rawConfig as Record<string, unknown>).filter(
       (key) => !Object.hasOwn(schemaShape, key) && !supportedRuntimeKeys.has(key),
     );

@@ -9,7 +9,6 @@ import {
   removeMemberFn,
   resendInviteFn,
   revokeInviteFn,
-  grantCreditsFn,
 } from '@/server';
 import { notifyError, notifySuccess } from '@/utils';
 
@@ -35,7 +34,6 @@ export function useMemberActions(
     }
     queryClient.invalidateQueries({ queryKey: ['user-detail', member.id] });
     queryClient.invalidateQueries({ queryKey: ['user-usage', member.id] });
-    queryClient.invalidateQueries({ queryKey: ['user-credits', member.id] });
   };
 
   const finish = (message: string) => () => {
@@ -94,15 +92,6 @@ export function useMemberActions(
     onSuccess: () => notifySuccess('Verification email resent'),
     onError,
   });
-  const grantCredits = useMutation({
-    mutationFn: (packageId: string) =>
-      grantCreditsFn({ data: { userId: member!.id, packageId, platform } }),
-    onSuccess: () => {
-      refresh();
-      notifySuccess('Credits granted');
-    },
-    onError,
-  });
 
   const clearResendLink = useCallback(() => setResendLink(null), []);
 
@@ -114,7 +103,6 @@ export function useMemberActions(
     remove,
     changeRole,
     resendVerification,
-    grantCredits,
   ].some((mutation) => mutation.isPending);
 
   return {
@@ -125,7 +113,6 @@ export function useMemberActions(
     remove,
     changeRole,
     resendVerification,
-    grantCredits,
     resendLink,
     clearResendLink,
     busy,
