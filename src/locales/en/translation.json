@@ -1465,5 +1465,20 @@
   "com_pricing_updated": "Last changed {{date}}",
   "com_pricing_save": "Save pricing",
   "com_pricing_saved": "Pricing saved. All packages were repriced.",
-  "com_pricing_invalid": "Enter a rate of at least 1, a fee from 0 to 100% and a weekly cap from 1 to 100%."
+  "com_pricing_invalid": "Enter a rate of at least 1, a fee from 0 to 100% and a weekly cap from 1 to 100%.",
+  "com_assign_option": "{{name}} · {{monthly}}/month · {{weekly}}/week",
+  "com_assign_saved": "Usage package saved",
+  "com_assign_institution_title": "Usage packages",
+  "com_assign_institution_description": "The institution's own pooled allowance, and the package its members get unless they have their own.",
+  "com_assign_institution_own": "Institution package",
+  "com_assign_institution_members": "Default member package",
+  "com_assign_none_institution": "No institution limit",
+  "com_assign_none_member": "No member package",
+  "com_assign_credit_note": "Usage is charged in credits at each model's price. Every request must fit both the institution's and the member's weekly and monthly allowance.",
+  "com_assign_token_note": "No package is set, so this institution uses its token usage policy.",
+  "com_assign_member_title": "Usage package",
+  "com_assign_member_description": "A package for this member only. It replaces the institution's default member package until it expires.",
+  "com_assign_member_own": "Member package",
+  "com_assign_use_default": "Use the institution default",
+  "com_assign_expires": "Expires (optional)"
 }

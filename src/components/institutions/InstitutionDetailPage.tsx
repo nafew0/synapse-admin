@@ -17,6 +17,7 @@ import {
 } from '@/server';
 import type * as t from '@/types';
 import { EmptyState, LoadingState } from '@/components/shared';
+import { InstitutionPackageCard } from '@/components/packages';
 import { notifyError, notifySuccess } from '@/utils';
 
 const Route = getRouteApi('/_app/institutions/$tenantId');
@@ -212,14 +213,17 @@ export function InstitutionDetailPage() {
       </nav>
 
       {tab === 'overview' && (
-        <Overview
-          institution={institution}
-          policy={quota.policy}
-          admins={admins}
-          adminsError={adminsQuery.isError}
-          revoking={revokeAdminMutation.isPending}
-          onRevokeAdmin={(admin) => revokeAdminMutation.mutate(admin)}
-        />
+        <>
+          <Overview
+            institution={institution}
+            policy={quota.policy}
+            admins={admins}
+            adminsError={adminsQuery.isError}
+            revoking={revokeAdminMutation.isPending}
+            onRevokeAdmin={(admin) => revokeAdminMutation.mutate(admin)}
+          />
+          <InstitutionPackageCard tenantId={tenantId} current={institution.usagePackage} />
+        </>
       )}
       {tab === 'members' && membersQuery.isError && (
         <EmptyState message={membersQuery.error?.message || 'Failed to load members.'} />

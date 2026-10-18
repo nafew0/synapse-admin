@@ -77,3 +77,59 @@ export const updateUsagePricingFn = createServerFn({ method: 'POST' })
         'Failed to save pricing',
       ),
   );
+
+export const setInstitutionUsagePackageFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      tenantId: z.string().min(1),
+      packageKey: z.string().nullable(),
+      memberPackageKey: z.string().nullable(),
+    }),
+  )
+  .handler(async ({ data }): Promise<{ usagePackage: t.InstitutionUsagePackage | null }> => {
+    const { tenantId, ...body } = data;
+    return send(
+      `/api/platform/institutions/${encodeURIComponent(tenantId)}/usage-package`,
+      { method: 'PUT', body: JSON.stringify(body) },
+      'Failed to assign the institution package',
+    );
+  });
+
+export const clearInstitutionUsagePackageFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ tenantId: z.string().min(1) }))
+  .handler(
+    async ({ data }): Promise<{ usagePackage: null }> =>
+      send(
+        `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/usage-package`,
+        { method: 'DELETE' },
+        'Failed to remove the institution package',
+      ),
+  );
+
+export const setUserUsagePackageFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      userId: z.string().min(1),
+      packageKey: z.string().min(1),
+      expiresAt: z.string().nullable(),
+    }),
+  )
+  .handler(async ({ data }): Promise<{ usagePackage: t.MemberUsagePackage }> => {
+    const { userId, ...body } = data;
+    return send(
+      `/api/platform/users/${encodeURIComponent(userId)}/usage-package`,
+      { method: 'PUT', body: JSON.stringify(body) },
+      'Failed to assign the member package',
+    );
+  });
+
+export const clearUserUsagePackageFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ userId: z.string().min(1) }))
+  .handler(
+    async ({ data }): Promise<{ usagePackage: null }> =>
+      send(
+        `/api/platform/users/${encodeURIComponent(data.userId)}/usage-package`,
+        { method: 'DELETE' },
+        'Failed to remove the member package',
+      ),
+  );

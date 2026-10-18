@@ -60,3 +60,11 @@ export type UsagePricing = UsagePricingInput & {
 };
 
 export type UsagePackageList = { pricing: UsagePricing; packages: UsagePackage[] };
+
+export type InstitutionUsagePackage = {
+  packageKey: string | null;
+  memberPackageKey: string | null;
+  assignedAt?: string;
+};
+
+export type MemberUsagePackage = { packageKey: string; expiresAt: string | null };

@@ -1,3 +1,5 @@
+import type { InstitutionUsagePackage } from './billing';
+
 export interface PlatformInstitutionLimits {
   maxActiveMembers?: number | null;
 }
@@ -17,6 +19,8 @@ export interface PlatformInstitution {
   authDomains?: string[];
   timezone?: string;
   usagePolicyVersion?: number;
+  /** The institution's own usage package and the default for its members. */
+  usagePackage?: InstitutionUsagePackage | null;
   limits?: PlatformInstitutionLimits;
   stats?: PlatformInstitutionStats;
   createdAt?: string;

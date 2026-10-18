@@ -10,6 +10,7 @@ import {
   grantCreditsFn,
 } from '@/server';
 import { Avatar, EmptyState, LoadingState } from '@/components/shared';
+import { MemberPackageCard } from '@/components/packages';
 import { SystemCapabilities } from '@/constants';
 import { useAdminScope, useCapabilities } from '@/hooks';
 import { formatUsageCost, modelRowKey, notifyError, notifySuccess } from '@/utils';
@@ -189,12 +190,17 @@ export function UserDetailPage() {
       </nav>
 
       {tab === 'overview' && (
-        <Overview
-          member={member}
-          balance={creditsQuery.data?.balance ?? 0}
-          latestGrant={latestGrant}
-          packages={packages}
-        />
+        <>
+          <Overview
+            member={member}
+            balance={creditsQuery.data?.balance ?? 0}
+            latestGrant={latestGrant}
+            packages={packages}
+          />
+          {isPlatform && member.kind === 'user' ? (
+            <MemberPackageCard userId={userId} current={member.usagePackage} />
+          ) : null}
+        </>
       )}
       {tab === 'usage' && (
         <Usage
