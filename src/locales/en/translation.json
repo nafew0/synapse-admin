@@ -1480,5 +1480,20 @@
   "com_assign_member_description": "A package for this member only. It replaces the institution's default member package until it expires.",
   "com_assign_member_own": "Member package",
   "com_assign_use_default": "Use the institution default",
-  "com_assign_expires": "Expires (optional)"
+  "com_assign_expires": "Expires (optional)",
+  "com_credit_institution_title": "Usage allowance",
+  "com_credit_institution_description": "Institution package: {{pool}}. Default member package: {{member}}.",
+  "com_credit_none": "None",
+  "com_credit_not_enforced": "Shadow mode: usage is recorded but nothing is refused yet.",
+  "com_credit_this_week": "This week",
+  "com_credit_this_month": "This month",
+  "com_credit_used_of": "{{used}} of {{limit}}",
+  "com_credit_used_unlimited": "{{used}} used, no limit",
+  "com_credit_resets": "Resets {{date}}",
+  "com_credit_members_title": "Members",
+  "com_credit_members_description": "The busiest members this month, each against their own package.",
+  "com_credit_members_empty": "No member has used the allowance this month.",
+  "com_credit_col_member": "Member",
+  "com_credit_col_package": "Package",
+  "com_credit_own_package": "own package"
 }

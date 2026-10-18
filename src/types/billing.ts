@@ -68,3 +68,34 @@ export type InstitutionUsagePackage = {
 };
 
 export type MemberUsagePackage = { packageKey: string; expiresAt: string | null };
+
+/** One allowance window, in credits (USD × 1e6) with taka alongside. */
+export type CreditMeter = {
+  used: number;
+  limit: number | null;
+  remaining: number | null;
+  usedBdt: number | null;
+  limitBdt: number | null;
+  blocked: boolean;
+  resetsAt: string;
+};
+
+export type CreditMemberUsage = {
+  userId: string;
+  name: string | null;
+  email: string | null;
+  package: { key: string; name: string; unlimited: boolean } | null;
+  /** The member has their own package rather than the institution default. */
+  ownPackage: boolean;
+  week: CreditMeter;
+  month: CreditMeter;
+};
+
+/** An institution on usage packages, as the platform console shows it. */
+export type CreditConsole = {
+  enforced: boolean;
+  institutionPackage: string | null;
+  defaultMemberPackage: string | null;
+  institution: { week: CreditMeter; month: CreditMeter };
+  members: CreditMemberUsage[];
+};

@@ -96,6 +96,8 @@ export const getPlatformInstitutionQuotaFn = createServerFn({ method: 'GET' })
         warnings: t.UsageWarning[];
       };
       models: t.QuotaModelRow[];
+      /** Set once the institution is on usage packages. */
+      credits?: t.CreditConsole | null;
     }> => {
       const response = await apiFetch(
         `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/quota`,
@@ -109,6 +111,7 @@ export const getPlatformInstitutionQuotaFn = createServerFn({ method: 'GET' })
           warnings: t.UsageWarning[];
         };
         models: t.QuotaModelRow[];
+        credits?: t.CreditConsole | null;
       };
     },
   );

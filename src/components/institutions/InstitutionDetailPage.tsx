@@ -17,7 +17,7 @@ import {
 } from '@/server';
 import type * as t from '@/types';
 import { EmptyState, LoadingState } from '@/components/shared';
-import { InstitutionPackageCard } from '@/components/packages';
+import { CreditUsage, InstitutionPackageCard } from '@/components/packages';
 import { notifyError, notifySuccess } from '@/utils';
 
 const Route = getRouteApi('/_app/institutions/$tenantId');
@@ -264,6 +264,7 @@ export function InstitutionDetailPage() {
           policy={quota.policy}
           health={quota.health}
           models={quota.models}
+          credits={quota.credits}
           readiness={readinessQuery.data}
           readinessError={readinessQuery.isError}
         />
@@ -541,11 +542,14 @@ function Usage({
   policy,
   health,
   models,
+  credits,
   readiness,
   readinessError,
 }: {
   policy: t.UsagePolicy;
   models: t.QuotaModelRow[];
+  /** Set once the institution is on usage packages; replaces the per-model token view. */
+  credits?: t.CreditConsole | null;
   health: {
     range: { start: string; end: string; timezone: string };
     buckets: t.UsageBucketHealth[];
@@ -557,29 +561,37 @@ function Usage({
   const institutionBucket = health.buckets.find((bucket) => bucket.scopeType === 'institution');
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Metric label="Used tokens" value={formatTokens(institutionBucket?.usedTokens ?? 0)} />
-      <Metric
-        label="Reserved tokens"
-        value={formatTokens(institutionBucket?.reservedTokens ?? 0)}
-      />
-      <Metric
-        label="Remaining"
-        value={formatTokens(
-          institutionBucket?.remaining ?? policy.limits.institutionTokens ?? null,
-        )}
-      />
-      <Panel title="Model breakdown" className="md:col-span-3">
-        {models.length === 0 ? (
-          <p className="text-sm text-(--cui-color-text-muted)">
-            No models are configured for this institution.
-          </p>
-        ) : (
-          models.map((model) => <ModelQuotaLine key={model.modelKey} model={model} />)
-        )}
-        <p className="mt-3 text-xs text-(--cui-color-text-muted)">
-          Resets {new Date(health.range.end).toLocaleString()} ({health.range.timezone})
-        </p>
-      </Panel>
+      {credits ? (
+        <div className="md:col-span-3">
+          <CreditUsage credits={credits} />
+        </div>
+      ) : (
+        <>
+          <Metric label="Used tokens" value={formatTokens(institutionBucket?.usedTokens ?? 0)} />
+          <Metric
+            label="Reserved tokens"
+            value={formatTokens(institutionBucket?.reservedTokens ?? 0)}
+          />
+          <Metric
+            label="Remaining"
+            value={formatTokens(
+              institutionBucket?.remaining ?? policy.limits.institutionTokens ?? null,
+            )}
+          />
+          <Panel title="Model breakdown" className="md:col-span-3">
+            {models.length === 0 ? (
+              <p className="text-sm text-(--cui-color-text-muted)">
+                No models are configured for this institution.
+              </p>
+            ) : (
+              models.map((model) => <ModelQuotaLine key={model.modelKey} model={model} />)
+            )}
+            <p className="mt-3 text-xs text-(--cui-color-text-muted)">
+              Resets {new Date(health.range.end).toLocaleString()} ({health.range.timezone})
+            </p>
+          </Panel>
+        </>
+      )}
       {readinessError && (
         <div className="md:col-span-3">
           <Panel title="Shadow rollout gate">
