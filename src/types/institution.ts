@@ -34,16 +34,6 @@ export interface PlatformInstitutionListResponse {
   offset: number;
 }
 
-export interface InstitutionPackage {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  currency: string;
-  monthlyTokenLimit: number;
-  active: boolean;
-}
-
 export interface UsageModelLimit {
   modelKey: string;
   maxTokens: number | null;
