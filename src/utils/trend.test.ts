@@ -10,6 +10,7 @@ import {
   weekdayAverages,
   currentWeek,
   weekStart,
+  sameDaysLastMonth,
 } from './trend';
 
 describe('date ranges', () => {
@@ -34,6 +35,17 @@ describe('date ranges', () => {
     expect(weekStart('2026-10-25')).toBe('2026-10-19');
     expect(currentWeek('2026-10-28')).toEqual({ start: '2026-10-26', end: '2026-11-01' });
     expect(presetRange('week', '2026-10-28')).toEqual({ start: '2026-10-26', end: '2026-10-28' });
+  });
+
+  it('compares a month so far with the same days of the month before', () => {
+    expect(sameDaysLastMonth({ start: '2026-10-01', end: '2026-10-26' })).toEqual({
+      start: '2026-09-01',
+      end: '2026-09-26',
+    });
+    expect(sameDaysLastMonth({ start: '2026-03-01', end: '2026-03-31' })).toEqual({
+      start: '2026-02-01',
+      end: '2026-02-28',
+    });
   });
 
   it('resolves presets from a given day', () => {

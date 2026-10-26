@@ -1270,7 +1270,7 @@
   "com_dash_seats": "Seats in use",
   "com_dash_seats_of": "of {{max}} · {{free}} free",
   "com_dash_seats_unlimited": "No seat limit",
-  "com_dash_seats_active": "{{count}} active",
+  "com_dash_seats_active": "{{count}} joined",
   "com_dash_seats_invited": "{{count}} invited",
   "com_dash_token_trend": "Token trend",
   "com_dash_token_trend_desc": "{{total}} tokens in this period",
@@ -1402,7 +1402,7 @@
   "com_dash_weekday_desc_empty": "Average tokens per day of the week",
   "com_dash_weekday_day": "Day",
   "com_dash_weekday_average": "Average tokens",
-  "com_dash_weekday_note": "Average tokens per day in this period. Today is left out until it ends.",
+  "com_dash_weekday_note": "Average tokens per day over the last 30 days. Today is left out until it ends.",
   "com_usage_members_showing": "Showing top {{shown}} of {{total}} members with usage",
   "com_usage_members_more": "Show more",
   "com_usage_members_loading": "Loading…",
@@ -1433,5 +1433,9 @@
   "com_dash_resend_to": "Resend invite to {{email}}",
   "com_dash_resend_all": "Resend all",
   "com_dash_all_members": "All members",
-  "com_dash_week_of": "Week of {{start}}"
+  "com_dash_week_of": "Week of {{start}}",
+  "com_dash_weekday_short": "Busiest days",
+  "com_dash_month_title": "This month so far",
+  "com_dash_vs_same_days_last_month": "vs same days last month",
+  "com_dash_month_requests": "{{requests}} requests"
 }

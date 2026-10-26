@@ -132,6 +132,7 @@
     --syn-chart-2: #e8730c;
     --syn-chart-avg: #132321;
     --syn-track: #ededed;
+    --syn-ghost: #8a8a8a;
     --syn-on-accent: #132321;
     --syn-success-bg: #ecfdf5;
     --syn-success-fg: #047857;
@@ -200,6 +201,7 @@
     --syn-chart-2: #d97418;
     --syn-chart-avg: #f2f4f4;
     --syn-track: #1b2c31;
+    --syn-ghost: #6f7d80;
     --syn-on-accent: #12171a;
     --syn-success-bg: #0b2e25;
     --syn-success-fg: #6ee7b7;
@@ -269,6 +271,7 @@
       --syn-chart-2: #d97418;
       --syn-chart-avg: #f2f4f4;
       --syn-track: #1b2c31;
+      --syn-ghost: #6f7d80;
       --syn-on-accent: #12171a;
       --syn-success-bg: #0b2e25;
       --syn-success-fg: #6ee7b7;

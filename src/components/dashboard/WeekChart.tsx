@@ -6,6 +6,10 @@ import { useLocalize } from '@/hooks';
 
 const CHART_HEIGHT = 190;
 const START_DELAY_MS = 250;
+const FUTURE_MIN_HEIGHT = 12;
+/** Days still ahead are hatched so "not yet" never reads as zero usage. */
+const FUTURE_HATCH =
+  'repeating-linear-gradient(135deg, var(--syn-track) 0 4px, transparent 4px 8px)';
 
 function barHeight(value: number, peak: number): number {
   if (peak <= 0 || value <= 0) {
@@ -50,12 +54,13 @@ export function WeekChart({ thisWeek, lastWeek, today }: t.WeekChartProps) {
               </span>
               <div className="relative flex w-full max-w-14 items-end justify-center" style={{ height: CHART_HEIGHT }}>
                 <div
-                  className="absolute bottom-0 w-full rounded-t-md border border-b-0 border-dashed border-(--cui-color-stroke-intense)"
-                  style={{ height: barHeight(previous, peak) }}
+                  className="absolute bottom-0 w-full rounded-t-md border border-b-0 border-dashed border-(--syn-ghost)"
+                  style={{
+                    height: Math.max(barHeight(previous, peak), isFuture ? FUTURE_MIN_HEIGHT : 0),
+                    backgroundImage: isFuture ? FUTURE_HATCH : undefined,
+                  }}
                 />
-                {isFuture ? (
-                  <div className="absolute bottom-0 h-1 w-full rounded-t-sm bg-(--syn-track)" />
-                ) : (
+                {isFuture ? null : (
                   <div
                     className="syn-bar-rise relative w-[78%] rounded-t-md bg-(--syn-chart-1)"
                     style={
@@ -82,8 +87,13 @@ export function WeekChart({ thisWeek, lastWeek, today }: t.WeekChartProps) {
                 : 'text-(--cui-color-text-muted)'
             }
           >
-            {formatWeekday(order === 6 ? 0 : order + 1)}
-            {day.day === today ? ` · ${localize('com_dash_week_today')}` : ''}
+            <span className="whitespace-nowrap">{formatWeekday(order === 6 ? 0 : order + 1)}</span>
+            {day.day === today ? (
+              <span className="block whitespace-nowrap text-(--syn-brand-ink) sm:inline">
+                <span className="hidden sm:inline"> · </span>
+                {localize('com_dash_week_today')}
+              </span>
+            ) : null}
           </span>
         ))}
       </div>

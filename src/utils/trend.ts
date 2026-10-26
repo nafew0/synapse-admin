@@ -47,6 +47,15 @@ export function currentWeek(today = localDay()): t.DateRange {
   return { start, end: addDays(start, 6) };
 }
 
+/** The same span of days at the start of the previous month, clamped to that month's end. */
+export function sameDaysLastMonth(range: t.DateRange): t.DateRange {
+  const [year, month] = range.start.split('-').map(Number);
+  const start = toDay(Date.UTC(year, month - 2, 1));
+  const lastDay = toDay(Date.UTC(year, month - 1, 0));
+  const end = addDays(start, dayCount(range) - 1);
+  return { start, end: end < lastDay ? end : lastDay };
+}
+
 export function presetRange(preset: Exclude<t.RangePreset, 'custom'>, today = localDay()): t.DateRange {
   const [year, month] = today.split('-').map(Number);
   if (preset === 'week') {

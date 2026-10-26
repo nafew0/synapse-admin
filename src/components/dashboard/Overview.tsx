@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Activity, Layers, Plus, UserCheck, IdCard } from 'lucide-react';
+import type { ReactNode } from 'react';
 import type * as t from '@/types';
 import {
   formatRelativeTime,
@@ -11,6 +12,7 @@ import {
   formatCompact,
   currentWeek,
   addDays,
+  sameDaysLastMonth,
   modelRowKey,
   presetRange,
   localDay,
@@ -122,7 +124,7 @@ export function Overview() {
   const weekChange = percentChange(weekSoFar, lastWeekSoFar);
 
   return (
-    <div className="flex flex-1 flex-col overflow-auto">
+    <div className="flex flex-1 flex-col overflow-auto bg-(--syn-bg)">
       <div className="flex w-full flex-col gap-5 p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <p className="m-0 text-sm text-(--cui-color-text-muted)">
@@ -198,13 +200,14 @@ export function Overview() {
             <div
               role="tablist"
               aria-label={localize('com_dash_week_tabs')}
-              className="-mx-1 flex gap-1 overflow-x-auto border-b border-(--cui-color-stroke-muted)"
+              className="-mx-1 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-(--cui-color-stroke-muted)"
             >
               <TabButton active={tab === 'week'} onClick={() => setTab('week')} controls="dash-week-panel">
                 {localize('com_dash_week_tab')}
               </TabButton>
               <TabButton active={tab === 'weekdays'} onClick={() => setTab('weekdays')} controls="dash-weekdays-panel">
-                {localize('com_dash_weekday_title')}
+                <span className="sm:hidden">{localize('com_dash_weekday_short')}</span>
+                <span className="hidden sm:inline">{localize('com_dash_weekday_title')}</span>
               </TabButton>
             </div>
             {tab === 'week' ? (
@@ -213,7 +216,7 @@ export function Overview() {
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[28px] leading-none font-bold tracking-tight">
                       {weekSeries.isLoading ? '—' : formatCompact(weekSoFar)}
-                      <span className="ml-2 text-sm font-semibold text-(--cui-color-text-muted)">
+                      <span className="ml-2 text-sm font-semibold tracking-normal text-(--cui-color-text-muted)">
                         {localize('com_dash_week_tokens_so_far')}
                       </span>
                     </span>
@@ -250,7 +253,10 @@ export function Overview() {
             )}
           </section>
 
-          <FollowUp canManage={canManage} />
+          <div className="flex min-w-0 flex-col gap-4">
+            <MonthSoFar />
+            <FollowUp canManage={canManage} />
+          </div>
         </section>
 
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
@@ -259,13 +265,19 @@ export function Overview() {
               <EmptyRow text={localize(members.isLoading ? 'com_ui_loading' : 'com_dash_no_usage')} />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-120 border-collapse text-left text-[13px]">
+                <table className="w-full border-collapse text-left text-[13px] sm:min-w-120">
                   <thead>
                     <tr className="text-xs text-(--cui-color-text-muted)">
                       <th className="py-2 font-medium">{localize('com_dash_member')}</th>
-                      <th className="w-2/5 py-2 font-medium">{localize('com_dash_tokens')}</th>
-                      <th className="py-2 text-right font-medium">{localize('com_dash_requests')}</th>
-                      <th className="py-2 text-right font-medium">{localize('com_dash_last_used')}</th>
+                      <th className="py-2 text-right font-medium sm:w-2/5 sm:text-left">
+                        {localize('com_dash_tokens')}
+                      </th>
+                      <th className="hidden py-2 text-right font-medium sm:table-cell">
+                        {localize('com_dash_requests')}
+                      </th>
+                      <th className="hidden py-2 text-right font-medium sm:table-cell">
+                        {localize('com_dash_last_used')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="tabular-nums">
@@ -276,19 +288,20 @@ export function Overview() {
                           <div className="text-xs text-(--cui-color-text-muted)">{member.email}</div>
                         </td>
                         <td className="pr-4">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-end gap-3">
                             <ShareBar
                               value={member.totalTokens}
                               max={topMemberTokens}
                               growDelay={500 + order * BAR_STAGGER_MS}
+                              className="hidden sm:block"
                             />
                             <span className="w-14 shrink-0 text-right font-semibold">
                               {formatCompact(member.totalTokens)}
                             </span>
                           </div>
                         </td>
-                        <td className="text-right">{formatUsageNumber(member.eventCount)}</td>
-                        <td className="text-right text-(--cui-color-text-muted)">
+                        <td className="hidden text-right sm:table-cell">{formatUsageNumber(member.eventCount)}</td>
+                        <td className="hidden text-right text-(--cui-color-text-muted) sm:table-cell">
                           {formatRelativeTime(member.lastUsedAt)}
                         </td>
                       </tr>
@@ -340,7 +353,7 @@ function TabButton({
   active: boolean;
   onClick: () => void;
   controls: string;
-  children: string;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -358,6 +371,45 @@ function TabButton({
     >
       {children}
     </button>
+  );
+}
+
+function MonthSoFar() {
+  const localize = useLocalize();
+  const month = useMemo(() => presetRange('month'), []);
+  const before = useMemo(() => sameDaysLastMonth(month), [month]);
+  const current = useUsageSummary(month);
+  const previous = useUsageSummary(before);
+  const tokens = current.data?.summary.totalTokens ?? 0;
+  return (
+    <Card
+      title={localize('com_dash_month_title')}
+      description={localize('com_dash_range_line', {
+        start: formatDayLabel(month.start),
+        end: formatDayLabel(month.end),
+      })}
+    >
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <span className="text-[28px] leading-none font-bold tracking-tight">
+            {current.isLoading ? '—' : formatCompact(tokens)}
+            <span className="ml-2 text-sm font-semibold tracking-normal text-(--cui-color-text-muted)">
+              {localize('com_dash_tokens')}
+            </span>
+          </span>
+          <Delta
+            current={tokens}
+            previous={previous.data?.summary.totalTokens}
+            suffix={localize('com_dash_vs_same_days_last_month')}
+          />
+        </div>
+        <span className="text-[13px] text-(--cui-color-text-muted)">
+          {localize('com_dash_month_requests', {
+            requests: formatUsageNumber(current.data?.summary.eventCount ?? 0),
+          })}
+        </span>
+      </div>
+    </Card>
   );
 }
 
