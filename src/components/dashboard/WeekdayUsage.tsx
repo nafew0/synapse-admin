@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import type * as t from '@/types';
-import { formatCompact, formatWeekday, localDay, weekdayAverages } from '@/utils';
+import { formatCompact, formatWeekday, localDay, weekdayAverages, cn } from '@/utils';
 import { BAR_STAGGER_MS } from '@/components/shared';
 import { useLocalize } from '@/hooks';
 
@@ -9,8 +9,8 @@ const CHART_HEIGHT = 150;
 const START_DELAY_MS = 150;
 
 /**
- * Average daily tokens for each weekday across the series it is given. The busiest day
- * is emphasised and labelled; the rest stay muted, with values in the table.
+ * Average daily tokens for each weekday across the series it is given. Every bar carries
+ * its value; the busiest day is emphasised and the rest stay faded, labelled in muted ink.
  */
 export function WeekdayUsage({ series }: { series: t.TrendDatum[] }) {
   const localize = useLocalize();
@@ -55,11 +55,16 @@ export function WeekdayUsage({ series }: { series: t.TrendDatum[] }) {
                   title={`${formatWeekday(day.weekday, 'long')}: ${formatCompact(day.average)}`}
                   className="flex h-full flex-col items-center justify-end gap-1"
                 >
-                  {isBusiest ? (
-                    <span className="text-[11px] font-bold text-(--cui-color-text-default) tabular-nums">
-                      {formatCompact(day.average)}
-                    </span>
-                  ) : null}
+                  <span
+                    className={cn(
+                      'text-[10px] whitespace-nowrap tabular-nums sm:text-[11px]',
+                      isBusiest
+                        ? 'font-bold text-(--cui-color-text-default)'
+                        : 'font-semibold text-(--cui-color-text-muted)',
+                    )}
+                  >
+                    {formatCompact(day.average)}
+                  </span>
                   <div
                     className="syn-bar-rise w-full max-w-9 rounded-t-md"
                     style={
