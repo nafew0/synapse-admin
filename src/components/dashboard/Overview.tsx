@@ -10,6 +10,7 @@ import {
   formatDayLabel,
   formatCompact,
   currentWeek,
+  addDays,
   modelRowKey,
   presetRange,
   localDay,
@@ -65,7 +66,14 @@ export function Overview() {
 
   const today = localDay();
   const range = useMemo(() => presetRange(period), [period]);
-  const previous = useMemo(() => previousRange(range), [range]);
+  /** "This week" compares with the same weekdays last week, not the days just before it. */
+  const previous = useMemo(
+    () =>
+      period === 'week'
+        ? { start: addDays(range.start, -7), end: addDays(range.end, -7) }
+        : previousRange(range),
+    [period, range],
+  );
   const week = useMemo(() => currentWeek(today), [today]);
   const lastWeek = useMemo(() => previousRange(week), [week]);
   const thirtyDays = useMemo(() => presetRange('30d'), []);
@@ -96,6 +104,8 @@ export function Overview() {
     [lastWeek, lastWeekSeries.data?.points, week, weekSeries.data?.points],
   );
 
+  const loading = summary.isLoading;
+  const placeholder = (value: string) => (loading ? '—' : value);
   const current = summary.data?.summary;
   const before = previousSummary.data?.summary;
   const comparedTo = localize(period === 'week' ? 'com_dash_vs_same_days_last_week' : 'com_dash_vs_previous', {
@@ -116,10 +126,12 @@ export function Overview() {
       <div className="flex w-full flex-col gap-5 p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <p className="m-0 text-sm text-(--cui-color-text-muted)">
-            {localize('com_dash_range_line', {
-              start: formatDayLabel(range.start),
-              end: formatDayLabel(range.end),
-            })}
+            {period === 'week'
+              ? localize('com_dash_week_of', { start: formatDayLabel(range.start) })
+              : localize('com_dash_range_line', {
+                  start: formatDayLabel(range.start),
+                  end: formatDayLabel(range.end),
+                })}
             {timezone ? ` · ${timezone}` : ''}
           </p>
           <div className="flex flex-wrap items-center gap-2.5">
@@ -144,7 +156,7 @@ export function Overview() {
           <SeatsTile seats={seats} />
           <StatTile
             label={localize('com_dash_active_users')}
-            value={formatUsageNumber(current?.memberCount ?? 0)}
+            value={placeholder(formatUsageNumber(current?.memberCount ?? 0))}
             icon={<UserCheck size={ICON_SIZE} />}
             index={1}
             detail={
@@ -163,7 +175,7 @@ export function Overview() {
           />
           <StatTile
             label={localize('com_dash_requests')}
-            value={formatUsageNumber(current?.eventCount ?? 0)}
+            value={placeholder(formatUsageNumber(current?.eventCount ?? 0))}
             icon={<Activity size={ICON_SIZE} />}
             index={2}
             detail={<Delta current={current?.eventCount ?? 0} previous={before?.eventCount} suffix={comparedTo} />}
@@ -172,7 +184,7 @@ export function Overview() {
           </StatTile>
           <StatTile
             label={localize('com_dash_tokens_used')}
-            value={formatCompact(totalTokens)}
+            value={placeholder(formatCompact(totalTokens))}
             icon={<Layers size={ICON_SIZE} />}
             index={3}
             detail={<Delta current={totalTokens} previous={before?.totalTokens} suffix={comparedTo} />}
@@ -186,7 +198,7 @@ export function Overview() {
             <div
               role="tablist"
               aria-label={localize('com_dash_week_tabs')}
-              className="-mx-1 flex gap-1 border-b border-(--cui-color-stroke-muted)"
+              className="-mx-1 flex gap-1 overflow-x-auto border-b border-(--cui-color-stroke-muted)"
             >
               <TabButton active={tab === 'week'} onClick={() => setTab('week')} controls="dash-week-panel">
                 {localize('com_dash_week_tab')}
@@ -200,7 +212,7 @@ export function Overview() {
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[28px] leading-none font-bold tracking-tight">
-                      {formatCompact(weekSoFar)}
+                      {weekSeries.isLoading ? '—' : formatCompact(weekSoFar)}
                       <span className="ml-2 text-sm font-semibold text-(--cui-color-text-muted)">
                         {localize('com_dash_week_tokens_so_far')}
                       </span>
@@ -244,7 +256,7 @@ export function Overview() {
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <Card className="xl:col-span-2" title={localize('com_dash_top_members')} action={<DetailsLink />}>
             {(members.data?.members ?? []).length === 0 ? (
-              <EmptyRow text={localize('com_dash_no_usage')} />
+              <EmptyRow text={localize(members.isLoading ? 'com_ui_loading' : 'com_dash_no_usage')} />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-120 border-collapse text-left text-[13px]">
@@ -289,7 +301,7 @@ export function Overview() {
 
           <Card title={localize('com_dash_tokens_by_model')} action={<DetailsLink />}>
             {(models.data?.models ?? []).length === 0 ? (
-              <EmptyRow text={localize('com_dash_no_usage')} />
+              <EmptyRow text={localize(models.isLoading ? 'com_ui_loading' : 'com_dash_no_usage')} />
             ) : (
               <ul className="m-0 flex list-none flex-col gap-4 p-0">
                 {(models.data?.models ?? []).map((model, order) => (
@@ -338,7 +350,7 @@ function TabButton({
       aria-controls={controls}
       onClick={onClick}
       className={cn(
-        '-mb-px min-h-10 cursor-pointer border-0 border-b-2 bg-transparent px-3 text-sm',
+        '-mb-px min-h-10 shrink-0 cursor-pointer border-0 border-b-2 bg-transparent px-3 text-sm whitespace-nowrap',
         active
           ? 'border-(--syn-brand) font-semibold text-(--cui-color-text-default)'
           : 'border-transparent font-medium text-(--cui-color-text-muted) hover:text-(--cui-color-text-default)',

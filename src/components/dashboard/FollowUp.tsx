@@ -9,7 +9,7 @@ import { ResendInvitesDialog } from '@/components/users';
 import { getMembersFn, resendInviteFn } from '@/server';
 import { Card } from '@/components/shared';
 
-const SHOWN = 3;
+const SHOWN = 4;
 /** The list endpoint caps a page at 100; an institution rarely has more open invites. */
 const PENDING_FETCH_LIMIT = 100;
 
@@ -29,7 +29,11 @@ export function FollowUp({ canManage }: { canManage: boolean }) {
     staleTime: 60_000,
   });
   const soonest = useMemo(
-    () => [...(pending.data?.members ?? [])].sort(byExpiry).slice(0, SHOWN),
+    () =>
+      (pending.data?.members ?? [])
+        .filter((invite) => new Date(invite.expiresAt ?? 0).getTime() > Date.now())
+        .sort(byExpiry)
+        .slice(0, SHOWN),
     [pending.data?.members],
   );
   const expired = counts.expired ?? 0;
@@ -46,7 +50,7 @@ export function FollowUp({ canManage }: { canManage: boolean }) {
     >
       {soonest.length === 0 ? (
         <p className="m-0 py-4 text-center text-sm text-(--cui-color-text-muted)">
-          {localize('com_dash_invites_none')}
+          {localize(pending.isLoading ? 'com_ui_loading' : 'com_dash_invites_none')}
         </p>
       ) : (
         <ul className="m-0 flex list-none flex-col p-0">

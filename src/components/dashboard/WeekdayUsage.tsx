@@ -14,7 +14,11 @@ const START_DELAY_MS = 150;
  */
 export function WeekdayUsage({ series }: { series: t.TrendDatum[] }) {
   const localize = useLocalize();
-  const averages = useMemo(() => weekdayAverages(series, [localDay()]), [series]);
+  /** Monday first, like the week chart and the allowance week. */
+  const averages = useMemo(() => {
+    const sundayFirst = weekdayAverages(series, [localDay()]);
+    return [...sundayFirst.slice(1), sundayFirst[0]];
+  }, [series]);
   const busiest = averages.reduce<t.WeekdayAverage | null>(
     (best, day) => (day.average > (best?.average ?? 0) ? day : best),
     null,

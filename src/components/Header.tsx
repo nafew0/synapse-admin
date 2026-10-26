@@ -27,7 +27,7 @@ export function Header({ title, onSearchClick, children }: t.HeaderProps) {
               aria-label={localize('com_cmdk_label')}
               className="flex shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-(--cui-color-stroke-default) bg-transparent px-3 py-1.5 text-sm text-(--cui-color-text-muted) transition-colors hover:border-(--cui-color-stroke-intense) hover:text-(--cui-color-text-default)"
             >
-              <span>{localize('com_ui_search')}</span>
+              <span className="hidden sm:inline">{localize('com_ui_search')}</span>
               <kbd className="rounded border border-(--cui-color-stroke-default) bg-(--cui-color-background-secondary) px-1.5 py-0.5 text-xs font-medium text-(--cui-color-text-default)">
                 {shortcut}
               </kbd>

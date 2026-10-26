@@ -1432,5 +1432,6 @@
   "com_dash_resend": "Resend",
   "com_dash_resend_to": "Resend invite to {{email}}",
   "com_dash_resend_all": "Resend all",
-  "com_dash_all_members": "All members"
+  "com_dash_all_members": "All members",
+  "com_dash_week_of": "Week of {{start}}"
 }

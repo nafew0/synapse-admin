@@ -46,7 +46,7 @@ export function WeekChart({ thisWeek, lastWeek, today }: t.WeekChartProps) {
                   isFuture ? 'text-(--cui-color-text-muted)' : 'text-(--cui-color-text-default)',
                 )}
               >
-                {isFuture ? '—' : formatCompact(day.value)}
+                {isFuture ? '' : formatCompact(day.value)}
               </span>
               <div className="relative flex w-full max-w-14 items-end justify-center" style={{ height: CHART_HEIGHT }}>
                 <div
