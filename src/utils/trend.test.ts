@@ -8,6 +8,8 @@ import {
   previousRange,
   rollingAverage,
   weekdayAverages,
+  currentWeek,
+  weekStart,
 } from './trend';
 
 describe('date ranges', () => {
@@ -25,6 +27,13 @@ describe('date ranges', () => {
       start: '2026-08-09',
       end: '2026-09-07',
     });
+  });
+
+  it('starts weeks on Monday, as allowances do', () => {
+    expect(weekStart('2026-10-26')).toBe('2026-10-26');
+    expect(weekStart('2026-10-25')).toBe('2026-10-19');
+    expect(currentWeek('2026-10-28')).toEqual({ start: '2026-10-26', end: '2026-11-01' });
+    expect(presetRange('week', '2026-10-28')).toEqual({ start: '2026-10-26', end: '2026-10-28' });
   });
 
   it('resolves presets from a given day', () => {

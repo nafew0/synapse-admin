@@ -35,8 +35,23 @@ export function previousRange(range: t.DateRange): t.DateRange {
   return { start: addDays(end, 1 - dayCount(range)), end };
 }
 
+/** Monday of the ISO week containing `day`; usage allowances reset on Mondays. */
+export function weekStart(day: string): string {
+  const weekday = new Date(parseDay(day)).getUTCDay();
+  return addDays(day, -((weekday + 6) % 7));
+}
+
+/** The whole Monday–Sunday week containing `today`, future days included. */
+export function currentWeek(today = localDay()): t.DateRange {
+  const start = weekStart(today);
+  return { start, end: addDays(start, 6) };
+}
+
 export function presetRange(preset: Exclude<t.RangePreset, 'custom'>, today = localDay()): t.DateRange {
   const [year, month] = today.split('-').map(Number);
+  if (preset === 'week') {
+    return { start: weekStart(today), end: today };
+  }
   if (preset === '7d') {
     return { start: addDays(today, -6), end: today };
   }
