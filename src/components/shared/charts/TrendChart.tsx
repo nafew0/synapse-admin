@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react';
 import type * as t from '@/types';
-import { rollingAverage } from '@/utils';
+import { rollingAverage, cn } from '@/utils';
 import { useLocalize } from '@/hooks';
 
 const VIEW_WIDTH = 1000;
@@ -238,7 +238,7 @@ export function TrendChart({
         {axisIndices(data.length).map((index, position, all) => (
           <span
             key={data[index].day}
-            className="absolute whitespace-nowrap"
+            className={cn('absolute whitespace-nowrap', position % 2 === 1 && 'hidden sm:inline')}
             style={{
               left: `${geometry.xPercent(index)}%`,
               transform: labelShift(position, all.length),

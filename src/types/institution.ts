@@ -237,3 +237,22 @@ export interface PlatformAgentAccessReconcileResult {
   unchanged: number;
   activeMemberCount: number;
 }
+
+export interface InstitutionAttentionInput {
+  status: PlatformInstitution['status'];
+  /** `null` until the administrator list has loaded. */
+  adminCount: number | null;
+  joined: number;
+  validInvites: number;
+  maxSeats: number | null;
+  /** `null` until the invitation count has loaded. */
+  expiredInvites: number | null;
+  /** Last day with any request; `null` when none in range, `undefined` until loaded. */
+  lastActiveDay: string | null | undefined;
+  today: string;
+}
+
+export type InstitutionAttention =
+  | { key: 'suspended' | 'no_admin' | 'idle' }
+  | { key: 'seats'; used: number; max: number }
+  | { key: 'expired'; count: number };
