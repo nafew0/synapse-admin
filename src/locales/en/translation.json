@@ -1433,9 +1433,6 @@
   "com_dash_resend_all": "Resend all",
   "com_dash_all_members": "All members",
   "com_dash_week_of": "Week of {{start}}",
-  "com_dash_month_title": "This month so far",
-  "com_dash_vs_same_days_last_month": "vs same days last month",
-  "com_dash_month_requests": "{{requests}} requests",
   "com_dash_week_none_yet": "None yet",
   "com_dash_showing_last_week": "Showing last week"
 }

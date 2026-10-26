@@ -11,7 +11,6 @@ import {
   formatCompact,
   currentWeek,
   addDays,
-  sameDaysLastMonth,
   modelRowKey,
   presetRange,
   localDay,
@@ -297,7 +296,6 @@ export function Overview() {
           </Card>
 
           <div className="flex min-w-0 flex-col gap-4">
-            <MonthSoFar />
             <FollowUp canManage={canManage} />
             <Card title={localize('com_dash_tokens_by_model')} description={listNote} action={<DetailsLink />}>
               {(models.data?.models ?? []).length === 0 ? (
@@ -329,45 +327,6 @@ export function Overview() {
       </div>
       <CreateUserDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </div>
-  );
-}
-
-function MonthSoFar() {
-  const localize = useLocalize();
-  const month = useMemo(() => presetRange('month'), []);
-  const before = useMemo(() => sameDaysLastMonth(month), [month]);
-  const current = useUsageSummary(month);
-  const previous = useUsageSummary(before);
-  const tokens = current.data?.summary.totalTokens ?? 0;
-  return (
-    <Card
-      title={localize('com_dash_month_title')}
-      description={localize('com_dash_range_line', {
-        start: formatDayLabel(month.start),
-        end: formatDayLabel(month.end),
-      })}
-    >
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <span className="text-[28px] leading-none font-bold tracking-tight">
-            {current.isLoading ? '—' : formatCompact(tokens)}
-            <span className="ml-2 text-sm font-semibold tracking-normal text-(--cui-color-text-muted)">
-              {localize('com_dash_tokens')}
-            </span>
-          </span>
-          <Delta
-            current={tokens}
-            previous={previous.data?.summary.totalTokens}
-            suffix={localize('com_dash_vs_same_days_last_month')}
-          />
-        </div>
-        <span className="text-[13px] text-(--cui-color-text-muted)">
-          {localize('com_dash_month_requests', {
-            requests: formatUsageNumber(current.data?.summary.eventCount ?? 0),
-          })}
-        </span>
-      </div>
-    </Card>
   );
 }
 

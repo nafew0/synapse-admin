@@ -217,7 +217,7 @@ A two-hue brand world (teal and orange) on cool neutrals, with semantic tints fo
 **Character:** One plain sans at modest sizes, with weight (600 to 700) and tabular numerals doing the hierarchy. Figures are big and bold; the word that explains them sits beside them at 14px in muted ink.
 
 ### Hierarchy
-- **Headline** (700, 28px, line-height 1, tight tracking): the one hero figure per card ("tokens this week so far", "this month so far").
+- **Headline** (700, 28px, line-height 1, tight tracking): the one hero figure per card ("tokens this week so far").
 - **Figure** (700, 24px, line-height 1, tight tracking): stat-tile values.
 - **Page Title** (700, 20px): the page name in the top header, one step above card titles.
 - **Title** (600, 15px): card titles and the sidebar product name.
@@ -233,7 +233,7 @@ A two-hue brand world (teal and orange) on cool neutrals, with semantic tints fo
 
 ## Layout
 
-A fixed left sidebar (224px, 64px collapsed) beside a scrolling content column on the grey ground with 24px padding and 20px vertical rhythm between rows. The dashboard is three rows: a row of four figure tiles (auto-fit grid, 14rem minimum, 16px gap); a main row where the week card spans two of three columns at `xl` (1280px) with the Busiest days card beside it, both always visible (no tabs); and a bottom row of top members (two columns) beside a right column stacking "This month so far", "Invites to follow up" and tokens by model. Below `xl` every row stacks to one column; below `sm` (640px) tables drop secondary columns. Card internals use 16px gaps and 20px padding; rows inside lists use 10px vertical padding with a muted top rule.
+A fixed left sidebar (224px, 64px collapsed) beside a scrolling content column on the grey ground with 24px padding and 20px vertical rhythm between rows. The dashboard is three rows: a row of four figure tiles (auto-fit grid, 14rem minimum, 16px gap); a main row where the week card spans two of three columns at `xl` (1280px) with the Busiest days card beside it, both always visible (no tabs); and a bottom row of top members (two columns) beside a right column stacking "Invites to follow up" and tokens by model. Below `xl` every row stacks to one column; below `sm` (640px) tables drop secondary columns. Card internals use 16px gaps and 20px padding; rows inside lists use 10px vertical padding with a muted top rule.
 
 ## Elevation & Depth
 
@@ -305,5 +305,6 @@ Danger-tint panel, 8px radius, 12px padding: a circle-x icon, a bold 13px senten
 - **Don't** put a shadow on a card or tile at rest.
 - **Don't** put white text on Action Orange; use dark ink (on-accent-ink).
 - **Do** fall back to last week in the member and model lists when this week has no usage yet, and say so in the card description ("Showing last week").
+- **Don't** add a month-to-date tokens card: it repeats the period switch. The right-column slot is reserved for the monthly allowance once institution admins can read it.
 - **Don't** draw a future day as a zero bar; it is a dimmed, unlabelled ghost.
 - **Don't** show allowance, credit or taka figures to institution admins from superadmin-only `/api/platform/*` data.
