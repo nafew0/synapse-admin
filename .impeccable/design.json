@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-26T00:00:00Z",
+  "title": "Design System: BdREN Synapse Admin",
+  "extensions": {
+    "colorMeta": {
+      "brand-teal": { "role": "primary", "displayName": "Synapse Teal", "canonical": "#186569", "cssVar": "--syn-brand", "dark": "#4fb6ba", "tonalRamp": ["#082a2c", "#0f3f42", "#134f54", "#186569", "#2f8a8e", "#5fb0b3", "#a9d6d7", "#e2f0ee"] },
+      "brand-teal-ink": { "role": "primary", "displayName": "Deep Teal Ink", "canonical": "#134f54", "cssVar": "--syn-brand-ink", "dark": "#7fd0d3" },
+      "brand-teal-tint": { "role": "primary", "displayName": "Teal Wash", "canonical": "#e2f0ee", "cssVar": "--syn-brand-tint", "dark": "#133a3d" },
+      "chart-teal": { "role": "primary", "displayName": "Chart Teal", "canonical": "#008f88", "cssVar": "--syn-chart-1", "dark": "#12a7a3", "tonalRamp": ["#00302d", "#004a46", "#00665f", "#008f88", "#2fb0a9", "#6ccbc5", "#ade3df", "#e3f6f4"] },
+      "action-orange": { "role": "secondary", "displayName": "Action Orange", "canonical": "#f5871f", "cssVar": "--cui-color-accent", "dark": "#f0a857", "tonalRamp": ["#4a2306", "#73370b", "#a34f0f", "#d06814", "#f5871f", "#f8a95e", "#fbcd9f", "#fef0e2"] },
+      "chart-orange": { "role": "secondary", "displayName": "Chart Orange", "canonical": "#e8730c", "cssVar": "--syn-chart-2", "dark": "#d97418" },
+      "on-accent-ink": { "role": "neutral", "displayName": "On-Orange Ink", "canonical": "#132321", "cssVar": "--syn-on-accent", "dark": "#12171a" },
+      "ground": { "role": "neutral", "displayName": "Mist Ground", "canonical": "#f7f7f8", "cssVar": "--syn-bg", "dark": "#06161a" },
+      "surface": { "role": "neutral", "displayName": "Card White", "canonical": "#ffffff", "cssVar": "--syn-surface", "dark": "#0f1f24" },
+      "ink": { "role": "neutral", "displayName": "Ledger Ink", "canonical": "#132321", "cssVar": "--cui-color-text-default", "dark": "#f2f4f4" },
+      "ink-muted": { "role": "neutral", "displayName": "Pencil Grey", "canonical": "#595959", "cssVar": "--cui-color-text-muted", "dark": "#9aa5a7" },
+      "stroke": { "role": "neutral", "displayName": "Rule Grey", "canonical": "#e3e3e3", "cssVar": "--cui-color-stroke-default", "dark": "#23363b" },
+      "stroke-muted": { "role": "neutral", "displayName": "Faint Rule", "canonical": "#ededed", "cssVar": "--cui-color-stroke-muted", "dark": "#1a2c31" },
+      "stroke-intense": { "role": "neutral", "displayName": "Firm Rule", "canonical": "#cdcdcd", "cssVar": "--cui-color-stroke-intense", "dark": "#34464a" },
+      "track": { "role": "neutral", "displayName": "Track Grey", "canonical": "#ededed", "cssVar": "--syn-track", "dark": "#1b2c31" },
+      "ghost": { "role": "neutral", "displayName": "Ghost Grey", "canonical": "#8a8a8a", "cssVar": "--syn-ghost", "dark": "#6f7d80" },
+      "hover-wash": { "role": "neutral", "displayName": "Hover Wash", "canonical": "#f2f4f4", "cssVar": "--cui-color-background-hover", "dark": "#16292e" },
+      "success-fg": { "role": "semantic", "displayName": "Success", "canonical": "#047857", "cssVar": "--syn-success-fg", "dark": "#6ee7b7" },
+      "warning-fg": { "role": "semantic", "displayName": "Warning", "canonical": "#b45309", "cssVar": "--syn-warning-fg", "dark": "#f5c26b" },
+      "warning-bg": { "role": "semantic", "displayName": "Warning Tint", "canonical": "#fffbeb", "cssVar": "--syn-warning-bg", "dark": "#33240b" },
+      "danger-fg": { "role": "semantic", "displayName": "Danger", "canonical": "#b91c1c", "cssVar": "--syn-danger-fg", "dark": "#fca5a5" },
+      "danger-bg": { "role": "semantic", "displayName": "Danger Tint", "canonical": "#fef2f2", "cssVar": "--syn-danger-bg", "dark": "#3a1517" },
+      "danger-border": { "role": "semantic", "displayName": "Danger Rule", "canonical": "#fecaca", "cssVar": "--syn-danger-border", "dark": "#6b2226" }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline figure", "purpose": "The one hero figure per card, with a muted word beside it." },
+      "figure": { "displayName": "Tile figure", "purpose": "Stat-tile values." },
+      "title": { "displayName": "Card title", "purpose": "Card titles and the sidebar product name." },
+      "body": { "displayName": "Body", "purpose": "Nav items, tabs, buttons, figure captions." },
+      "body-small": { "displayName": "Body small", "purpose": "Descriptions, comparison lines, table cells, card-header links." },
+      "label": { "displayName": "Label", "purpose": "Tile labels, legends, deltas, row meta." },
+      "micro": { "displayName": "Micro", "purpose": "Chart values and day labels; sidebar section labels (600, 0.08em, uppercase)." }
+    },
+    "shadows": [
+      { "name": "selection-lift", "value": "0 1px 2px rgb(0 0 0 / 0.05)", "purpose": "Selected segment of the range picker." },
+      { "name": "tooltip", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "Chart crosshair tooltip." },
+      { "name": "modal", "value": "0 16px 70px var(--cui-color-shadow)", "purpose": "Dialogs and the command menu." }
+    ],
+    "motion": [
+      { "name": "icon-pop", "value": "520ms cubic-bezier(0.34, 1.56, 0.64, 1)", "purpose": "Tile and nav icons on entrance; staggered 90ms per tile." },
+      { "name": "bar-rise", "value": "900ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Week and weekday bars grow from the baseline; staggered 120ms." },
+      { "name": "bar-grow", "value": "1100ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Share bars grow from the left." },
+      { "name": "line-draw", "value": "900ms ease-out", "purpose": "Sparklines draw left to right." },
+      { "name": "reveal", "value": "1400ms cubic-bezier(0.33, 1, 0.68, 1)", "purpose": "Trend charts reveal left to right by clip." },
+      { "name": "drawer-in", "value": "240ms cubic-bezier(0.32, 0.72, 0, 1)", "purpose": "Side drawers." },
+      { "name": "reduced-motion", "value": "animation: none", "purpose": "All syn-* entrance animations off under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "xl", "value": "1280px" }
+    ],
+    "patterns": [
+      { "name": "future-hatch", "value": "repeating-linear-gradient(135deg, var(--syn-track) 0 4px, transparent 4px 8px)", "purpose": "Days of the week still to come." },
+      { "name": "ghost-bar", "value": "1px dashed var(--syn-ghost), no bottom border, 6px top radius", "purpose": "Last week's value behind each day." }
+    ],
+    "knownLimitations": [
+      "Institution admins have no allowance or credit endpoint yet; quota data sits behind superadmin-only /api/platform/*. The dashboard shows token figures where allowance would go, and the week chart uses the last-week ghost instead of the pace line.",
+      "The quota week is the ISO week starting Monday."
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single primary action on a screen, e.g. Invite member.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>Invite member</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 0; border-radius: 8px; background: var(--cui-color-accent, #f5871f); color: var(--syn-on-accent, #132321); font: 700 14px/1 Inter, -apple-system, 'Segoe UI', sans-serif; cursor: pointer; transition: filter 0.15s; } .ds-btn-primary:hover { filter: brightness(0.95); } .ds-btn-primary:focus-visible { outline: 2px solid var(--cui-color-outline, #f5871f); outline-offset: 2px; }"
+    },
+    {
+      "name": "Row Action Button",
+      "kind": "button",
+      "refersTo": "button-row",
+      "description": "Small bordered action inside a list row, e.g. Resend.",
+      "html": "<button class=\"ds-btn-row\">Resend</button>",
+      "css": ".ds-btn-row { height: 32px; padding: 0 10px; border: 1px solid var(--cui-color-stroke-default, #e3e3e3); border-radius: 6px; background: transparent; color: var(--cui-color-text-default, #132321); font: 700 12px/1 Inter, -apple-system, 'Segoe UI', sans-serif; cursor: pointer; } .ds-btn-row:hover { background: var(--cui-color-background-hover, #f2f4f4); } .ds-btn-row:focus-visible { outline: 2px solid var(--cui-color-outline, #f5871f); outline-offset: 2px; } .ds-btn-row:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Range Picker",
+      "kind": "chip",
+      "refersTo": "range-picker",
+      "description": "Segmented period switch: This week / This month / 30 days.",
+      "html": "<div class=\"ds-range\" role=\"group\"><button aria-pressed=\"true\">This week</button><button aria-pressed=\"false\">This month</button><button aria-pressed=\"false\">30 days</button></div>",
+      "css": ".ds-range { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--cui-color-background-muted, #f7f7f8); } .ds-range button { height: 32px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--cui-color-text-muted, #595959); font: 500 13px/1 Inter, -apple-system, 'Segoe UI', sans-serif; cursor: pointer; transition: color 0.15s, background 0.15s; } .ds-range button:hover { color: var(--cui-color-text-default, #132321); } .ds-range button[aria-pressed='true'] { background: var(--syn-surface, #fff); color: var(--syn-brand-ink, #134f54); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); } .ds-range button:focus-visible { outline: 2px solid var(--cui-color-outline, #f5871f); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Flat bordered container with title, description and a header link.",
+      "html": "<section class=\"ds-card\"><div class=\"ds-card-head\"><div><h2>Invites to follow up</h2><p>Pending invites expiring soonest</p></div><a href=\"#\">All members</a></div><p class=\"ds-card-body\">mahmud.k@demo.edu.bd</p></section>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 16px; padding: 20px; border: 1px solid var(--cui-color-stroke-default, #e3e3e3); border-radius: 12px; background: var(--syn-surface, #fff); font-family: Inter, -apple-system, 'Segoe UI', sans-serif; } .ds-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; } .ds-card h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--cui-color-text-default, #132321); } .ds-card p { margin: 2px 0 0; font-size: 13px; color: var(--cui-color-text-muted, #595959); } .ds-card a { font-size: 13px; font-weight: 600; color: var(--cui-color-text-link, #186569); text-decoration: none; } .ds-card a:hover { text-decoration: underline; } .ds-card-body { color: var(--cui-color-text-default, #132321) !important; font-weight: 600; }"
+    },
+    {
+      "name": "Stat Tile",
+      "kind": "card",
+      "refersTo": "stat-tile",
+      "description": "Headline figure with icon chip, label and a comparison line.",
+      "html": "<div class=\"ds-tile\"><div class=\"ds-tile-head\"><span class=\"ds-tile-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\"/></svg></span><span>Requests</span></div><span class=\"ds-tile-value\">36</span><span class=\"ds-tile-detail\">6% more than the same days last week</span></div>",
+      "css": ".ds-tile { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--cui-color-stroke-default, #e3e3e3); border-radius: 12px; background: var(--syn-surface, #fff); font-family: Inter, -apple-system, 'Segoe UI', sans-serif; } .ds-tile-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: var(--cui-color-text-muted, #595959); } .ds-tile-icon { display: flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 8px; background: var(--syn-brand-tint, #e2f0ee); color: var(--syn-brand-ink, #134f54); } .ds-tile-value { font-size: 24px; font-weight: 700; line-height: 1; letter-spacing: -0.025em; color: var(--cui-color-text-default, #132321); } .ds-tile-detail { font-size: 12px; font-weight: 600; color: var(--syn-success-fg, #047857); }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Sidebar link; active state is the teal wash.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-nav-label\">Overview</span><a href=\"#\" aria-current=\"page\">Dashboard</a><a href=\"#\">Usage</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 2px; width: 204px; font-family: Inter, -apple-system, 'Segoe UI', sans-serif; } .ds-nav-label { padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cui-color-text-muted, #595959); } .ds-nav a { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--cui-color-text-muted, #595959); text-decoration: none; transition: background 0.1s, color 0.1s; } .ds-nav a:hover { background: var(--cui-color-background-hover, #f2f4f4); color: var(--cui-color-text-default, #132321); } .ds-nav a[aria-current='page'] { background: var(--syn-brand-tint, #e2f0ee); color: var(--syn-brand-ink, #134f54); font-weight: 600; } .ds-nav a:focus-visible { outline: 2px solid var(--cui-color-outline, #f5871f); }"
+    },
+    {
+      "name": "Underline Tabs",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Card-level tabs: This week | Busiest days of the week.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button role=\"tab\" aria-selected=\"true\">This week</button><button role=\"tab\" aria-selected=\"false\">Busiest days of the week</button></div>",
+      "css": ".ds-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--cui-color-stroke-muted, #ededed); font-family: Inter, -apple-system, 'Segoe UI', sans-serif; } .ds-tabs button { margin-bottom: -1px; min-height: 40px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; font-size: 14px; font-weight: 500; color: var(--cui-color-text-muted, #595959); cursor: pointer; } .ds-tabs button:hover { color: var(--cui-color-text-default, #132321); } .ds-tabs button[aria-selected='true'] { border-bottom-color: var(--syn-brand, #186569); color: var(--cui-color-text-default, #132321); font-weight: 600; } .ds-tabs button:focus-visible { outline: 2px solid var(--cui-color-outline, #f5871f); }"
+    },
+    {
+      "name": "Week Chart",
+      "kind": "custom",
+      "refersTo": "share-bar",
+      "description": "Signature Monday-first week: teal bars inside dashed last-week ghosts, today softened, future days hatched.",
+      "html": "<div class=\"ds-week\"><div class=\"ds-day\"><div class=\"ds-ghost\" style=\"height:60%\"></div><div class=\"ds-bar ds-today\" style=\"height:55%\"></div><span>Mon · today</span></div><div class=\"ds-day\"><div class=\"ds-ghost ds-future\" style=\"height:90%\"></div><span>Tue</span></div><div class=\"ds-day\"><div class=\"ds-ghost ds-future\" style=\"height:70%\"></div><span>Wed</span></div></div>",
+      "css": ".ds-week { display: grid; grid-template-columns: repeat(3, 56px); gap: 12px; height: 160px; align-items: end; font: 11px Inter, -apple-system, 'Segoe UI', sans-serif; color: var(--cui-color-text-muted, #595959); } .ds-day { position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; } .ds-day span { margin-top: 4px; } .ds-ghost { position: absolute; bottom: 18px; width: 100%; border: 1px dashed var(--syn-ghost, #8a8a8a); border-bottom: 0; border-radius: 6px 6px 0 0; } .ds-future { background-image: repeating-linear-gradient(135deg, var(--syn-track, #ededed) 0 4px, transparent 4px 8px); } .ds-bar { position: relative; width: 78%; border-radius: 6px 6px 0 0; background: var(--syn-chart-1, #008f88); transform-origin: bottom; transition: transform 0.3s; } .ds-today { opacity: 0.75; } .ds-bar:hover { opacity: 1; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Office Ledger",
+    "overview": "The admin console is a calm, white-card ledger kept in the Synapse chat app's colours: a teal brand for identity and data, a single orange for the one thing to do next. It is read by occasional office staff, so every surface is a plain card on a soft grey ground, every figure carries its period and comparison in words, and the densest thing on screen is a seven-bar week. Dark mode is a full second world, not an inversion: a deep teal-black ground (the admin login page palette) with brighter teal and a warmer, lighter orange.\n\nThe system is flat. Depth comes from a one-pixel stroke and the step from grey ground to white surface, never from shadow. Motion is a short entrance only (icons pop, bars rise, lines draw) and switches off under reduced motion. Status is always an icon or word beside a colour, never colour alone.\n\nThe dashboard is time-shaped, not KPI-shaped: the main chart is the current ISO week (Monday to Sunday, matching the quota engine's reset), today marked, future days hatched, last week as a dashed ghost behind each bar.",
+    "keyCharacteristics": [
+      "Grey ground, white bordered cards, 12px corners, no shadows at rest.",
+      "Teal for data and identity, orange for the primary action and the second data series.",
+      "Big bold tabular figures with a muted word beside them (\"98.1K tokens this week so far\").",
+      "Monday-first week everywhere a week appears.",
+      "Light and dark defined as paired token sets in `src/styles.css` (`:root`, `.dark`, and `prefers-color-scheme: dark`)."
+    ],
+    "rules": [
+      { "name": "The One Orange Rule", "body": "Action Orange marks the single primary action per screen; Chart Orange is reserved for the second data series. Orange is never decoration.", "section": "colors" },
+      { "name": "The Paired Token Rule", "body": "Every colour is a CSS variable with a light value and a dark value, declared in all three blocks of `src/styles.css`. Components reference `var(--syn-*)` or `var(--cui-color-*)`; no hex in components.", "section": "colors" },
+      { "name": "The Login Dark Rule", "body": "Dark mode follows the admin login page: teal-black ground (dark-ground), deep teal-grey cards (dark-surface), lighter teal (dark-brand-teal) and a lighter orange (dark-action-orange) so text on it stays dark.", "section": "colors" },
+      { "name": "The Figure-Plus-Word Rule", "body": "A number never stands alone: it carries its unit or period in muted 13 to 14px text beside or beneath it.", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "Numbers in tables, charts and tooltips use tabular numerals so columns align.", "section": "typography" },
+      { "name": "The Flat Card Rule", "body": "Cards and tiles never carry a shadow; a 1px border and the ground-to-surface step are the only separation.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** put every colour through a paired `--syn-*` or `--cui-color-*` variable defined in `:root`, `.dark` and `prefers-color-scheme: dark`.",
+      "**Do** keep orange to the single primary action and the second data series.",
+      "**Do** start every week on Monday and end it on Sunday; that is the quota reset week.",
+      "**Do** pair every status colour with an icon or a word, and every chart with a screen-reader table.",
+      "**Do** show token figures where allowance would go until institution admins have a tenant-scoped allowance endpoint; label them as tokens.",
+      "**Do** wrap entrance motion in the `syn-*` classes so `prefers-reduced-motion` turns it off."
+    ],
+    "donts": [
+      "**Don't** put a shadow on a card or tile at rest.",
+      "**Don't** put white text on Action Orange; use dark ink (on-accent-ink).",
+      "**Don't** draw a future day as a zero bar; it is hatched and unlabelled.",
+      "**Don't** show allowance, credit or taka figures to institution admins from superadmin-only `/api/platform/*` data."
+    ]
+  }
+}
