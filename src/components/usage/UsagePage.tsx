@@ -47,6 +47,9 @@ import { exportUsageCsvServerFn, listPlatformInstitutionsFn } from '@/server';
 import { SystemCapabilities } from '@/constants';
 
 const PAGE_SIZE = 10;
+/** The member ranking opens on the top 10 and grows by 10 up to the top 50. */
+const MEMBER_STEP = 10;
+const MEMBER_CAP = 50;
 const PRESETS: t.RangePreset[] = ['7d', '30d', 'month', 'lastMonth', 'custom'];
 
 type Metric = 'tokens' | 'requests';
@@ -118,11 +121,11 @@ export function UsagePage() {
   const [metric, setMetric] = useState<Metric>('tokens');
   const [exporting, setExporting] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState('');
-  const [memberPage, setMemberPage] = useState(1);
+  const [memberLimit, setMemberLimit] = useState(MEMBER_STEP);
   const [modelPage, setModelPage] = useState(1);
 
   const resetPages = useCallback(() => {
-    setMemberPage(1);
+    setMemberLimit(MEMBER_STEP);
     setModelPage(1);
   }, []);
 
@@ -150,7 +153,10 @@ export function UsagePage() {
   const summaryQuery = useUsageSummary(scope, scopeReady);
   const previousQuery = useUsageSummary(previousScope, scopeReady);
   const timeseriesQuery = useUsageTimeseries(scope, scopeReady);
-  const membersQuery = useUsageMembers(listScope(memberPage), scopeReady);
+  const membersQuery = useUsageMembers(
+    { ...scope, query: search, limit: memberLimit, offset: 0 },
+    scopeReady,
+  );
   const modelsQuery = useUsageModels(listScope(modelPage), scopeReady);
 
   const series = useMemo(() => {
@@ -293,7 +299,9 @@ export function UsagePage() {
   const comparedTo = localize('com_usage_vs_previous');
   const members = membersQuery.data?.members ?? [];
   const models = modelsQuery.data?.models ?? [];
-  const memberPages = Math.max(1, Math.ceil((membersQuery.data?.total ?? 0) / PAGE_SIZE));
+  const memberTotal = membersQuery.data?.total ?? 0;
+  const memberLimitReached = Math.min(memberTotal, MEMBER_CAP);
+  const loadingMore = membersQuery.isFetching && membersQuery.isPlaceholderData;
   const modelPages = Math.max(1, Math.ceil((modelsQuery.data?.total ?? 0) / PAGE_SIZE));
   const topModel = models[0]?.totalTokens ?? 0;
   const topMember = members[0]?.totalTokens ?? 0;
@@ -515,7 +523,40 @@ export function UsagePage() {
                 </tr>
               ))}
             </DataTable>
-            <Pagination currentPage={memberPage} totalPages={memberPages} onPageChange={setMemberPage} />
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--cui-color-stroke-muted) pt-3">
+              <span className="text-[13px] text-(--cui-color-text-muted)">
+                {localize('com_usage_members_showing', {
+                  shown: formatUsageNumber(members.length),
+                  total: formatUsageNumber(memberTotal),
+                })}
+              </span>
+              <div className="flex gap-2">
+                {memberLimit > MEMBER_STEP ? (
+                  <button
+                    type="button"
+                    onClick={() => setMemberLimit(MEMBER_STEP)}
+                    className="h-9 cursor-pointer rounded-lg border border-(--cui-color-stroke-default) bg-transparent px-3 text-[13px] font-semibold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover)"
+                  >
+                    {localize('com_usage_members_top10')}
+                  </button>
+                ) : null}
+                {members.length < memberLimitReached ? (
+                  <button
+                    type="button"
+                    disabled={loadingMore}
+                    onClick={() => setMemberLimit((limit) => Math.min(limit + MEMBER_STEP, MEMBER_CAP))}
+                    className="h-9 cursor-pointer rounded-lg border border-(--cui-color-stroke-default) bg-(--syn-surface) px-3 text-[13px] font-semibold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover) disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {localize(loadingMore ? 'com_usage_members_loading' : 'com_usage_members_more')}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            {memberTotal > MEMBER_CAP && members.length >= MEMBER_CAP ? (
+              <p className="m-0 text-xs text-(--cui-color-text-muted)">
+                {localize('com_usage_members_cap_note', { cap: MEMBER_CAP })}
+              </p>
+            ) : null}
           </>
         )}
       </Card>

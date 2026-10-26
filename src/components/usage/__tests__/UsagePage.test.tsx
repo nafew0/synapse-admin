@@ -52,6 +52,7 @@ const modelRow = {
   memberCount: 2,
 };
 const models = vi.hoisted(() => ({ total: 1 }));
+const members = vi.hoisted(() => ({ total: 1 }));
 
 vi.mock('@/server', () => ({
   getUsageSummaryFn: vi.fn().mockResolvedValue({
@@ -65,23 +66,21 @@ vi.mock('@/server', () => ({
       modelCount: 1,
     },
   }),
-  getUsageMembersFn: vi.fn().mockResolvedValue({
+  getUsageMembersFn: vi.fn(async ({ data }: { data: { limit: number } }) => ({
     range: {},
-    members: [
-      {
-        userId: 'u1',
-        name: 'Ada Lovelace',
-        email: 'ada@example.com',
-        totalTokens: 1000,
-        promptTokens: 400,
-        completionTokens: 600,
-        eventCount: 8,
-      },
-    ],
-    total: 1,
-    limit: 10,
+    members: Array.from({ length: Math.min(data.limit, members.total) }, (_, i) => ({
+      userId: `u${i + 1}`,
+      name: i === 0 ? 'Ada Lovelace' : `Member ${i + 1}`,
+      email: `m${i + 1}@example.com`,
+      totalTokens: 1000 - i,
+      promptTokens: 400,
+      completionTokens: 600 - i,
+      eventCount: 8,
+    })),
+    total: members.total,
+    limit: data.limit,
     offset: 0,
-  }),
+  })),
   getUsageModelsFn: vi.fn(async ({ data }: { data: { offset: number } }) => ({
     range: {},
     models: [modelRow],
@@ -95,7 +94,12 @@ vi.mock('@/server', () => ({
 }));
 
 const { UsagePage } = await import('../UsagePage');
-const { getUsageModelsFn } = await import('@/server');
+const { getUsageModelsFn, getUsageMembersFn } = await import('@/server');
+
+function lastMembersLimit(): number {
+  const calls = vi.mocked(getUsageMembersFn).mock.calls;
+  return (calls[calls.length - 1][0] as { data: { limit: number } }).data.limit;
+}
 
 function lastModelsOffset(): number {
   const calls = vi.mocked(getUsageModelsFn).mock.calls;
@@ -115,7 +119,9 @@ describe('UsagePage', () => {
   beforeEach(() => {
     routeContext.user = { tenantId: 'tenant-a', isPlatformSuperadmin: false };
     models.total = 1;
+    members.total = 1;
     vi.mocked(getUsageModelsFn).mockClear();
+    vi.mocked(getUsageMembersFn).mockClear();
   });
 
   it('shows the UI model name rather than the provider model id', async () => {
@@ -174,5 +180,34 @@ describe('UsagePage', () => {
       target: { value: 'office' },
     });
     await waitFor(() => expect(lastModelsOffset()).toBe(0));
+  });
+
+  it('opens on the top 10 members and shows 10 more at a time up to 50', async () => {
+    members.total = 73;
+    renderPage();
+
+    await screen.findByText('Ada Lovelace');
+    expect(lastMembersLimit()).toBe(10);
+    expect(screen.queryByText('com_usage_members_top10')).not.toBeInTheDocument();
+
+    for (const expected of [20, 30, 40, 50]) {
+      fireEvent.click(await screen.findByText('com_usage_members_more'));
+      await waitFor(() => expect(lastMembersLimit()).toBe(expected));
+      await screen.findByText(`Member ${expected}`);
+    }
+
+    expect(screen.queryByText('com_usage_members_more')).not.toBeInTheDocument();
+    expect(screen.getByText('com_usage_members_cap_note')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('com_usage_members_top10'));
+    await waitFor(() => expect(lastMembersLimit()).toBe(10));
+  });
+
+  it('offers no "Show more" when every member already fits', async () => {
+    members.total = 4;
+    renderPage();
+
+    await screen.findByText('Ada Lovelace');
+    expect(screen.queryByText('com_usage_members_more')).not.toBeInTheDocument();
   });
 });
