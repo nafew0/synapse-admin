@@ -287,7 +287,7 @@ export function Overview() {
                           <div className="truncate font-semibold">{member.name}</div>
                           <div className="truncate text-xs text-(--cui-color-text-muted)">{member.email}</div>
                         </td>
-                        <td className="pr-4">
+                        <td className="sm:pr-4">
                           <div className="flex items-center justify-end gap-3">
                             <ShareBar
                               value={member.totalTokens}
