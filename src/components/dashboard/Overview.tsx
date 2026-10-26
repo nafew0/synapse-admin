@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Activity, Layers, Plus, UserCheck, IdCard } from 'lucide-react';
-import type { ReactNode } from 'react';
 import type * as t from '@/types';
 import {
   formatRelativeTime,
@@ -17,7 +16,6 @@ import {
   presetRange,
   localDay,
   fillDaily,
-  cn,
 } from '@/utils';
 import {
   useUsageTimeseries,
@@ -47,7 +45,6 @@ import { WeekChart } from './WeekChart';
 import { FollowUp } from './FollowUp';
 
 type Period = 'week' | 'month' | '30d';
-type MainTab = 'week' | 'weekdays';
 
 const PERIODS: t.RangePreset[] = ['week', 'month', '30d'];
 const TOP_ROWS = 5;
@@ -55,7 +52,7 @@ const ICON_SIZE = 16;
 
 /**
  * The institution admin's home: this week at a glance. Headline figures follow
- * the period switch; the main card always reads the current Monday–Sunday week
+ * the period switch; the week card always reads the current Monday–Sunday week
  * against the one before, with the weekday pattern of the last 30 days beside it.
  */
 export function Overview() {
@@ -63,7 +60,6 @@ export function Overview() {
   const { hasCapability } = useCapabilities();
   const canManage = hasCapability(SystemCapabilities.MANAGE_USERS);
   const [period, setPeriod] = useState<Period>('week');
-  const [tab, setTab] = useState<MainTab>('week');
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const today = localDay();
@@ -85,7 +81,7 @@ export function Overview() {
   const timeseries = useUsageTimeseries(range);
   const weekSeries = useUsageTimeseries(week);
   const lastWeekSeries = useUsageTimeseries(lastWeek);
-  const monthSeries = useUsageTimeseries(thirtyDays, tab === 'weekdays');
+  const monthSeries = useUsageTimeseries(thirtyDays);
   /** Early in the week there may be nothing yet: the lists then show last week, labelled. */
   const showLastWeek = period === 'week' && summary.isSuccess && (summary.data?.summary.totalTokens ?? 0) === 0;
   const listRange = showLastWeek ? lastWeek : range;
@@ -200,71 +196,49 @@ export function Overview() {
           </StatTile>
         </section>
 
-        <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-3">
-          <section className="flex min-w-0 flex-col gap-4 rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-5 xl:col-span-2">
-            <div
-              role="tablist"
-              aria-label={localize('com_dash_week_tabs')}
-              className="-mx-1 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-(--cui-color-stroke-muted)"
-            >
-              <TabButton active={tab === 'week'} onClick={() => setTab('week')} controls="dash-week-panel">
-                {localize('com_dash_week_tab')}
-              </TabButton>
-              <TabButton active={tab === 'weekdays'} onClick={() => setTab('weekdays')} controls="dash-weekdays-panel">
-                <span className="sm:hidden">{localize('com_dash_weekday_short')}</span>
-                <span className="hidden sm:inline">{localize('com_dash_weekday_title')}</span>
-              </TabButton>
+        <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+          <Card className="xl:col-span-2" title={localize('com_dash_week_tab')}>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[28px] leading-none font-bold tracking-tight">
+                  {weekSeries.isLoading ? '—' : formatCompact(weekSoFar)}
+                  <span className="ml-2 text-sm font-semibold tracking-normal text-(--cui-color-text-muted)">
+                    {localize('com_dash_week_tokens_so_far')}
+                  </span>
+                </span>
+                <span className="text-[13px] text-(--cui-color-text-muted)">
+                  {weekChange == null
+                    ? localize('com_dash_week_no_compare')
+                    : localize(weekChange >= 0 ? 'com_dash_week_more' : 'com_dash_week_less', {
+                        change: Math.abs(weekChange),
+                      })}
+                </span>
+              </div>
+              <ul className="m-0 flex list-none gap-4 p-0 text-xs font-medium text-(--cui-color-text-muted)">
+                <li className="flex items-center gap-1.5">
+                  <span aria-hidden="true" className="h-2.5 w-2.5 rounded-xs bg-(--syn-chart-1)" />
+                  {localize('com_dash_week_this')}
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className="h-2.5 w-2.5 rounded-xs border border-dashed border-(--syn-ghost) bg-(--syn-ghost-fill)"
+                  />
+                  {localize('com_dash_week_last_col')}
+                </li>
+              </ul>
             </div>
-            {tab === 'week' ? (
-              <div id="dash-week-panel" role="tabpanel" className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-end justify-between gap-3">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[28px] leading-none font-bold tracking-tight">
-                      {weekSeries.isLoading ? '—' : formatCompact(weekSoFar)}
-                      <span className="ml-2 text-sm font-semibold tracking-normal text-(--cui-color-text-muted)">
-                        {localize('com_dash_week_tokens_so_far')}
-                      </span>
-                    </span>
-                    <span className="text-[13px] text-(--cui-color-text-muted)">
-                      {weekChange == null
-                        ? localize('com_dash_week_no_compare')
-                        : localize(weekChange >= 0 ? 'com_dash_week_more' : 'com_dash_week_less', {
-                            change: Math.abs(weekChange),
-                          })}
-                    </span>
-                  </div>
-                  <ul className="m-0 flex list-none gap-4 p-0 text-xs font-medium text-(--cui-color-text-muted)">
-                    <li className="flex items-center gap-1.5">
-                      <span aria-hidden="true" className="h-2.5 w-2.5 rounded-xs bg-(--syn-chart-1)" />
-                      {localize('com_dash_week_this')}
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span
-                        aria-hidden="true"
-                        className="h-2.5 w-2.5 rounded-xs border border-dashed border-(--syn-ghost) bg-(--syn-ghost-fill)"
-                      />
-                      {localize('com_dash_week_last_col')}
-                    </li>
-                  </ul>
-                </div>
-                <WeekChart thisWeek={weekly.thisWeek} lastWeek={weekly.lastWeek} today={today} />
-              </div>
-            ) : (
-              <div id="dash-weekdays-panel" role="tabpanel">
-                <WeekdayUsage
-                  series={fillDaily(monthSeries.data?.points ?? [], thirtyDays, (point) => point.totalTokens)}
-                />
-              </div>
-            )}
-          </section>
+            <WeekChart thisWeek={weekly.thisWeek} lastWeek={weekly.lastWeek} today={today} />
+          </Card>
 
-          <div className="flex min-w-0 flex-col gap-4">
-            <MonthSoFar />
-            <FollowUp canManage={canManage} />
-          </div>
+          <Card title={localize('com_dash_weekday_title')}>
+            <WeekdayUsage
+              series={fillDaily(monthSeries.data?.points ?? [], thirtyDays, (point) => point.totalTokens)}
+            />
+          </Card>
         </section>
 
-        <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-3">
           <Card
             className="xl:col-span-2"
             title={localize('com_dash_top_members')}
@@ -322,65 +296,39 @@ export function Overview() {
             )}
           </Card>
 
-          <Card title={localize('com_dash_tokens_by_model')} description={listNote} action={<DetailsLink />}>
-            {(models.data?.models ?? []).length === 0 ? (
-              <EmptyRow text={localize(models.isLoading ? 'com_ui_loading' : 'com_dash_no_usage')} />
-            ) : (
-              <ul className="m-0 flex list-none flex-col gap-4 p-0">
-                {(models.data?.models ?? []).map((model, order) => (
-                  <li key={modelRowKey(model)} className="flex flex-col gap-1.5">
-                    <div className="flex justify-between gap-3 text-[13px]">
-                      <span className="truncate font-semibold">{model.displayName ?? model.modelKey}</span>
-                      <span className="shrink-0 text-(--cui-color-text-muted) tabular-nums">
-                        <b className="text-(--cui-color-text-default)">{formatCompact(model.totalTokens)}</b>
-                        {listTokens > 0 ? ` · ${Math.round((model.totalTokens / listTokens) * 100)}%` : ''}
-                      </span>
-                    </div>
-                    <ShareBar
-                      value={model.totalTokens}
-                      max={topModelTokens}
-                      className="h-2"
-                      growDelay={500 + order * BAR_STAGGER_MS}
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+          <div className="flex min-w-0 flex-col gap-4">
+            <MonthSoFar />
+            <FollowUp canManage={canManage} />
+            <Card title={localize('com_dash_tokens_by_model')} description={listNote} action={<DetailsLink />}>
+              {(models.data?.models ?? []).length === 0 ? (
+                <EmptyRow text={localize(models.isLoading ? 'com_ui_loading' : 'com_dash_no_usage')} />
+              ) : (
+                <ul className="m-0 flex list-none flex-col gap-4 p-0">
+                  {(models.data?.models ?? []).map((model, order) => (
+                    <li key={modelRowKey(model)} className="flex flex-col gap-1.5">
+                      <div className="flex justify-between gap-3 text-[13px]">
+                        <span className="truncate font-semibold">{model.displayName ?? model.modelKey}</span>
+                        <span className="shrink-0 text-(--cui-color-text-muted) tabular-nums">
+                          <b className="text-(--cui-color-text-default)">{formatCompact(model.totalTokens)}</b>
+                          {listTokens > 0 ? ` · ${Math.round((model.totalTokens / listTokens) * 100)}%` : ''}
+                        </span>
+                      </div>
+                      <ShareBar
+                        value={model.totalTokens}
+                        max={topModelTokens}
+                        className="h-2"
+                        growDelay={500 + order * BAR_STAGGER_MS}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
         </section>
       </div>
       <CreateUserDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  controls,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  controls: string;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      aria-controls={controls}
-      onClick={onClick}
-      className={cn(
-        '-mb-px min-h-10 shrink-0 cursor-pointer border-0 border-b-2 bg-transparent px-3 text-sm whitespace-nowrap',
-        active
-          ? 'border-(--syn-brand) font-semibold text-(--cui-color-text-default)'
-          : 'border-transparent font-medium text-(--cui-color-text-muted) hover:text-(--cui-color-text-default)',
-      )}
-    >
-      {children}
-    </button>
   );
 }
 

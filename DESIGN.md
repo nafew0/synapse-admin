@@ -233,7 +233,7 @@ A two-hue brand world (teal and orange) on cool neutrals, with semantic tints fo
 
 ## Layout
 
-A fixed left sidebar (224px, 64px collapsed) beside a scrolling content column on the grey ground with 24px padding and 20px vertical rhythm between rows. The dashboard is three rows: a row of four figure tiles (auto-fit grid, 14rem minimum, 16px gap); a main row where the week card spans two of three columns at `xl` (1280px) with a right column stacking "This month so far" and "Invites to follow up"; and a bottom row of top members (two columns) and tokens by model. Below `xl` every row stacks to one column; below `sm` (640px) tables drop secondary columns and the busiest-days tab shortens its label. Card internals use 16px gaps and 20px padding; rows inside lists use 10px vertical padding with a muted top rule.
+A fixed left sidebar (224px, 64px collapsed) beside a scrolling content column on the grey ground with 24px padding and 20px vertical rhythm between rows. The dashboard is three rows: a row of four figure tiles (auto-fit grid, 14rem minimum, 16px gap); a main row where the week card spans two of three columns at `xl` (1280px) with the Busiest days card beside it, both always visible (no tabs); and a bottom row of top members (two columns) beside a right column stacking "This month so far", "Invites to follow up" and tokens by model. Below `xl` every row stacks to one column; below `sm` (640px) tables drop secondary columns. Card internals use 16px gaps and 20px padding; rows inside lists use 10px vertical padding with a muted top rule.
 
 ## Elevation & Depth
 
@@ -283,7 +283,7 @@ Sidebar on Card White with a right border. Section labels 11px uppercase muted; 
 Seven Monday-first columns, 190px plot. Each day: a Ghost Tint bar with a dashed Ghost Grey outline for last week's value, with this week's Chart Teal bar (78% width, 6px top corners) inside it. Today is the bar at 75% opacity with a bold label and a teal "today" tag; future days show only the dimmed ghost and no value; today at zero shows "None yet" ("0" on phones) and a 2px teal baseline. Values sit above bars in 11px bold. A screen-reader table carries every number. Legend: solid teal swatch "This week", dashed swatch "Last week".
 
 ### Busiest Days
-Seven Monday-first bars of average tokens over 30 days; the busiest day full Chart Teal with its value labelled, the rest at 40% opacity.
+Seven Monday-first bars of average tokens over 30 days; the busiest day full Chart Teal with a bold value label, the rest at 40% opacity with their values in muted ink (10px on phones, 11px from `sm`). It sits in its own card at the top of the right column.
 
 ### Meter and Share Bar
 Pill tracks in Track Grey. The seat meter stacks joined (Chart Teal) and invited (Chart Orange) segments with a 2px gap and a square-swatch legend in words. Share bars (6px, 8px for models) compare rows to the largest and grow in from the left.

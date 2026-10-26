@@ -117,7 +117,7 @@
       "name": "Underline Tabs",
       "kind": "nav",
       "refersTo": "tab",
-      "description": "Card-level tabs: This week | Busiest days of the week.",
+      "description": "Underline tabs on a muted rail, for switching views inside a card.",
       "html": "<div class=\"ds-tabs\" role=\"tablist\"><button role=\"tab\" aria-selected=\"true\">This week</button><button role=\"tab\" aria-selected=\"false\">Busiest days of the week</button></div>",
       "css": ".ds-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--cui-color-stroke-muted, #ededed); font-family: Inter, -apple-system, 'Segoe UI', sans-serif; } .ds-tabs button { margin-bottom: -1px; min-height: 40px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; font-size: 14px; font-weight: 500; color: var(--cui-color-text-muted, #595959); cursor: pointer; } .ds-tabs button:hover { color: var(--cui-color-text-default, #132321); } .ds-tabs button[aria-selected='true'] { border-bottom-color: var(--syn-brand, #186569); color: var(--cui-color-text-default, #132321); font-weight: 600; } .ds-tabs button:focus-visible { outline: 2px solid var(--cui-color-outline, #f5871f); }"
     },
