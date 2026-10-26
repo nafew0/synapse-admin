@@ -272,10 +272,10 @@ export function Overview() {
                       <th className="py-2 text-right font-medium sm:w-2/5 sm:text-left">
                         {localize('com_dash_tokens')}
                       </th>
-                      <th className="hidden py-2 text-right font-medium sm:table-cell">
+                      <th className="hidden py-2 pl-4 text-right font-medium whitespace-nowrap sm:table-cell">
                         {localize('com_dash_requests')}
                       </th>
-                      <th className="hidden py-2 text-right font-medium sm:table-cell">
+                      <th className="hidden py-2 pl-4 text-right font-medium whitespace-nowrap sm:table-cell">
                         {localize('com_dash_last_used')}
                       </th>
                     </tr>
@@ -293,15 +293,15 @@ export function Overview() {
                               value={member.totalTokens}
                               max={topMemberTokens}
                               growDelay={500 + order * BAR_STAGGER_MS}
-                              className="hidden sm:block"
+                              className="hidden min-w-24 sm:block"
                             />
                             <span className="w-14 shrink-0 text-right font-semibold">
                               {formatCompact(member.totalTokens)}
                             </span>
                           </div>
                         </td>
-                        <td className="hidden text-right sm:table-cell">{formatUsageNumber(member.eventCount)}</td>
-                        <td className="hidden text-right text-(--cui-color-text-muted) sm:table-cell">
+                        <td className="hidden pl-4 text-right whitespace-nowrap sm:table-cell">{formatUsageNumber(member.eventCount)}</td>
+                        <td className="hidden pl-4 text-right whitespace-nowrap text-(--cui-color-text-muted) sm:table-cell">
                           {formatRelativeTime(member.lastUsedAt)}
                         </td>
                       </tr>

@@ -7,9 +7,6 @@ import { useLocalize } from '@/hooks';
 const CHART_HEIGHT = 190;
 const START_DELAY_MS = 250;
 const FUTURE_MIN_HEIGHT = 12;
-/** Days still ahead are hatched so "not yet" never reads as zero usage. */
-const FUTURE_HATCH =
-  'repeating-linear-gradient(135deg, var(--syn-track) 0 4px, transparent 4px 8px)';
 
 function barHeight(value: number, peak: number): number {
   if (peak <= 0 || value <= 0) {
@@ -21,7 +18,7 @@ function barHeight(value: number, peak: number): number {
 /**
  * Monday to Sunday of the current week, each day's tokens set against the
  * same weekday last week (the outlined ghost behind it). Days still to come
- * show as an empty slot, so the week reads as "how far through" at a glance.
+ * show as a filled, unlabelled slot so "not yet" never reads as zero usage.
  */
 export function WeekChart({ thisWeek, lastWeek, today }: t.WeekChartProps) {
   const localize = useLocalize();
@@ -57,7 +54,7 @@ export function WeekChart({ thisWeek, lastWeek, today }: t.WeekChartProps) {
                   className="absolute bottom-0 w-full rounded-t-md border border-b-0 border-dashed border-(--syn-ghost)"
                   style={{
                     height: Math.max(barHeight(previous, peak), isFuture ? FUTURE_MIN_HEIGHT : 0),
-                    backgroundImage: isFuture ? FUTURE_HATCH : undefined,
+                    backgroundColor: isFuture ? 'var(--syn-track)' : undefined,
                   }}
                 />
                 {isFuture ? null : (

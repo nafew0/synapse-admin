@@ -43,7 +43,7 @@
       { "name": "modal", "value": "0 16px 70px var(--cui-color-shadow)", "purpose": "Dialogs and the command menu." }
     ],
     "motion": [
-      { "name": "icon-pop", "value": "520ms cubic-bezier(0.34, 1.56, 0.64, 1)", "purpose": "Tile and nav icons on entrance; staggered 90ms per tile." },
+      { "name": "icon-pop", "value": "420ms cubic-bezier(0.25, 1, 0.5, 1)", "purpose": "Tile and nav icons on entrance; staggered 90ms per tile." },
       { "name": "bar-rise", "value": "900ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Week and weekday bars grow from the baseline; staggered 120ms." },
       { "name": "bar-grow", "value": "1100ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Share bars grow from the left." },
       { "name": "line-draw", "value": "900ms ease-out", "purpose": "Sparklines draw left to right." },
@@ -56,7 +56,7 @@
       { "name": "xl", "value": "1280px" }
     ],
     "patterns": [
-      { "name": "future-hatch", "value": "repeating-linear-gradient(135deg, var(--syn-track) 0 4px, transparent 4px 8px)", "purpose": "Days of the week still to come." },
+      { "name": "future-slot", "value": "var(--syn-track)", "purpose": "Days of the week still to come." },
       { "name": "ghost-bar", "value": "1px dashed var(--syn-ghost), no bottom border, 6px top radius", "purpose": "Last week's value behind each day." }
     ],
     "knownLimitations": [
@@ -125,14 +125,14 @@
       "name": "Week Chart",
       "kind": "custom",
       "refersTo": "share-bar",
-      "description": "Signature Monday-first week: teal bars inside dashed last-week ghosts, today softened, future days hatched.",
+      "description": "Signature Monday-first week: teal bars inside dashed last-week ghosts, today softened, future days filled as an empty slot.",
       "html": "<div class=\"ds-week\"><div class=\"ds-day\"><div class=\"ds-ghost\" style=\"height:60%\"></div><div class=\"ds-bar ds-today\" style=\"height:55%\"></div><span>Mon · today</span></div><div class=\"ds-day\"><div class=\"ds-ghost ds-future\" style=\"height:90%\"></div><span>Tue</span></div><div class=\"ds-day\"><div class=\"ds-ghost ds-future\" style=\"height:70%\"></div><span>Wed</span></div></div>",
-      "css": ".ds-week { display: grid; grid-template-columns: repeat(3, 56px); gap: 12px; height: 160px; align-items: end; font: 11px Inter, -apple-system, 'Segoe UI', sans-serif; color: var(--cui-color-text-muted, #595959); } .ds-day { position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; } .ds-day span { margin-top: 4px; } .ds-ghost { position: absolute; bottom: 18px; width: 100%; border: 1px dashed var(--syn-ghost, #8a8a8a); border-bottom: 0; border-radius: 6px 6px 0 0; } .ds-future { background-image: repeating-linear-gradient(135deg, var(--syn-track, #ededed) 0 4px, transparent 4px 8px); } .ds-bar { position: relative; width: 78%; border-radius: 6px 6px 0 0; background: var(--syn-chart-1, #008f88); transform-origin: bottom; transition: transform 0.3s; } .ds-today { opacity: 0.75; } .ds-bar:hover { opacity: 1; }"
+      "css": ".ds-week { display: grid; grid-template-columns: repeat(3, 56px); gap: 12px; height: 160px; align-items: end; font: 11px Inter, -apple-system, 'Segoe UI', sans-serif; color: var(--cui-color-text-muted, #595959); } .ds-day { position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; } .ds-day span { margin-top: 4px; } .ds-ghost { position: absolute; bottom: 18px; width: 100%; border: 1px dashed var(--syn-ghost, #8a8a8a); border-bottom: 0; border-radius: 6px 6px 0 0; } .ds-future { background: var(--syn-track, #ededed); } .ds-bar { position: relative; width: 78%; border-radius: 6px 6px 0 0; background: var(--syn-chart-1, #008f88); transform-origin: bottom; transition: transform 0.3s; } .ds-today { opacity: 0.75; } .ds-bar:hover { opacity: 1; }"
     }
   ],
   "narrative": {
     "northStar": "The Office Ledger",
-    "overview": "The admin console is a calm, white-card ledger kept in the Synapse chat app's colours: a teal brand for identity and data, a single orange for the one thing to do next. It is read by occasional office staff, so every surface is a plain card on a soft grey ground, every figure carries its period and comparison in words, and the densest thing on screen is a seven-bar week. Dark mode is a full second world, not an inversion: a deep teal-black ground (the admin login page palette) with brighter teal and a warmer, lighter orange.\n\nThe system is flat. Depth comes from a one-pixel stroke and the step from grey ground to white surface, never from shadow. Motion is a short entrance only (icons pop, bars rise, lines draw) and switches off under reduced motion. Status is always an icon or word beside a colour, never colour alone.\n\nThe dashboard is time-shaped, not KPI-shaped: the main chart is the current ISO week (Monday to Sunday, matching the quota engine's reset), today marked, future days hatched, last week as a dashed ghost behind each bar.",
+    "overview": "The admin console is a calm, white-card ledger kept in the Synapse chat app's colours: a teal brand for identity and data, a single orange for the one thing to do next. It is read by occasional office staff, so every surface is a plain card on a soft grey ground, every figure carries its period and comparison in words, and the densest thing on screen is a seven-bar week. Dark mode is a full second world, not an inversion: a deep teal-black ground (the admin login page palette) with brighter teal and a warmer, lighter orange.\n\nThe system is flat. Depth comes from a one-pixel stroke and the step from grey ground to white surface, never from shadow. Motion is a short entrance only (icons pop, bars rise, lines draw) and switches off under reduced motion. Status is always an icon or word beside a colour, never colour alone.\n\nThe dashboard is time-shaped, not KPI-shaped: the main chart is the current ISO week (Monday to Sunday, matching the quota engine's reset), today marked, future days filled as an empty slot, last week as a dashed ghost behind each bar.",
     "keyCharacteristics": [
       "Grey ground, white bordered cards, 12px corners, no shadows at rest.",
       "Teal for data and identity, orange for the primary action and the second data series.",
@@ -159,7 +159,7 @@
     "donts": [
       "**Don't** put a shadow on a card or tile at rest.",
       "**Don't** put white text on Action Orange; use dark ink (on-accent-ink).",
-      "**Don't** draw a future day as a zero bar; it is hatched and unlabelled.",
+      "**Don't** draw a future day as a zero bar; it is a filled, unlabelled slot.",
       "**Don't** show allowance, credit or taka figures to institution admins from superadmin-only `/api/platform/*` data."
     ]
   }

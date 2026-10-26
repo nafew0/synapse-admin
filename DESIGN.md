@@ -49,6 +49,10 @@ typography:
     fontWeight: 700
     lineHeight: 1
     letterSpacing: "-0.025em"
+  page-title:
+    fontFamily: "Inter, 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
+    fontSize: "20px"
+    fontWeight: 700
   title:
     fontFamily: "Inter, 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
     fontSize: "15px"
@@ -162,7 +166,7 @@ The admin console is a calm, white-card ledger kept in the Synapse chat app's co
 
 The system is flat. Depth comes from a one-pixel stroke and the step from grey ground to white surface, never from shadow. Motion is a short entrance only (icons pop, bars rise, lines draw) and switches off under reduced motion. Status is always an icon or word beside a colour, never colour alone.
 
-The dashboard is time-shaped, not KPI-shaped: the main chart is the current ISO week (Monday to Sunday, matching the quota engine's reset), today marked, future days hatched, last week as a dashed ghost behind each bar.
+The dashboard is time-shaped, not KPI-shaped: the main chart is the current ISO week (Monday to Sunday, matching the quota engine's reset), today marked, future days filled as an empty slot, last week as a dashed ghost behind each bar.
 
 **Key Characteristics:**
 - Grey ground, white bordered cards, 12px corners, no shadows at rest.
@@ -191,7 +195,7 @@ A two-hue brand world (teal and orange) on cool neutrals, with semantic tints fo
 - **Ledger Ink** (ink; dark: dark-ink): primary text and figures.
 - **Pencil Grey** (ink-muted; dark: dark-ink-muted): labels, descriptions, axis text, comparison lines.
 - **Rule Grey** (stroke; dark: dark-stroke): card borders and chart baselines; stroke-muted for row dividers and tab rails; stroke-intense for scrollbars and the dashed legend swatch.
-- **Track Grey** (track): empty part of meters and share bars, and the hatch stripe on future days (`--syn-track`).
+- **Track Grey** (track): empty part of meters and share bars, and the solid fill of future-day slots (`--syn-track`).
 - **Ghost Grey** (ghost): the dashed outline of last week's bar (`--syn-ghost`).
 
 ### Semantic
@@ -215,6 +219,7 @@ A two-hue brand world (teal and orange) on cool neutrals, with semantic tints fo
 ### Hierarchy
 - **Headline** (700, 28px, line-height 1, tight tracking): the one hero figure per card ("tokens this week so far", "this month so far").
 - **Figure** (700, 24px, line-height 1, tight tracking): stat-tile values.
+- **Page Title** (700, 20px): the page name in the top header, one step above card titles.
 - **Title** (600, 15px): card titles and the sidebar product name.
 - **Body** (500 to 600, 14px): nav items, tabs, buttons, the word beside a hero figure.
 - **Body Small** (400 to 600, 13px): card descriptions, comparison lines, table cells, links in card headers.
@@ -244,7 +249,7 @@ Flat by default. Depth is tonal: grey ground, white card, 1px Rule Grey border. 
 
 ## Shapes
 
-Gently rounded throughout: 12px (rounded.xl) on cards and tiles, 8px (rounded.lg) on buttons, nav items, icon chips and alerts, 6px (rounded.md) on small row buttons, range options and bar tops, 2px on legend swatches, full pills on meters, share bars and badges. Borders are 1px solid; the only dashed stroke is last week's ghost bar and its legend swatch. Future days fill with a 135-degree hatch (4px stripe, 4px gap) in Track Grey.
+Gently rounded throughout: 12px (rounded.xl) on cards and tiles, 8px (rounded.lg) on buttons, nav items, icon chips and alerts, 6px (rounded.md) on small row buttons, range options and bar tops, 2px on legend swatches, full pills on meters, share bars and badges. Borders are 1px solid; the only dashed stroke is last week's ghost bar and its legend swatch. Future days fill solid with Track Grey; no stripes or decorative patterns.
 
 ## Components
 
@@ -275,7 +280,7 @@ Underline tabs on a muted rail: 40px tall, 14px; active is ink, 600, with a 2px 
 Sidebar on Card White with a right border. Section labels 11px uppercase muted; items 40px tall, 8px radius, 18px lucide icon; active item Teal Wash with Deep Teal Ink 600; hover uses the hover wash. A pending-invite count shows as a warning-tinted pill. The logo swaps to the white mark in dark mode.
 
 ### Week Chart (signature)
-Seven Monday-first columns, 190px plot. Each day: a dashed Ghost Grey outline for last week's value, with this week's Chart Teal bar (78% width, 6px top corners) inside it. Today is the bar at 75% opacity with a bold label and a teal "today" tag; future days show only a hatched ghost and no value. Values sit above bars in 11px bold. A screen-reader table carries every number. Legend: solid teal swatch "This week", dashed swatch "Last week".
+Seven Monday-first columns, 190px plot. Each day: a dashed Ghost Grey outline for last week's value, with this week's Chart Teal bar (78% width, 6px top corners) inside it. Today is the bar at 75% opacity with a bold label and a teal "today" tag; future days show only a Track Grey slot and no value. Values sit above bars in 11px bold. A screen-reader table carries every number. Legend: solid teal swatch "This week", dashed swatch "Last week".
 
 ### Busiest Days
 Seven Monday-first bars of average tokens over 30 days; the busiest day full Chart Teal with its value labelled, the rest at 40% opacity.
@@ -299,5 +304,5 @@ Danger-tint panel, 8px radius, 12px padding: a circle-x icon, a bold 13px senten
 ### Don't:
 - **Don't** put a shadow on a card or tile at rest.
 - **Don't** put white text on Action Orange; use dark ink (on-accent-ink).
-- **Don't** draw a future day as a zero bar; it is hatched and unlabelled.
+- **Don't** draw a future day as a zero bar; it is a filled, unlabelled slot.
 - **Don't** show allowance, credit or taka figures to institution admins from superadmin-only `/api/platform/*` data.

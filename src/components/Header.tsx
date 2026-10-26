@@ -13,7 +13,7 @@ export function Header({ title, onSearchClick, children }: t.HeaderProps) {
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="flex shrink-0 flex-col">
           {title ? (
-            <h1 className="text-base font-bold text-(--cui-color-text-default)">{title}</h1>
+            <h1 className="text-xl font-bold text-(--cui-color-text-default)">{title}</h1>
           ) : (
             <div />
           )}
