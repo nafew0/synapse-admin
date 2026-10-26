@@ -46,7 +46,10 @@ import { FollowUp } from './FollowUp';
 type Period = 'week' | 'month' | '30d';
 
 const PERIODS: t.RangePreset[] = ['week', 'month', '30d'];
-const TOP_ROWS = 5;
+const TOP_MODELS = 5;
+const TOP_MEMBERS = 8;
+/** Every model the tenant used, so they can be ranked by requests rather than the API's token order. */
+const ALL_MODELS = 100;
 const ICON_SIZE = 16;
 
 /**
@@ -84,8 +87,8 @@ export function Overview() {
   /** Early in the week there may be nothing yet: the lists then show last week, labelled. */
   const showLastWeek = period === 'week' && summary.isSuccess && (summary.data?.summary.totalTokens ?? 0) === 0;
   const listRange = showLastWeek ? lastWeek : range;
-  const models = useUsageModels({ ...listRange, limit: TOP_ROWS, offset: 0 });
-  const members = useUsageMembers({ ...listRange, limit: TOP_ROWS, offset: 0 });
+  const models = useUsageModels({ ...listRange, limit: ALL_MODELS, offset: 0 });
+  const members = useUsageMembers({ ...listRange, limit: TOP_MEMBERS, offset: 0 });
   const seats = useMemberSummary();
 
   const series = useMemo(() => {
@@ -95,6 +98,13 @@ export function Overview() {
       requests: fillDaily(points, range, (point) => point.eventCount),
     };
   }, [range, timeseries.data?.points]);
+
+  const mostUsed = useMemo(() => {
+    const rows = models.data?.models ?? [];
+    const requests = rows.reduce((sum, model) => sum + model.eventCount, 0);
+    const top = [...rows].sort((a, b) => b.eventCount - a.eventCount).slice(0, TOP_MODELS);
+    return { top, requests, peak: top[0]?.eventCount ?? 0 };
+  }, [models.data?.models]);
 
   const weekly = useMemo(
     () => ({
@@ -113,9 +123,7 @@ export function Overview() {
   });
   const timezone = summary.data?.range.timezone;
   const totalTokens = current?.totalTokens ?? 0;
-  const listTokens = showLastWeek ? weekly.lastWeek.reduce((sum, day) => sum + day.value, 0) : totalTokens;
   const listNote = showLastWeek ? localize('com_dash_showing_last_week') : undefined;
-  const topModelTokens = models.data?.models[0]?.totalTokens ?? 0;
   const topMemberTokens = members.data?.members[0]?.totalTokens ?? 0;
 
   const elapsed = weekly.thisWeek.filter((day) => day.day <= today).length;
@@ -297,23 +305,25 @@ export function Overview() {
 
           <div className="flex min-w-0 flex-col gap-4">
             <FollowUp canManage={canManage} />
-            <Card title={localize('com_dash_tokens_by_model')} description={listNote} action={<DetailsLink />}>
-              {(models.data?.models ?? []).length === 0 ? (
+            <Card title={localize('com_dash_most_used_models')} description={listNote} action={<DetailsLink />}>
+              {mostUsed.top.length === 0 ? (
                 <EmptyRow text={localize(models.isLoading ? 'com_ui_loading' : 'com_dash_no_usage')} />
               ) : (
                 <ul className="m-0 flex list-none flex-col gap-4 p-0">
-                  {(models.data?.models ?? []).map((model, order) => (
+                  {mostUsed.top.map((model, order) => (
                     <li key={modelRowKey(model)} className="flex flex-col gap-1.5">
                       <div className="flex justify-between gap-3 text-[13px]">
                         <span className="truncate font-semibold">{model.displayName ?? model.modelKey}</span>
                         <span className="shrink-0 text-(--cui-color-text-muted) tabular-nums">
-                          <b className="text-(--cui-color-text-default)">{formatCompact(model.totalTokens)}</b>
-                          {listTokens > 0 ? ` · ${Math.round((model.totalTokens / listTokens) * 100)}%` : ''}
+                          <b className="text-(--cui-color-text-default)">
+                            {localize('com_dash_model_requests', { count: formatUsageNumber(model.eventCount) })}
+                          </b>
+                          {mostUsed.requests > 0 ? ` · ${Math.round((model.eventCount / mostUsed.requests) * 100)}%` : ''}
                         </span>
                       </div>
                       <ShareBar
-                        value={model.totalTokens}
-                        max={topModelTokens}
+                        value={model.eventCount}
+                        max={mostUsed.peak}
                         className="h-2"
                         growDelay={500 + order * BAR_STAGGER_MS}
                       />

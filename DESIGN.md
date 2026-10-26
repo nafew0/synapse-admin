@@ -233,7 +233,7 @@ A two-hue brand world (teal and orange) on cool neutrals, with semantic tints fo
 
 ## Layout
 
-A fixed left sidebar (224px, 64px collapsed) beside a scrolling content column on the grey ground with 24px padding and 20px vertical rhythm between rows. The dashboard is three rows: a row of four figure tiles (auto-fit grid, 14rem minimum, 16px gap); a main row where the week card spans two of three columns at `xl` (1280px) with the Busiest days card beside it, both always visible (no tabs); and a bottom row of top members (two columns) beside a right column stacking "Invites to follow up" and tokens by model. Below `xl` every row stacks to one column; below `sm` (640px) tables drop secondary columns. Card internals use 16px gaps and 20px padding; rows inside lists use 10px vertical padding with a muted top rule.
+A fixed left sidebar (224px, 64px collapsed) beside a scrolling content column on the grey ground with 24px padding and 20px vertical rhythm between rows. The dashboard is three rows: a row of four figure tiles (auto-fit grid, 14rem minimum, 16px gap); a main row where the week card spans two of three columns at `xl` (1280px) with the Busiest days card beside it, both always visible (no tabs); and a bottom row of the eight most active members (two columns) beside a right column stacking "Invites to follow up" and "Most used models" (the top five models ranked by requests, each with its share of all requests). Below `xl` every row stacks to one column; below `sm` (640px) tables drop secondary columns. Card internals use 16px gaps and 20px padding; rows inside lists use 10px vertical padding with a muted top rule.
 
 ## Elevation & Depth
 
