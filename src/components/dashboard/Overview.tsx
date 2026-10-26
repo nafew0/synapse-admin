@@ -86,8 +86,11 @@ export function Overview() {
   const weekSeries = useUsageTimeseries(week);
   const lastWeekSeries = useUsageTimeseries(lastWeek);
   const monthSeries = useUsageTimeseries(thirtyDays, tab === 'weekdays');
-  const models = useUsageModels({ ...range, limit: TOP_ROWS, offset: 0 });
-  const members = useUsageMembers({ ...range, limit: TOP_ROWS, offset: 0 });
+  /** Early in the week there may be nothing yet: the lists then show last week, labelled. */
+  const showLastWeek = period === 'week' && summary.isSuccess && (summary.data?.summary.totalTokens ?? 0) === 0;
+  const listRange = showLastWeek ? lastWeek : range;
+  const models = useUsageModels({ ...listRange, limit: TOP_ROWS, offset: 0 });
+  const members = useUsageMembers({ ...listRange, limit: TOP_ROWS, offset: 0 });
   const seats = useMemberSummary();
 
   const series = useMemo(() => {
@@ -115,6 +118,8 @@ export function Overview() {
   });
   const timezone = summary.data?.range.timezone;
   const totalTokens = current?.totalTokens ?? 0;
+  const listTokens = showLastWeek ? weekly.lastWeek.reduce((sum, day) => sum + day.value, 0) : totalTokens;
+  const listNote = showLastWeek ? localize('com_dash_showing_last_week') : undefined;
   const topModelTokens = models.data?.models[0]?.totalTokens ?? 0;
   const topMemberTokens = members.data?.members[0]?.totalTokens ?? 0;
 
@@ -236,7 +241,7 @@ export function Overview() {
                     <li className="flex items-center gap-1.5">
                       <span
                         aria-hidden="true"
-                        className="h-2.5 w-2.5 rounded-xs border border-dashed border-(--cui-color-stroke-intense)"
+                        className="h-2.5 w-2.5 rounded-xs border border-dashed border-(--syn-ghost) bg-(--syn-ghost-fill)"
                       />
                       {localize('com_dash_week_last_col')}
                     </li>
@@ -260,7 +265,12 @@ export function Overview() {
         </section>
 
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <Card className="xl:col-span-2" title={localize('com_dash_top_members')} action={<DetailsLink />}>
+          <Card
+            className="xl:col-span-2"
+            title={localize('com_dash_top_members')}
+            description={listNote}
+            action={<DetailsLink />}
+          >
             {(members.data?.members ?? []).length === 0 ? (
               <EmptyRow text={localize(members.isLoading ? 'com_ui_loading' : 'com_dash_no_usage')} />
             ) : (
@@ -312,7 +322,7 @@ export function Overview() {
             )}
           </Card>
 
-          <Card title={localize('com_dash_tokens_by_model')} action={<DetailsLink />}>
+          <Card title={localize('com_dash_tokens_by_model')} description={listNote} action={<DetailsLink />}>
             {(models.data?.models ?? []).length === 0 ? (
               <EmptyRow text={localize(models.isLoading ? 'com_ui_loading' : 'com_dash_no_usage')} />
             ) : (
@@ -323,7 +333,7 @@ export function Overview() {
                       <span className="truncate font-semibold">{model.displayName ?? model.modelKey}</span>
                       <span className="shrink-0 text-(--cui-color-text-muted) tabular-nums">
                         <b className="text-(--cui-color-text-default)">{formatCompact(model.totalTokens)}</b>
-                        {totalTokens > 0 ? ` · ${Math.round((model.totalTokens / totalTokens) * 100)}%` : ''}
+                        {listTokens > 0 ? ` · ${Math.round((model.totalTokens / listTokens) * 100)}%` : ''}
                       </span>
                     </div>
                     <ShareBar

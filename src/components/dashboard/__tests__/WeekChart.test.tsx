@@ -23,4 +23,20 @@ describe('WeekChart', () => {
     expect(within(rows[3]).getAllByRole('cell')[1]).toHaveTextContent('—');
     expect(within(rows[3]).getAllByRole('cell')[2]).toHaveTextContent('90K');
   });
+
+  it('says so when today has no usage yet, keeping last week visible', () => {
+    const { container } = render(
+      <WeekChart
+        today="2026-10-26"
+        thisWeek={days.map((day) => ({ day, value: 0 }))}
+        lastWeek={lastDays.map((day, i) => ({ day, value: [100_000, 200_000, 80_000, 90_000, 70_000, 5_000, 1_000][i] }))}
+      />,
+    );
+
+    expect(screen.getByText('com_dash_week_none_yet')).toBeInTheDocument();
+    expect(container.querySelectorAll('.bg-\\(--syn-ghost-fill\\)')).toHaveLength(7);
+    const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1);
+    expect(within(rows[0]).getAllByRole('cell')[1]).toHaveTextContent('0');
+    expect(within(rows[1]).getAllByRole('cell')[2]).toHaveTextContent('200K');
+  });
 });

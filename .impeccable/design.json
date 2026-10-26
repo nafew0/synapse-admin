@@ -56,7 +56,7 @@
       { "name": "xl", "value": "1280px" }
     ],
     "patterns": [
-      { "name": "future-slot", "value": "var(--syn-track)", "purpose": "Days of the week still to come." },
+      { "name": "future-slot", "value": "var(--syn-ghost-fill) at 60% opacity", "purpose": "Days of the week still to come." },
       { "name": "ghost-bar", "value": "1px dashed var(--syn-ghost), no bottom border, 6px top radius", "purpose": "Last week's value behind each day." }
     ],
     "knownLimitations": [
@@ -132,7 +132,7 @@
   ],
   "narrative": {
     "northStar": "The Office Ledger",
-    "overview": "The admin console is a calm, white-card ledger kept in the Synapse chat app's colours: a teal brand for identity and data, a single orange for the one thing to do next. It is read by occasional office staff, so every surface is a plain card on a soft grey ground, every figure carries its period and comparison in words, and the densest thing on screen is a seven-bar week. Dark mode is a full second world, not an inversion: a deep teal-black ground (the admin login page palette) with brighter teal and a warmer, lighter orange.\n\nThe system is flat. Depth comes from a one-pixel stroke and the step from grey ground to white surface, never from shadow. Motion is a short entrance only (icons pop, bars rise, lines draw) and switches off under reduced motion. Status is always an icon or word beside a colour, never colour alone.\n\nThe dashboard is time-shaped, not KPI-shaped: the main chart is the current ISO week (Monday to Sunday, matching the quota engine's reset), today marked, future days filled as an empty slot, last week as a dashed ghost behind each bar.",
+    "overview": "The admin console is a calm, white-card ledger kept in the Synapse chat app's colours: a teal brand for identity and data, a single orange for the one thing to do next. It is read by occasional office staff, so every surface is a plain card on a soft grey ground, every figure carries its period and comparison in words, and the densest thing on screen is a seven-bar week. Dark mode is a full second world, not an inversion: a deep teal-black ground (the admin login page palette) with brighter teal and a warmer, lighter orange.\n\nThe system is flat. Depth comes from a one-pixel stroke and the step from grey ground to white surface, never from shadow. Motion is a short entrance only (icons pop, bars rise, lines draw) and switches off under reduced motion. Status is always an icon or word beside a colour, never colour alone.\n\nThe dashboard is time-shaped, not KPI-shaped: the main chart is the current ISO week (Monday to Sunday, matching the quota engine's reset), today marked, future days dimmed, last week as a tinted, dashed ghost behind each bar so the week always has a shape.",
     "keyCharacteristics": [
       "Grey ground, white bordered cards, 12px corners, no shadows at rest.",
       "Teal for data and identity, orange for the primary action and the second data series.",
@@ -159,7 +159,7 @@
     "donts": [
       "**Don't** put a shadow on a card or tile at rest.",
       "**Don't** put white text on Action Orange; use dark ink (on-accent-ink).",
-      "**Don't** draw a future day as a zero bar; it is a filled, unlabelled slot.",
+      "**Don't** draw a future day as a zero bar; it is a dimmed, unlabelled ghost.",
       "**Don't** show allowance, credit or taka figures to institution admins from superadmin-only `/api/platform/*` data."
     ]
   }

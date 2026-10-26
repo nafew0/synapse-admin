@@ -1437,5 +1437,7 @@
   "com_dash_weekday_short": "Busiest days",
   "com_dash_month_title": "This month so far",
   "com_dash_vs_same_days_last_month": "vs same days last month",
-  "com_dash_month_requests": "{{requests}} requests"
+  "com_dash_month_requests": "{{requests}} requests",
+  "com_dash_week_none_yet": "None yet",
+  "com_dash_showing_last_week": "Showing last week"
 }

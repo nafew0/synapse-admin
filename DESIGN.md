@@ -166,7 +166,7 @@ The admin console is a calm, white-card ledger kept in the Synapse chat app's co
 
 The system is flat. Depth comes from a one-pixel stroke and the step from grey ground to white surface, never from shadow. Motion is a short entrance only (icons pop, bars rise, lines draw) and switches off under reduced motion. Status is always an icon or word beside a colour, never colour alone.
 
-The dashboard is time-shaped, not KPI-shaped: the main chart is the current ISO week (Monday to Sunday, matching the quota engine's reset), today marked, future days filled as an empty slot, last week as a dashed ghost behind each bar.
+The dashboard is time-shaped, not KPI-shaped: the main chart is the current ISO week (Monday to Sunday, matching the quota engine's reset), today marked, future days dimmed, last week as a tinted, dashed ghost behind each bar so the week always has a shape.
 
 **Key Characteristics:**
 - Grey ground, white bordered cards, 12px corners, no shadows at rest.
@@ -195,7 +195,7 @@ A two-hue brand world (teal and orange) on cool neutrals, with semantic tints fo
 - **Ledger Ink** (ink; dark: dark-ink): primary text and figures.
 - **Pencil Grey** (ink-muted; dark: dark-ink-muted): labels, descriptions, axis text, comparison lines.
 - **Rule Grey** (stroke; dark: dark-stroke): card borders and chart baselines; stroke-muted for row dividers and tab rails; stroke-intense for scrollbars and the dashed legend swatch.
-- **Track Grey** (track): empty part of meters and share bars, and the solid fill of future-day slots (`--syn-track`).
+- **Track Grey** (track): empty part of meters and share bars, (`--syn-track`).
 - **Ghost Grey** (ghost): the dashed outline of last week's bar (`--syn-ghost`).
 
 ### Semantic
@@ -249,7 +249,7 @@ Flat by default. Depth is tonal: grey ground, white card, 1px Rule Grey border. 
 
 ## Shapes
 
-Gently rounded throughout: 12px (rounded.xl) on cards and tiles, 8px (rounded.lg) on buttons, nav items, icon chips and alerts, 6px (rounded.md) on small row buttons, range options and bar tops, 2px on legend swatches, full pills on meters, share bars and badges. Borders are 1px solid; the only dashed stroke is last week's ghost bar and its legend swatch. Future days fill solid with Track Grey; no stripes or decorative patterns.
+Gently rounded throughout: 12px (rounded.xl) on cards and tiles, 8px (rounded.lg) on buttons, nav items, icon chips and alerts, 6px (rounded.md) on small row buttons, range options and bar tops, 2px on legend swatches, full pills on meters, share bars and badges. Borders are 1px solid; the only dashed stroke is last week's ghost bar and its legend swatch. Last week's ghost fills with Ghost Tint (`--syn-ghost-fill`: #d3e3e0 light, #284349 dark); future days show it at 60% opacity. No stripes or decorative patterns.
 
 ## Components
 
@@ -280,7 +280,7 @@ Underline tabs on a muted rail: 40px tall, 14px; active is ink, 600, with a 2px 
 Sidebar on Card White with a right border. Section labels 11px uppercase muted; items 40px tall, 8px radius, 18px lucide icon; active item Teal Wash with Deep Teal Ink 600; hover uses the hover wash. A pending-invite count shows as a warning-tinted pill. The logo swaps to the white mark in dark mode.
 
 ### Week Chart (signature)
-Seven Monday-first columns, 190px plot. Each day: a dashed Ghost Grey outline for last week's value, with this week's Chart Teal bar (78% width, 6px top corners) inside it. Today is the bar at 75% opacity with a bold label and a teal "today" tag; future days show only a Track Grey slot and no value. Values sit above bars in 11px bold. A screen-reader table carries every number. Legend: solid teal swatch "This week", dashed swatch "Last week".
+Seven Monday-first columns, 190px plot. Each day: a Ghost Tint bar with a dashed Ghost Grey outline for last week's value, with this week's Chart Teal bar (78% width, 6px top corners) inside it. Today is the bar at 75% opacity with a bold label and a teal "today" tag; future days show only the dimmed ghost and no value; today at zero shows "None yet" ("0" on phones) and a 2px teal baseline. Values sit above bars in 11px bold. A screen-reader table carries every number. Legend: solid teal swatch "This week", dashed swatch "Last week".
 
 ### Busiest Days
 Seven Monday-first bars of average tokens over 30 days; the busiest day full Chart Teal with its value labelled, the rest at 40% opacity.
@@ -304,5 +304,6 @@ Danger-tint panel, 8px radius, 12px padding: a circle-x icon, a bold 13px senten
 ### Don't:
 - **Don't** put a shadow on a card or tile at rest.
 - **Don't** put white text on Action Orange; use dark ink (on-accent-ink).
-- **Don't** draw a future day as a zero bar; it is a filled, unlabelled slot.
+- **Do** fall back to last week in the member and model lists when this week has no usage yet, and say so in the card description ("Showing last week").
+- **Don't** draw a future day as a zero bar; it is a dimmed, unlabelled ghost.
 - **Don't** show allowance, credit or taka figures to institution admins from superadmin-only `/api/platform/*` data.
