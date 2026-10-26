@@ -195,7 +195,7 @@ export function Overview() {
           </StatTile>
         </section>
 
-        <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-3">
           <section className="flex min-w-0 flex-col gap-4 rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-5 xl:col-span-2">
             <div
               role="tablist"
@@ -283,9 +283,9 @@ export function Overview() {
                   <tbody className="tabular-nums">
                     {(members.data?.members ?? []).map((member, order) => (
                       <tr key={member.userId} className="border-t border-(--cui-color-stroke-muted)">
-                        <td className="py-2.5 pr-4">
-                          <div className="font-semibold">{member.name}</div>
-                          <div className="text-xs text-(--cui-color-text-muted)">{member.email}</div>
+                        <td className="w-full max-w-0 py-2.5 pr-4">
+                          <div className="truncate font-semibold">{member.name}</div>
+                          <div className="truncate text-xs text-(--cui-color-text-muted)">{member.email}</div>
                         </td>
                         <td className="pr-4">
                           <div className="flex items-center justify-end gap-3">

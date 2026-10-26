@@ -30,7 +30,7 @@ export function Header({ title, onSearchClick, children }: t.HeaderProps) {
             >
               <Search aria-hidden="true" size={15} className="sm:hidden" />
               <span className="hidden sm:inline">{localize('com_ui_search')}</span>
-              <kbd className="rounded border border-(--cui-color-stroke-default) bg-(--cui-color-background-secondary) px-1.5 py-0.5 text-xs font-medium text-(--cui-color-text-default)">
+              <kbd className="hidden rounded border border-(--cui-color-stroke-default) bg-(--cui-color-background-secondary) px-1.5 py-0.5 text-xs font-medium text-(--cui-color-text-default) sm:inline">
                 {shortcut}
               </kbd>
             </button>
