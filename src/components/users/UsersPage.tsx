@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, Plus, Send, Upload } from 'lucide-react';
 import { getRouteApi } from '@tanstack/react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -64,7 +64,7 @@ function shortDate(value?: string | null): string {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value));
 }
 
-export function UsersPage() {
+export function UsersPage({ openInvite = false, onInviteHandled }: t.UsersPageProps = {}) {
   const localize = useLocalize();
   const { user } = Route.useRouteContext();
   const {
@@ -89,6 +89,17 @@ export function UsersPage() {
   const [exporting, setExporting] = useState(false);
   const [selected, setSelected] = useState<t.InstitutionMember | null>(null);
   const statusCounts = useMemberStatusCounts();
+
+  /** Arriving from the Dashboard's "Invite member": open the form once capabilities are known. */
+  useEffect(() => {
+    if (!openInvite || capabilitiesLoading) {
+      return;
+    }
+    if (canManage && !isPlatformSuperadmin) {
+      setInviteOpen(true);
+    }
+    onInviteHandled?.();
+  }, [canManage, capabilitiesLoading, isPlatformSuperadmin, onInviteHandled, openInvite]);
 
   const accountScope: 'institution' | 'standalone' =
     tenantFilter === 'others' ? 'standalone' : 'institution';

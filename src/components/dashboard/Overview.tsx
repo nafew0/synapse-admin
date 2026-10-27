@@ -35,7 +35,6 @@ import {
   Card,
   BAR_STAGGER_MS,
 } from '@/components/shared';
-import { CreateUserDialog } from '@/components/users';
 import { SystemCapabilities } from '@/constants';
 import { WeekdayUsage } from './WeekdayUsage';
 import { WeekChart } from './WeekChart';
@@ -60,7 +59,6 @@ export function Overview() {
   const { hasCapability } = useCapabilities();
   const canManage = hasCapability(SystemCapabilities.MANAGE_USERS);
   const [period, setPeriod] = useState<Period>('week');
-  const [inviteOpen, setInviteOpen] = useState(false);
 
   const today = localDay();
   const range = useMemo(() => presetRange(period), [period]);
@@ -139,14 +137,14 @@ export function Overview() {
           <div className="flex flex-wrap items-center gap-2.5">
             <RangePicker value={period} presets={PERIODS} onChange={(next) => setPeriod(next as Period)} />
             {canManage ? (
-              <button
-                type="button"
-                onClick={() => setInviteOpen(true)}
-                className="flex h-10 cursor-pointer items-center gap-2 rounded-lg border-0 bg-(--cui-color-accent) px-4 text-sm font-bold text-(--syn-on-accent) transition hover:brightness-95"
+              <Link
+                to="/users"
+                search={{ invite: true }}
+                className="flex h-10 items-center gap-2 rounded-lg bg-(--cui-color-accent) px-4 text-sm font-bold text-(--syn-on-accent) no-underline transition hover:brightness-95"
               >
                 <Plus aria-hidden="true" size={16} strokeWidth={2.4} />
                 {localize('com_users_invite_member')}
-              </button>
+              </Link>
             ) : null}
           </div>
         </div>
@@ -323,7 +321,6 @@ export function Overview() {
           </div>
         </section>
       </div>
-      <CreateUserDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </div>
   );
 }
