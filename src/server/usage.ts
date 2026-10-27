@@ -129,18 +129,19 @@ export const exportUsageCsvServerFn = createServerFn({ method: 'POST' })
       `/api/admin/usage/export.csv${buildQuery({ start: data.start, end: data.end, tenantId: data.tenantId })}`,
       {
         method: 'GET',
-        headers: { Accept: 'text/csv' },
+        headers: { Accept: 'text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
       },
     );
     if (!response.ok) {
       await extractApiError(response, 'Failed to export usage CSV');
     }
-    const filename = `usage-${new Date().toISOString().slice(0, 10)}.csv`;
+    /** Superadmins get an .xlsx workbook, institution admins a CSV: pass on what the API sent. */
+    const fallback = `attachment; filename="usage-${new Date().toISOString().slice(0, 10)}.csv"`;
     return new Response(response.body, {
       status: 200,
       headers: {
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Type': response.headers.get('Content-Type') ?? 'text/csv; charset=utf-8',
+        'Content-Disposition': response.headers.get('Content-Disposition') ?? fallback,
         'Cache-Control': 'no-store',
       },
     });
