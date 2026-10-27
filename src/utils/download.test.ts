@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { datedFilename, downloadBlob } from './download';
+import { datedFilename, downloadBlob, filenameFromDisposition } from './download';
 
 describe('datedFilename', () => {
   beforeEach(() => {
@@ -56,5 +56,21 @@ describe('downloadBlob', () => {
     vi.runAllTimers();
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake-url');
     vi.useRealTimers();
+  });
+});
+
+describe('filenameFromDisposition', () => {
+  it('reads the filename the server chose', () => {
+    expect(filenameFromDisposition('attachment; filename="member-usage-2026-10-27.xlsx"', 'x.csv')).toBe(
+      'member-usage-2026-10-27.xlsx',
+    );
+    expect(filenameFromDisposition('attachment; filename=usage-2026-10-27.csv', 'x.csv')).toBe(
+      'usage-2026-10-27.csv',
+    );
+  });
+
+  it('falls back when the header is missing or names no file', () => {
+    expect(filenameFromDisposition(null, 'usage-2026-10-27.csv')).toBe('usage-2026-10-27.csv');
+    expect(filenameFromDisposition('attachment', 'usage-2026-10-27.csv')).toBe('usage-2026-10-27.csv');
   });
 });

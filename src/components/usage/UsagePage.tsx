@@ -5,6 +5,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { SystemCapabilities } from '@/constants';
 import { useAdminScope, useCapabilities } from '@/hooks';
 import {
+  filenameFromDisposition,
   datedFilename,
   downloadBlob,
   formatUsageCost,
@@ -185,7 +186,11 @@ export function UsagePage() {
     setExporting(true);
     try {
       const response = await exportUsageCsvServerFn({ data: range });
-      downloadBlob(await response.blob(), datedFilename('usage', 'csv'));
+      const filename = filenameFromDisposition(
+        response.headers.get('Content-Disposition'),
+        datedFilename('usage', 'csv'),
+      );
+      downloadBlob(await response.blob(), filename);
     } finally {
       setExporting(false);
     }
@@ -286,7 +291,7 @@ export function UsagePage() {
           className="flex items-center gap-1.5 rounded-lg border border-(--cui-color-stroke-default) px-3 py-2 text-sm text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Icon name="download" size="xs" />
-          {exporting ? 'Exporting…' : 'Export CSV'}
+          {exporting ? 'Exporting…' : 'Export'}
         </button>
       </section>
 

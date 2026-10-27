@@ -20,3 +20,9 @@ export function downloadBlob(blob: Blob, filename: string): void {
 export function datedFilename(name: string, extension: string): string {
   return `${name}-${new Date().toISOString().slice(0, 10)}.${extension}`;
 }
+
+/** The filename a `Content-Disposition` header names, or `fallback` when it names none. */
+export function filenameFromDisposition(header: string | null, fallback: string): string {
+  const match = header?.match(/filename="?([^";]+)"?/i);
+  return match?.[1]?.trim() || fallback;
+}
