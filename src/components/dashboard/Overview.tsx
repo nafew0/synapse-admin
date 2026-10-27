@@ -139,7 +139,6 @@ export function Overview() {
             {canManage ? (
               <Link
                 to="/users"
-                search={{ invite: true }}
                 className="flex h-10 items-center gap-2 rounded-lg bg-(--cui-color-accent) px-4 text-sm font-bold text-(--syn-on-accent) no-underline transition hover:brightness-95"
               >
                 <Plus aria-hidden="true" size={16} strokeWidth={2.4} />

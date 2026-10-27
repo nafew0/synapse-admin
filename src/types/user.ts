@@ -148,10 +148,3 @@ export interface MemberPanelProps {
 
 export type RoleFilter = 'all' | 'user' | 'institution_admin';
 export type StatusFilter = 'all' | MemberStatus;
-
-export interface UsersPageProps {
-  /** Open the invite form on arrival, as the Dashboard's "Invite member" asks. */
-  openInvite?: boolean;
-  /** Called once the request is handled, so a reload does not reopen the form. */
-  onInviteHandled?: () => void;
-}
