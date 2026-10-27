@@ -29,12 +29,10 @@ import {
   MeterLegend,
   RangePicker,
   ShareBar,
-  Sparkline,
   StatTile,
   Delta,
   Meter,
   Card,
-  TILE_STAGGER_MS,
   BAR_STAGGER_MS,
 } from '@/components/shared';
 import { CreateUserDialog } from '@/components/users';
@@ -80,7 +78,6 @@ export function Overview() {
 
   const summary = useUsageSummary(range);
   const previousSummary = useUsageSummary(previous);
-  const timeseries = useUsageTimeseries(range);
   const weekSeries = useUsageTimeseries(week);
   const lastWeekSeries = useUsageTimeseries(lastWeek);
   const monthSeries = useUsageTimeseries(thirtyDays);
@@ -91,13 +88,8 @@ export function Overview() {
   const members = useUsageMembers({ ...listRange, limit: TOP_MEMBERS, offset: 0 });
   const seats = useMemberSummary();
 
-  const series = useMemo(() => {
-    const points = timeseries.data?.points ?? [];
-    return {
-      tokens: fillDaily(points, range, (point) => point.totalTokens),
-      requests: fillDaily(points, range, (point) => point.eventCount),
-    };
-  }, [range, timeseries.data?.points]);
+  /** Days in the period, for the "vs previous N days" comparison. */
+  const periodDays = useMemo(() => fillDaily([], range, () => 0).length, [range]);
 
   const mostUsed = useMemo(() => {
     const rows = models.data?.models ?? [];
@@ -119,7 +111,7 @@ export function Overview() {
   const current = summary.data?.summary;
   const before = previousSummary.data?.summary;
   const comparedTo = localize(period === 'week' ? 'com_dash_vs_same_days_last_week' : 'com_dash_vs_previous', {
-    days: series.tokens.length,
+    days: periodDays,
   });
   const timezone = summary.data?.range.timezone;
   const totalTokens = current?.totalTokens ?? 0;
@@ -189,18 +181,14 @@ export function Overview() {
             icon={<Activity size={ICON_SIZE} />}
             index={2}
             detail={<Delta current={current?.eventCount ?? 0} previous={before?.eventCount} suffix={comparedTo} />}
-          >
-            <Sparkline values={series.requests.map((datum) => datum.value)} delay={2 * TILE_STAGGER_MS} />
-          </StatTile>
+          />
           <StatTile
             label={localize('com_dash_tokens_used')}
             value={placeholder(formatCompact(totalTokens))}
             icon={<Layers size={ICON_SIZE} />}
             index={3}
             detail={<Delta current={totalTokens} previous={before?.totalTokens} suffix={comparedTo} />}
-          >
-            <Sparkline values={series.tokens.map((datum) => datum.value)} delay={3 * TILE_STAGGER_MS} />
-          </StatTile>
+          />
         </section>
 
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
