@@ -1290,7 +1290,7 @@
   "com_usage_from": "From",
   "com_usage_to": "To",
   "com_usage_search": "Search members or models",
-  "com_usage_export": "Export CSV",
+  "com_usage_export": "Export",
   "com_usage_exporting": "Exporting…",
   "com_usage_failed": "Failed to load institution usage.",
   "com_usage_vs_previous": "vs previous period",

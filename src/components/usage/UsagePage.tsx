@@ -20,6 +20,7 @@ import {
   formatUsageCost,
   previousRange,
   formatDayLabel,
+  filenameFromDisposition,
   datedFilename,
   formatCompact,
   modelRowKey,
@@ -174,7 +175,11 @@ export function UsagePage() {
     setExporting(true);
     try {
       const response = await exportUsageCsvServerFn({ data: scope });
-      downloadBlob(await response.blob(), datedFilename('usage', 'csv'));
+      const filename = filenameFromDisposition(
+        response.headers.get('Content-Disposition'),
+        datedFilename('usage', 'csv'),
+      );
+      downloadBlob(await response.blob(), filename);
     } finally {
       setExporting(false);
     }
