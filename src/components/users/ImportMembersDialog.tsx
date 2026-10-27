@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { Download } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type * as t from '@/types';
 import { FormDialog } from '@/components/shared';
 import { createMemberImportFn, dryRunMemberImportFn } from '@/server';
 import { downloadBlob, notifyError, notifySuccess } from '@/utils';
+import { useLocalize } from '@/hooks';
 
 const MEMBER_IMPORT_TEMPLATE =
   '\uFEFFemail,name,role\nmember1@your-institution.edu.bd,Full Name,USER\nadmin1@your-institution.edu.bd,Full Name,INSTITUTION_ADMIN\n';
@@ -16,6 +18,7 @@ function downloadMemberImportTemplate() {
 }
 
 export function ImportMembersDialog({ open, onClose }: t.ImportMembersDialogProps) {
+  const localize = useLocalize();
   const queryClient = useQueryClient();
   const [fileName, setFileName] = useState('');
   const [csvText, setCsvText] = useState('');
@@ -117,19 +120,19 @@ export function ImportMembersDialog({ open, onClose }: t.ImportMembersDialogProp
         ) : null}
       </div>
 
-      <p className="text-xs text-(--cui-color-text-muted)">
-        Required column: <code>email</code>. Optional: <code>name</code> and <code>role</code> —
-        leave a cell blank to omit it. Accepted roles: <code>USER</code>,{' '}
-        <code>INSTITUTION_ADMIN</code> (blank = USER). Max 1000 rows. Save as CSV (Excel:{' '}
-        <em>CSV UTF-8</em>).{' '}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-(--syn-brand-tint) px-4 py-3">
+        <p className="m-0 text-[15px] font-medium text-(--cui-color-text-default)">
+          {localize('com_members_import_hint')}
+        </p>
         <button
           type="button"
           onClick={downloadMemberImportTemplate}
-          className="text-(--cui-color-text-link) underline"
+          className="flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-lg border-0 bg-(--syn-brand) px-4 text-[15px] font-bold text-(--syn-on-brand) transition hover:brightness-110"
         >
-          Download a sample CSV
+          <Download aria-hidden="true" size={18} strokeWidth={2.2} />
+          {localize('com_members_import_sample')}
         </button>
-      </p>
+      </div>
 
       {summary ? (
         <div className="grid grid-cols-2 gap-3 rounded-lg border border-(--cui-color-stroke-default) p-3 text-sm md:grid-cols-4">

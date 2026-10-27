@@ -1470,5 +1470,7 @@
   "com_usage_trend_desc_requests": "Daily request totals",
   "com_usage_tokens_per_day_unit": "tokens/day",
   "com_usage_requests_per_day_unit": "requests/day",
-  "com_usage_daily_total": "Daily total"
+  "com_usage_daily_total": "Daily total",
+  "com_members_import_hint": "Follow the provided sample CSV file format.",
+  "com_members_import_sample": "Download sample CSV"
 }
