@@ -1294,8 +1294,6 @@
   "com_usage_exporting": "Exporting…",
   "com_usage_failed": "Failed to load institution usage.",
   "com_usage_vs_previous": "vs previous period",
-  "com_usage_tokens_per_day": "Tokens per day",
-  "com_usage_requests_per_day": "Requests per day",
   "com_usage_total_tokens": "Total tokens",
   "com_usage_requests": "Requests",
   "com_usage_tokens": "Tokens",
@@ -1303,9 +1301,8 @@
   "com_usage_members_with_usage": "Members with usage",
   "com_usage_models_used": "Models used",
   "com_usage_cost": "Usage cost",
-  "com_usage_token_trend": "Token trend",
+  "com_usage_token_trend": "Token usage trend",
   "com_usage_request_trend": "Request trend",
-  "com_usage_trend_desc": "Daily totals with a 7-day average",
   "com_usage_metric": "Metric",
   "com_usage_by_model": "By model",
   "com_usage_models_count": "{{count}} models",
@@ -1468,5 +1465,10 @@
   "com_inst_detail_tenant": "Tenant ID",
   "com_inst_status_active": "Active",
   "com_inst_status_suspended": "Suspended",
-  "com_inst_status_closed": "Closed"
+  "com_inst_status_closed": "Closed",
+  "com_usage_trend_desc_tokens": "Daily token totals",
+  "com_usage_trend_desc_requests": "Daily request totals",
+  "com_usage_tokens_per_day_unit": "tokens/day",
+  "com_usage_requests_per_day_unit": "requests/day",
+  "com_usage_daily_total": "Daily total"
 }

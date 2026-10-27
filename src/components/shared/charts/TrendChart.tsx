@@ -61,7 +61,9 @@ export function TrendChart({
   detailRows,
   height = 240,
   averageWindow = 7,
+  variant = 'line',
 }: t.TrendChartProps) {
+  const bars = variant === 'bars';
   const localize = useLocalize();
   const plotRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<number | null>(null);
@@ -80,10 +82,11 @@ export function TrendChart({
       line,
       area: line ? `${line} L${VIEW_WIDTH},${height} L0,${height} Z` : '',
       average: buildPath(averages, x, y),
-      xPercent: (i: number) => (i / last) * 100,
+      /** Bars sit in the middle of equal day slots; the line runs edge to edge. */
+      xPercent: (i: number) => (bars ? ((i + 0.5) / data.length) * 100 : (i / last) * 100),
       yPercent: (v: number) => 100 - (v / top) * 100,
     };
-  }, [averageWindow, data, height]);
+  }, [averageWindow, bars, data, height]);
 
   if (data.length === 0) {
     return null;
@@ -95,7 +98,11 @@ export function TrendChart({
       return;
     }
     const ratio = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
-    setActive(Math.round(ratio * (data.length - 1)));
+    setActive(
+      bars
+        ? Math.min(Math.floor(ratio * data.length), data.length - 1)
+        : Math.round(ratio * (data.length - 1)),
+    );
   };
 
   const moveWithKeys = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -148,9 +155,20 @@ export function TrendChart({
           className="relative flex-1 touch-none rounded-sm outline-offset-4"
           style={{ height }}
         >
-          <div className="absolute inset-x-0 top-0 border-t border-(--syn-track)" />
-          <div className="absolute inset-x-0 top-1/2 border-t border-(--syn-track)" />
+          <div className={cn('absolute inset-x-0 top-0 border-t border-(--syn-track)', bars && 'border-dashed')} />
+          <div className={cn('absolute inset-x-0 top-1/2 border-t border-(--syn-track)', bars && 'border-dashed')} />
           <div className="absolute inset-x-0 bottom-0 border-t border-(--cui-color-stroke-default)" />
+          {bars ? (
+            <BarPlot
+              key={drawKey}
+              data={data}
+              active={active}
+              top={geometry.top}
+              xPercent={geometry.xPercent}
+            />
+          ) : null}
+          {bars ? null : (
+            <>
           <svg
             key={drawKey}
             aria-hidden="true"
@@ -186,7 +204,21 @@ export function TrendChart({
               style={{ stroke: 'var(--syn-chart-avg)' }}
             />
           </svg>
-          {activeDatum ? (
+            </>
+          )}
+          {activeDatum && bars ? (
+            <BarTooltip
+              day={formatDay(activeDatum.day)}
+              label={label}
+              value={formatValue(activeDatum.value)}
+              averageLabel={averageLabel}
+              average={activeAverage == null ? '—' : formatValue(activeAverage)}
+              detailRows={detailRows?.(active ?? 0) ?? []}
+              left={geometry.xPercent(active ?? 0)}
+              barTop={geometry.yPercent(activeDatum.value)}
+            />
+          ) : null}
+          {activeDatum && !bars ? (
             <>
               <div
                 aria-hidden="true"
@@ -268,5 +300,127 @@ export function TrendChart({
         </tbody>
       </table>
     </figure>
+  );
+}
+
+/** One bar per day; the hovered bar brightens and gets a marker at its top. */
+function BarPlot({
+  data,
+  active,
+  top,
+  xPercent,
+}: {
+  data: t.TrendDatum[];
+  active: number | null;
+  top: number;
+  xPercent: (index: number) => number;
+}) {
+  const slot = 100 / Math.max(data.length, 1);
+  return (
+    <div aria-hidden="true" className="absolute inset-0">
+      {data.map((datum, index) => {
+        const height = top > 0 ? (datum.value / top) * 100 : 0;
+        const isActive = index === active;
+        return (
+          <div
+            key={datum.day}
+            className="absolute bottom-0"
+            style={{
+              left: `${xPercent(index)}%`,
+              width: `max(2px, calc(${slot}% * 0.55))`,
+              height: datum.value > 0 ? `max(2px, ${height}%)` : 0,
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <div
+              className={cn(
+                'syn-bar-rise h-full w-full rounded-t-[3px] bg-(--syn-chart-1) transition-[filter,opacity] duration-150',
+                active != null && !isActive && 'opacity-80',
+                isActive && 'brightness-125',
+              )}
+              style={{ '--syn-delay': `${Math.min(index * 12, 360)}ms` } as CSSProperties}
+            />
+            {isActive ? (
+              <span className="absolute -top-1.25 left-1/2 h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 border-(--syn-surface) bg-(--syn-chart-1)" />
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Centred over the bar, or anchored to it near either edge so it stays in the plot. */
+function tooltipShift(left: number): string {
+  if (left < 18) {
+    return '-12px';
+  }
+  return left > 82 ? 'calc(-100% + 12px)' : '-50%';
+}
+
+/**
+ * Sits above the hovered bar with a dashed stem down to it; beside the bar when
+ * the bar is too tall to leave room above. Kept inside the plot at either edge.
+ */
+function BarTooltip({
+  day,
+  label,
+  value,
+  averageLabel,
+  average,
+  detailRows,
+  left,
+  barTop,
+}: {
+  day: string;
+  label: string;
+  value: string;
+  averageLabel: string;
+  average: string;
+  detailRows: t.TrendTooltipRow[];
+  left: number;
+  barTop: number;
+}) {
+  const above = barTop > 45;
+  const shift = tooltipShift(left);
+  return (
+    <div
+      className="pointer-events-none absolute inset-y-0"
+      style={{ left: `${left}%` }}
+    >
+      {above ? (
+        <span
+          aria-hidden="true"
+          className="absolute h-4 border-l border-dashed border-(--cui-color-stroke-intense)"
+          style={{ top: `calc(${barTop}% - 18px)` }}
+        />
+      ) : null}
+      <div
+        role="status"
+        className="absolute z-10 min-w-44 rounded-lg border border-(--cui-color-stroke-default) bg-(--syn-surface) px-3 py-2.5 text-xs whitespace-nowrap shadow-lg"
+        style={
+          above
+            ? { bottom: `calc(${100 - barTop}% + 18px)`, transform: `translateX(${shift})` }
+            : { top: 8, transform: left > 60 ? 'translateX(calc(-100% - 14px))' : 'translateX(14px)' }
+        }
+      >
+        <div className="mb-1.5 text-(--cui-color-text-muted)">{day}</div>
+        <dl className="m-0 grid grid-cols-[auto_auto] items-center gap-x-5 gap-y-1 tabular-nums">
+          <dt className="flex items-center gap-1.5 text-(--cui-color-text-default)">
+            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-(--syn-chart-1)" />
+            {label}
+          </dt>
+          <dd className="m-0 text-right text-[13px] font-bold">{value}</dd>
+          <dt className="pl-3.5 text-(--cui-color-text-muted)">{averageLabel}</dt>
+          <dd className="m-0 text-right text-(--cui-color-text-muted)">{average}</dd>
+          {detailRows.map((row) => (
+            <div key={row.label} className="contents">
+              <dt className="pl-3.5 text-(--cui-color-text-muted)">{row.label}</dt>
+              <dd className="m-0 text-right text-(--cui-color-text-muted)">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
   );
 }
