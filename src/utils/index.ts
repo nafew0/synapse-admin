@@ -8,3 +8,4 @@ export * from './secrets';
 export * from './toast';
 export * from './usage';
 export * from './trend';
+export * from './attention';

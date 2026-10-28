@@ -30,6 +30,9 @@ export interface TrendChartProps {
   detailRows?: (index: number) => TrendTooltipRow[];
   height?: number;
   averageWindow?: number;
+  /** `line` draws the series with its rolling average; `bars` draws one bar per
+   *  day and leaves the average to the tooltip. */
+  variant?: 'line' | 'bars';
 }
 
 export interface SparklineProps {

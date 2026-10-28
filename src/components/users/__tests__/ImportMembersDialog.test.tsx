@@ -33,7 +33,7 @@ describe('ImportMembersDialog', () => {
       </QueryClientProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Download a sample CSV' }));
+    await user.click(screen.getByRole('button', { name: 'com_members_import_sample' }));
 
     expect(downloadBlob).toHaveBeenCalledTimes(1);
     const [blob, filename] = downloadBlob.mock.calls[0] as [Blob, string];
