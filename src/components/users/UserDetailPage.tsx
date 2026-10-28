@@ -12,7 +12,7 @@ import {
 import { Avatar, EmptyState, LoadingState } from '@/components/shared';
 import { SystemCapabilities } from '@/constants';
 import { useAdminScope, useCapabilities } from '@/hooks';
-import { formatUsageCost, notifyError, notifySuccess } from '@/utils';
+import { formatUsageCost, modelRowKey, notifyError, notifySuccess } from '@/utils';
 
 const Route = getRouteApi('/_app/users/$userId');
 const AppRoute = getRouteApi('/_app');
@@ -297,7 +297,7 @@ function Usage({ usage, loading, error, start, end, onStartChange, onEndChange }
               <tbody>
                 {usage.models.map((model) => (
                   <tr
-                    key={model.displayName ?? model.modelKey}
+                    key={modelRowKey(model)}
                     className="border-b border-(--cui-color-stroke-default)"
                   >
                     {showCost ? <td className="px-2 py-2">{model.providerKey || 'unknown'}</td> : null}

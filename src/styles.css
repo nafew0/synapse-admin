@@ -79,23 +79,23 @@
 
 @layer theme {
   :root {
-    --cui-color-stroke-default: #e3e5e8;
-    --cui-color-stroke-muted: #e3e5e8;
-    --cui-color-stroke-intense: #c9ccd1;
+    --cui-color-stroke-default: #e3e3e3;
+    --cui-color-stroke-muted: #ededed;
+    --cui-color-stroke-intense: #cdcdcd;
     --cui-color-background-default: #ffffff;
-    --cui-color-background-muted: #f5f6f7;
+    --cui-color-background-muted: #f7f7f8;
     --cui-color-background-panel: #ffffff;
-    --cui-color-background-hover: #f5f6f7;
-    --cui-color-background-active: #e3e5e8;
-    --cui-color-background-secondary: #f0f1f3;
-    --cui-color-text-default: #161517;
-    --cui-color-text-muted: #6c6f77;
-    --cui-color-text-disabled: #9a9ea7;
+    --cui-color-background-hover: #f2f4f4;
+    --cui-color-background-active: #e2f0ee;
+    --cui-color-background-secondary: #f7f7f8;
+    --cui-color-text-default: #132321;
+    --cui-color-text-muted: #595959;
+    --cui-color-text-disabled: #999696;
     --cui-color-text-primary: #f5871f;
-    --cui-color-text-link: #f5871f;
+    --cui-color-text-link: #186569;
     --cui-color-text-danger: #e20a0a;
-    --cui-color-title-default: #161517;
-    --cui-color-title-muted: #6c6f77;
+    --cui-color-title-default: #132321;
+    --cui-color-title-muted: #595959;
     --cui-color-accent: #f5871f;
     --cui-color-outline: #f5871f;
     --cui-color-shadow: rgb(0% 0% 0% / 0.1);
@@ -121,28 +121,51 @@
     --avatar-color-3: #15803d;
     --avatar-color-4: #be123c;
     --avatar-color-5: #6d28d9;
+    --syn-bg: #f7f7f8;
+    --syn-surface: #ffffff;
+    --syn-surface-2: #f7f7f8;
+    --syn-brand: #186569;
+    --syn-on-brand: #ffffff;
+    --syn-brand-ink: #134f54;
+    --syn-brand-tint: #e2f0ee;
+    --syn-chart-1: #008f88;
+    --syn-chart-2: #e8730c;
+    --syn-chart-avg: #132321;
+    --syn-track: #ededed;
+    --syn-on-accent: #132321;
+    --syn-success-bg: #ecfdf5;
+    --syn-success-fg: #047857;
+    --syn-warning-bg: #fffbeb;
+    --syn-warning-fg: #b45309;
+    --syn-danger-bg: #fef2f2;
+    --syn-danger-fg: #b91c1c;
+    --syn-danger-border: #fecaca;
+    --syn-info-bg: #eff6ff;
+    --syn-info-fg: #1d4ed8;
+    --syn-neutral-bg: #ededed;
+    --syn-neutral-fg: #2f3b3a;
   }
 
   .dark {
-    --cui-color-stroke-default: #323232;
-    --cui-color-stroke-muted: #323232;
-    --cui-color-stroke-intense: #414141;
-    --cui-color-background-default: #1f1f1c;
-    --cui-color-background-muted: #282828;
-    --cui-color-background-panel: #1f1f1c;
-    --cui-color-background-hover: #282828;
-    --cui-color-background-active: #323232;
-    --cui-color-background-secondary: #282828;
-    --cui-color-text-default: #ffffff;
-    --cui-color-text-muted: #b3b6bd;
-    --cui-color-text-disabled: #808080;
-    --cui-color-text-primary: #fba24d;
-    --cui-color-text-link: #fba24d;
+    --cui-color-stroke-default: #23363b;
+    --cui-color-stroke-muted: #1a2c31;
+    --cui-color-stroke-intense: #34464a;
+    --cui-color-background-default: #06161a;
+    --cui-color-background-muted: #0b1c21;
+    --cui-color-background-panel: #0f1f24;
+    --cui-color-background-hover: #16292e;
+    --cui-color-background-active: #133a3d;
+    --cui-color-background-secondary: #16292e;
+    --cui-color-text-default: #f2f4f4;
+    --cui-color-text-muted: #9aa5a7;
+    --cui-color-text-disabled: #6b7779;
+    --cui-color-text-primary: #f0a857;
+    --cui-color-text-link: #4fb6ba;
     --cui-color-text-danger: #ffbaba;
-    --cui-color-title-default: rgb(97.5% 97.5% 97.5%);
-    --cui-color-title-muted: #b3b6bd;
-    --cui-color-accent: #fba24d;
-    --cui-color-outline: #fba24d;
+    --cui-color-title-default: #f2f4f4;
+    --cui-color-title-muted: #9aa5a7;
+    --cui-color-accent: #f0a857;
+    --cui-color-outline: #f0a857;
     --cui-color-shadow: rgb(8.2353% 8.2353% 8.2353% / 0.6);
     --cui-color-accent-success: #4ade80;
     --cui-color-accent-warning: #fbbf24;
@@ -160,35 +183,58 @@
     --cui-color-feedback-danger-fg: #ffbaba;
     --cui-color-feedback-user-bg: rgb(107 33 168 / 0.3);
     --cui-color-feedback-user-fg: #d8b4fe;
-    --cui-color-text-on-accent: #ffffff;
+    --cui-color-text-on-accent: #12171a;
     --avatar-color-1: #1d4ed8;
     --avatar-color-2: #b45309;
     --avatar-color-3: #15803d;
     --avatar-color-4: #be123c;
     --avatar-color-5: #6d28d9;
+    --syn-bg: #06161a;
+    --syn-surface: #0f1f24;
+    --syn-surface-2: #13262b;
+    --syn-brand: #4fb6ba;
+    --syn-on-brand: #06161a;
+    --syn-brand-ink: #7fd0d3;
+    --syn-brand-tint: #133a3d;
+    --syn-chart-1: #12a7a3;
+    --syn-chart-2: #d97418;
+    --syn-chart-avg: #f2f4f4;
+    --syn-track: #1b2c31;
+    --syn-on-accent: #12171a;
+    --syn-success-bg: #0b2e25;
+    --syn-success-fg: #6ee7b7;
+    --syn-warning-bg: #33240b;
+    --syn-warning-fg: #f5c26b;
+    --syn-danger-bg: #3a1517;
+    --syn-danger-fg: #fca5a5;
+    --syn-danger-border: #6b2226;
+    --syn-info-bg: #10263f;
+    --syn-info-fg: #93c5fd;
+    --syn-neutral-bg: #1b2a2e;
+    --syn-neutral-fg: #c9d3d4;
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not(.light) {
-      --cui-color-stroke-default: #323232;
-      --cui-color-stroke-muted: #323232;
-      --cui-color-stroke-intense: #414141;
-      --cui-color-background-default: #1f1f1c;
-      --cui-color-background-muted: #282828;
-      --cui-color-background-panel: #1f1f1c;
-      --cui-color-background-hover: #282828;
-      --cui-color-background-active: #323232;
-      --cui-color-background-secondary: #282828;
-      --cui-color-text-default: #ffffff;
-      --cui-color-text-muted: #b3b6bd;
-      --cui-color-text-disabled: #808080;
-      --cui-color-text-primary: #fba24d;
-      --cui-color-text-link: #fba24d;
+      --cui-color-stroke-default: #23363b;
+      --cui-color-stroke-muted: #1a2c31;
+      --cui-color-stroke-intense: #34464a;
+      --cui-color-background-default: #06161a;
+      --cui-color-background-muted: #0b1c21;
+      --cui-color-background-panel: #0f1f24;
+      --cui-color-background-hover: #16292e;
+      --cui-color-background-active: #133a3d;
+      --cui-color-background-secondary: #16292e;
+      --cui-color-text-default: #f2f4f4;
+      --cui-color-text-muted: #9aa5a7;
+      --cui-color-text-disabled: #6b7779;
+      --cui-color-text-primary: #f0a857;
+      --cui-color-text-link: #4fb6ba;
       --cui-color-text-danger: #ffbaba;
-      --cui-color-title-default: rgb(97.5% 97.5% 97.5%);
-      --cui-color-title-muted: #b3b6bd;
-      --cui-color-accent: #fba24d;
-      --cui-color-outline: #fba24d;
+      --cui-color-title-default: #f2f4f4;
+      --cui-color-title-muted: #9aa5a7;
+      --cui-color-accent: #f0a857;
+      --cui-color-outline: #f0a857;
       --cui-color-shadow: rgb(8.2353% 8.2353% 8.2353% / 0.6);
       --cui-color-accent-success: #4ade80;
       --cui-color-accent-warning: #fbbf24;
@@ -206,12 +252,35 @@
       --cui-color-feedback-danger-fg: #ffbaba;
       --cui-color-feedback-user-bg: rgb(107 33 168 / 0.3);
       --cui-color-feedback-user-fg: #d8b4fe;
-      --cui-color-text-on-accent: #ffffff;
+      --cui-color-text-on-accent: #12171a;
       --avatar-color-1: #1d4ed8;
       --avatar-color-2: #b45309;
       --avatar-color-3: #15803d;
       --avatar-color-4: #be123c;
       --avatar-color-5: #6d28d9;
+      --syn-bg: #06161a;
+      --syn-surface: #0f1f24;
+      --syn-surface-2: #13262b;
+      --syn-brand: #4fb6ba;
+      --syn-on-brand: #06161a;
+      --syn-brand-ink: #7fd0d3;
+      --syn-brand-tint: #133a3d;
+      --syn-chart-1: #12a7a3;
+      --syn-chart-2: #d97418;
+      --syn-chart-avg: #f2f4f4;
+      --syn-track: #1b2c31;
+      --syn-on-accent: #12171a;
+      --syn-success-bg: #0b2e25;
+      --syn-success-fg: #6ee7b7;
+      --syn-warning-bg: #33240b;
+      --syn-warning-fg: #f5c26b;
+      --syn-danger-bg: #3a1517;
+      --syn-danger-fg: #fca5a5;
+      --syn-danger-border: #6b2226;
+      --syn-info-bg: #10263f;
+      --syn-info-fg: #93c5fd;
+      --syn-neutral-bg: #1b2a2e;
+      --syn-neutral-fg: #c9d3d4;
     }
   }
 }
@@ -265,6 +334,99 @@ body {
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* Dashboard entrance motion: tile icons pop in, sparklines draw left to right.
+   Kept to transform/opacity/stroke so it stays cheap, and off for reduced motion. */
+@keyframes syn-icon-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(4px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes syn-line-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.syn-icon-pop {
+  animation: syn-icon-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--syn-delay, 0ms);
+}
+
+.syn-line-draw {
+  stroke-dasharray: 1;
+  animation: syn-line-draw 900ms ease-out both;
+  animation-delay: calc(var(--syn-delay, 0ms) + 150ms);
+}
+
+@keyframes syn-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.syn-bar-grow {
+  transform-origin: left center;
+  animation: syn-bar-grow 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--syn-delay, 0ms);
+}
+
+/* Reveals a chart left to right. A clip, not a stroke dash, so it also works
+   with non-scaling strokes and draws the filled area together with its line. */
+@keyframes syn-reveal {
+  from {
+    clip-path: inset(-4px 100% -4px -4px);
+  }
+  to {
+    clip-path: inset(-4px -4px -4px -4px);
+  }
+}
+
+.syn-reveal {
+  animation: syn-reveal 1400ms cubic-bezier(0.33, 1, 0.68, 1) both;
+  animation-delay: var(--syn-delay, 0ms);
+}
+
+@keyframes syn-bar-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.syn-bar-rise {
+  transform-origin: bottom center;
+  animation: syn-bar-rise 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--syn-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .syn-bar-rise,
+  .syn-icon-pop,
+  .syn-reveal,
+  .syn-bar-grow,
+  .syn-line-draw {
+    animation: none;
+  }
 }
 
 .user-dropdown [role='menuitem'] {

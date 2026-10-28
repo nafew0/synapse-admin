@@ -1,48 +1,50 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button, Icon } from '@clickhouse/click-ui';
+import { Download, Plus, Send, Upload } from 'lucide-react';
 import { getRouteApi } from '@tanstack/react-router';
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import type * as t from '@/types';
-import { SystemCapabilities } from '@/constants';
-import { normalizeBasePath } from '@/config/basePath';
-import { useCapabilities, useDebouncedFilter } from '@/hooks';
-import { cn, datedFilename, downloadBlob, notifyError, notifySuccess } from '@/utils';
 import {
-  exportMembersFn,
-  getMembersFn,
-  listPlatformInstitutionsFn,
-  removeMemberFn,
-  suspendMemberFn,
-} from '@/server';
+  useMemberStatusCounts,
+  useDebouncedFilter,
+  useCapabilities,
+  useLocalize,
+} from '@/hooks';
 import {
-  AccessDenied,
-  EmptyState,
-  LoadingState,
-  Pagination,
   PermissionsUnavailable,
+  InitialsAvatar,
+  AccessDenied,
+  LoadingState,
   SearchInput,
+  StatusChip,
+  EmptyState,
+  Pagination,
+  RoleChip,
+  Meter,
 } from '@/components/shared';
-import { CreateUserDialog } from './CreateUserDialog';
+import { cn, datedFilename, downloadBlob, formatUsageNumber, notifyError } from '@/utils';
+import { exportMembersFn, getMembersFn, listPlatformInstitutionsFn } from '@/server';
 import { ImportMembersDialog } from './ImportMembersDialog';
 import { ResendInvitesDialog } from './ResendInvitesDialog';
-import { UserDetailDialog } from './UserDetailDialog';
-import { ConfirmDialog } from '../access';
+import { CreateUserDialog } from './CreateUserDialog';
+import { SystemCapabilities } from '@/constants';
+import { MemberPanel } from './MemberPanel';
 
 const PAGE_SIZE = 25;
 const Route = getRouteApi('/_app');
 
-const ROLE_FILTERS: Array<{ key: t.RoleFilter; label: string }> = [
-  { key: 'all', label: 'All roles' },
-  { key: 'user', label: 'Members' },
-  { key: 'institution_admin', label: 'Institution admins' },
+const STATUS_TABS: Array<{ key: t.StatusFilter; labelKey: t.TranslationKeys }> = [
+  { key: 'all', labelKey: 'com_members_tab_all' },
+  { key: 'active', labelKey: 'com_status_active' },
+  { key: 'invited', labelKey: 'com_status_invited' },
+  { key: 'expired', labelKey: 'com_status_expired' },
+  { key: 'suspended', labelKey: 'com_status_suspended' },
 ];
 
-const STATUS_FILTERS: Array<{ key: t.StatusFilter; label: string }> = [
-  { key: 'all', label: 'All statuses' },
-  { key: 'active', label: 'Active' },
-  { key: 'suspended', label: 'Suspended' },
-  { key: 'invited', label: 'Invited' },
-  { key: 'expired', label: 'Expired invites' },
+const ROLE_FILTERS: Array<{ key: t.RoleFilter; labelKey: t.TranslationKeys }> = [
+  { key: 'all', labelKey: 'com_members_role_all' },
+  { key: 'user', labelKey: 'com_members_role_members' },
+  { key: 'institution_admin', labelKey: 'com_members_role_admins' },
 ];
 
 function toMemberRoleFilter(roleFilter: t.RoleFilter): t.MemberRole | 'all' {
@@ -55,20 +57,15 @@ function toMemberRoleFilter(roleFilter: t.RoleFilter): t.MemberRole | 'all' {
   return 'all';
 }
 
-function roleLabel(role: t.MemberRole): string {
-  switch (role) {
-    case 'INSTITUTION_ADMIN':
-      return 'Institution admin';
-    case 'STANDALONE_USER':
-      return 'Standalone user';
-    case 'INSTITUTION_MEMBER':
-    case 'USER':
-    default:
-      return 'Institution member';
+function shortDate(value?: string | null): string {
+  if (!value) {
+    return '—';
   }
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value));
 }
 
 export function UsersPage() {
+  const localize = useLocalize();
   const { user } = Route.useRouteContext();
   const {
     hasCapability,
@@ -77,6 +74,7 @@ export function UsersPage() {
   } = useCapabilities();
   const canRead = hasCapability(SystemCapabilities.READ_USERS);
   const canManage = hasCapability(SystemCapabilities.MANAGE_USERS);
+  const isPlatformSuperadmin = user?.isPlatformSuperadmin === true;
 
   const [roleFilter, setRoleFilter] = useState<t.RoleFilter>('all');
   const [statusFilter, setStatusFilter] = useState<t.StatusFilter>('all');
@@ -87,11 +85,13 @@ export function UsersPage() {
   const search = useDebouncedFilter('', () => setPage(1));
   const [inviteOpen, setInviteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<t.InstitutionMember | null>(null);
-  const [exporting, setExporting] = useState(false);
   const [resendOpen, setResendOpen] = useState(false);
-  const isPlatformSuperadmin = user?.isPlatformSuperadmin === true;
+  const [exporting, setExporting] = useState(false);
+  const [selected, setSelected] = useState<t.InstitutionMember | null>(null);
+  const statusCounts = useMemberStatusCounts();
 
+  const accountScope: 'institution' | 'standalone' =
+    tenantFilter === 'others' ? 'standalone' : 'institution';
   const queryInput = useMemo(
     () => ({
       limit: PAGE_SIZE,
@@ -101,11 +101,9 @@ export function UsersPage() {
       status: statusFilter,
       platform: isPlatformSuperadmin,
       tenantId: tenantFilter === 'all' ? undefined : tenantFilter,
-      accountScope: (tenantFilter === 'others' ? 'standalone' : 'institution') as
-        | 'institution'
-        | 'standalone',
+      accountScope,
     }),
-    [isPlatformSuperadmin, page, roleFilter, search.debouncedValue, statusFilter, tenantFilter],
+    [accountScope, isPlatformSuperadmin, page, roleFilter, search.debouncedValue, statusFilter, tenantFilter],
   );
 
   /** Exports exactly what the current filters describe, so the file and the table
@@ -124,16 +122,16 @@ export function UsersPage() {
             isPlatformSuperadmin && tenantFilter !== 'all' && tenantFilter !== 'others'
               ? tenantFilter
               : undefined,
-          accountScope: tenantFilter === 'others' ? 'standalone' : 'institution',
+          accountScope,
         },
       });
       downloadBlob(await response.blob(), datedFilename('members', 'xlsx'));
     } catch (error) {
-      notifyError(error instanceof Error ? error.message : 'Failed to export members');
+      notifyError(error instanceof Error ? error.message : localize('com_members_export_failed'));
     } finally {
       setExporting(false);
     }
-  }, [isPlatformSuperadmin, roleFilter, search.debouncedValue, statusFilter, tenantFilter]);
+  }, [accountScope, isPlatformSuperadmin, localize, roleFilter, search.debouncedValue, statusFilter, tenantFilter]);
 
   const membersQuery = useQuery({
     queryKey: ['members', queryInput],
@@ -154,241 +152,272 @@ export function UsersPage() {
   if (capabilitiesLoading) {
     return null;
   }
-
   if (capabilitiesError) {
     return <PermissionsUnavailable />;
   }
-
   if (!canRead) {
     return <AccessDenied />;
   }
-
   if (membersQuery.isLoading || (isPlatformSuperadmin && institutionsQuery.isLoading)) {
     return <LoadingState />;
   }
-
   if (membersQuery.isError) {
     return (
-      <EmptyState message={membersQuery.error.message || 'Failed to load institution members.'} />
+      <EmptyState message={membersQuery.error.message || localize('com_members_load_failed')} />
     );
   }
 
   const data = membersQuery.data;
   if (!data) {
-    return <EmptyState message="No institution members available." />;
+    return <EmptyState message={localize('com_members_none_available')} />;
   }
   const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
+  /** Prefer the row from the latest page so the panel reflects role and status changes. */
+  const current = selected
+    ? (data.members.find((member) => member.kind === selected.kind && member.id === selected.id) ??
+      selected)
+    : null;
+  const columnCount = isPlatformSuperadmin ? 5 : 4;
 
   return (
-    <div className="flex flex-1 flex-col gap-6 overflow-auto p-6">
-      <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <SummaryCard
-          label={isPlatformSuperadmin ? 'Active users' : 'Active seats'}
-          value={`${data.summary.activeMembers}`}
-          detail={
-            data.summary.maxActiveMembers != null
-              ? `of ${data.summary.maxActiveMembers}`
-              : 'Unlimited plan'
-          }
-        />
-        <SummaryCard label="Pending invites" value={`${data.summary.pendingInvites}`} />
-        <SummaryCard
-          label={isPlatformSuperadmin ? 'Institutions' : 'Visible results'}
-          value={`${isPlatformSuperadmin ? (data.summary.institutions ?? 0) : data.total}`}
-          detail={isPlatformSuperadmin ? 'Current institution scope' : 'Current filter set'}
-        />
-      </section>
-
-      <section className="flex flex-wrap items-center gap-3">
-        <SearchInput
-          value={search.value}
-          onChange={search.onChange}
-          placeholder="Search members"
-          className="min-w-70 flex-1"
-        />
-
-        <select
-          value={roleFilter}
-          onChange={(e) => {
-            setRoleFilter(e.target.value as t.RoleFilter);
-            setPage(1);
-          }}
-          className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
-        >
-          {ROLE_FILTERS.map((filter) => (
-            <option key={filter.key} value={filter.key}>
-              {filter.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value as t.StatusFilter);
-            setPage(1);
-          }}
-          className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
-        >
-          {STATUS_FILTERS.map((filter) => (
-            <option key={filter.key} value={filter.key}>
-              {filter.label}
-            </option>
-          ))}
-        </select>
-
-        {isPlatformSuperadmin ? (
-          <select
-            value={tenantFilter}
-            onChange={(e) => {
-              setTenantFilter(e.target.value);
-              setPage(1);
-            }}
-            className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-default) px-3 py-2 text-sm text-(--cui-color-text-default)"
-          >
-            <option value="all">All institutions</option>
-            <option value="others">Others</option>
-            {(institutionsQuery.data?.institutions ?? []).map((institution) => (
-              <option key={institution.tenantId} value={institution.tenantId}>
-                {institution.name}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={() => setImportOpen(true)}
+    <div className="flex flex-1 flex-col overflow-auto">
+      <div className="flex w-full flex-col gap-4 p-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <SeatLine summary={data.summary} isPlatformSuperadmin={isPlatformSuperadmin} />
+          <div className="flex flex-wrap gap-2">
+            <ToolbarButton
+              onClick={handleExport}
+              disabled={exporting}
+              icon={<Download size={16} />}
+              label={localize(exporting ? 'com_members_exporting' : 'com_members_export')}
+            />
+            <ToolbarButton
+              onClick={() => setResendOpen(true)}
               disabled={!canManage}
-              className="flex items-center gap-1.5 rounded-lg border border-(--cui-color-stroke-default) px-3 py-2 text-sm text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Icon name="upload" size="xs" />
-              Import CSV
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setInviteOpen(true)}
-              disabled={!canManage}
-              className="flex items-center gap-1.5 rounded-lg border border-(--cui-color-stroke-default) px-3 py-2 text-sm text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Icon name="plus" size="xs" />
-              Invite member
-            </button>
-          </>
-        )}
-
-        <button
-          type="button"
-          onClick={() => setResendOpen(true)}
-          disabled={!canManage}
-          className="flex items-center gap-1.5 rounded-lg border border-(--cui-color-stroke-default) px-3 py-2 text-sm text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Icon name="email" size="xs" />
-          Resend invites
-        </button>
-
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={exporting}
-          aria-busy={exporting}
-          className="flex items-center gap-1.5 rounded-lg border border-(--cui-color-stroke-default) px-3 py-2 text-sm text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Icon name="download" size="xs" />
-          {exporting ? 'Exporting…' : 'Export'}
-        </button>
-      </section>
-
-      <section className="overflow-hidden rounded-lg border border-(--cui-color-stroke-default)">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-(--cui-color-stroke-default) bg-(--cui-color-background-muted)">
-              <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">Member</th>
-              {isPlatformSuperadmin ? (
-                <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                  Institution
-                </th>
-              ) : null}
-              <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">Role</th>
-              <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">Status</th>
-              <th className="px-4 py-2.5 font-medium text-(--cui-color-text-muted)">
-                Added / Sent
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.members.length === 0 ? (
-              <tr>
-                <td colSpan={isPlatformSuperadmin ? 5 : 4}>
-                  <EmptyState message="No members match the current filters." />
-                </td>
-              </tr>
-            ) : (
-              data.members.map((member, index) => (
-                <tr
-                  key={`${member.kind}-${member.id}`}
-                  className={cn(
-                    'bg-(--cui-color-background-panel) transition-colors hover:bg-(--cui-color-background-hover)',
-                    member.kind === 'invite' && 'cursor-pointer',
-                    index < data.members.length - 1 &&
-                      'border-b border-(--cui-color-stroke-default)',
-                  )}
-                  onClick={() => {
-                    if (member.kind === 'invite') {
-                      setSelectedMember(member);
-                    }
-                  }}
+              icon={<Send size={16} />}
+              label={localize('com_members_resend_invites')}
+            />
+            {!isPlatformSuperadmin ? (
+              <>
+                <ToolbarButton
+                  onClick={() => setImportOpen(true)}
+                  disabled={!canManage}
+                  icon={<Upload size={16} />}
+                  label={localize('com_members_import')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setInviteOpen(true)}
+                  disabled={!canManage}
+                  className="flex h-10 cursor-pointer items-center gap-2 rounded-lg border-0 bg-(--cui-color-accent) px-4 text-sm font-bold text-(--syn-on-accent) transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex min-w-0 flex-col gap-1">
-                        <span className="font-medium text-(--cui-color-text-default)">
-                          {member.name || 'Unnamed member'}
-                        </span>
-                        <span className="text-xs text-(--cui-color-text-muted)">
-                          {member.email}
-                        </span>
-                      </div>
-                      {member.kind !== 'invite' ? (
-                        <UserRowActions
-                          member={member}
-                          canManage={canManage}
-                          platform={isPlatformSuperadmin}
-                        />
-                      ) : null}
-                    </div>
-                  </td>
-                  {isPlatformSuperadmin ? (
-                    <td className="px-4 py-3 text-(--cui-color-text-default)">
-                      {member.institutionName || member.tenantId}
-                    </td>
-                  ) : null}
-                  <td className="px-4 py-3">
-                    <span className="rounded-full bg-(--cui-color-background-secondary) px-2 py-0.5 text-xs text-(--cui-color-text-default)">
-                      {roleLabel(member.role)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={statusBadgeClass(member.status)}>{member.status}</span>
-                  </td>
-                  <td className="px-4 py-3 text-(--cui-color-text-muted)">
-                    {new Date(
-                      member.lastSentAt || member.createdAt || Date.now(),
-                    ).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+                  <Plus aria-hidden="true" size={16} strokeWidth={2.4} />
+                  {localize('com_users_invite_member')}
+                </button>
+              </>
+            ) : null}
+          </div>
+        </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-(--cui-color-text-muted)">
-          Showing {data.members.length} of {data.total} members
-        </p>
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+        <div className="flex flex-wrap items-start gap-6">
+          <section
+            aria-label={localize('com_members_list')}
+            className="min-w-0 flex-[999_1_36rem] overflow-hidden rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface)"
+          >
+            <div
+              role="tablist"
+              aria-label={localize('com_members_filter_status')}
+              className="flex flex-wrap gap-1 border-b border-(--cui-color-stroke-muted) px-3"
+            >
+              {STATUS_TABS.map((tab) => {
+                const active = statusFilter === tab.key;
+                const count = statusCounts[tab.key];
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => {
+                      setStatusFilter(tab.key);
+                      setPage(1);
+                    }}
+                    className={cn(
+                      '-mb-px flex min-h-11 cursor-pointer items-center gap-2 border-0 border-b-2 bg-transparent px-3 text-sm',
+                      active
+                        ? 'border-(--syn-brand) font-semibold text-(--cui-color-text-default)'
+                        : 'border-transparent font-medium text-(--cui-color-text-muted) hover:text-(--cui-color-text-default)',
+                    )}
+                  >
+                    {localize(tab.labelKey)}
+                    {count != null ? (
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 text-xs font-semibold tabular-nums',
+                          active
+                            ? 'bg-(--syn-brand-tint) text-(--syn-brand-ink)'
+                            : 'bg-(--syn-neutral-bg) text-(--syn-neutral-fg)',
+                        )}
+                      >
+                        {formatUsageNumber(count)}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 px-4 py-3">
+              <SearchInput
+                value={search.value}
+                onChange={search.onChange}
+                placeholder={localize('com_members_search')}
+                ariaLabel={localize('com_members_search')}
+                className="min-w-60 flex-1"
+              />
+              <FilterSelect
+                label={localize('com_usage_role')}
+                value={roleFilter}
+                onChange={(value) => {
+                  setRoleFilter(value as t.RoleFilter);
+                  setPage(1);
+                }}
+                options={ROLE_FILTERS.map((filter) => ({
+                  value: filter.key,
+                  label: localize(filter.labelKey),
+                }))}
+              />
+              {isPlatformSuperadmin ? (
+                <FilterSelect
+                  label={localize('com_usage_institution')}
+                  value={tenantFilter}
+                  onChange={(value) => {
+                    setTenantFilter(value);
+                    setPage(1);
+                  }}
+                  options={[
+                    { value: 'all', label: localize('com_members_all_institutions') },
+                    { value: 'others', label: localize('com_members_others') },
+                    ...(institutionsQuery.data?.institutions ?? []).map((institution) => ({
+                      value: institution.tenantId,
+                      label: institution.name,
+                    })),
+                  ]}
+                />
+              ) : null}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-160 border-collapse text-left text-[13px]">
+                <thead>
+                  <tr className="bg-(--syn-surface-2) text-xs text-(--cui-color-text-muted)">
+                    <th scope="col" className="px-4 py-2.5 font-medium">
+                      {localize('com_dash_member')}
+                    </th>
+                    {isPlatformSuperadmin ? (
+                      <th scope="col" className="py-2.5 pr-4 font-medium">
+                        {localize('com_usage_institution')}
+                      </th>
+                    ) : null}
+                    <th scope="col" className="py-2.5 pr-4 font-medium">
+                      {localize('com_usage_role')}
+                    </th>
+                    <th scope="col" className="py-2.5 pr-4 font-medium">
+                      {localize('com_members_status')}
+                    </th>
+                    <th scope="col" className="py-2.5 pr-4 font-medium">
+                      {localize('com_members_joined_invited')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.members.length === 0 ? (
+                    <tr>
+                      <td colSpan={columnCount}>
+                        <EmptyState message={localize('com_members_no_match')} />
+                      </td>
+                    </tr>
+                  ) : (
+                    data.members.map((member) => {
+                      const isInvite = member.kind === 'invite';
+                      const isSelected =
+                        current?.kind === member.kind && current?.id === member.id;
+                      return (
+                        <tr
+                          key={`${member.kind}-${member.id}`}
+                          onClick={() => setSelected(member)}
+                          className={cn(
+                            'cursor-pointer border-t border-(--cui-color-stroke-muted) transition-colors',
+                            isSelected
+                              ? 'bg-(--syn-brand-tint)'
+                              : 'hover:bg-(--cui-color-background-hover)',
+                          )}
+                        >
+                          <td className="px-4 py-2.5">
+                            <div className="flex items-center gap-2.5">
+                              <InitialsAvatar label={member.name || member.email} invite={isInvite} />
+                              <div className="min-w-0">
+                                <button
+                                  type="button"
+                                  aria-pressed={isSelected}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setSelected(member);
+                                  }}
+                                  className="max-w-full cursor-pointer truncate border-0 bg-transparent p-0 text-left text-[13px] font-semibold text-(--cui-color-text-default)"
+                                >
+                                  {isInvite ? member.email : member.name || member.email}
+                                </button>
+                                <div className="truncate text-xs text-(--cui-color-text-muted)">
+                                  {isInvite
+                                    ? localize(
+                                        member.inviteSource === 'csv_import'
+                                          ? 'com_members_invite_csv'
+                                          : 'com_members_invite_manual',
+                                      )
+                                    : member.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          {isPlatformSuperadmin ? (
+                            <td className="pr-4">{member.institutionName || member.tenantId || '—'}</td>
+                          ) : null}
+                          <td className="pr-4">
+                            <RoleChip role={member.role} />
+                          </td>
+                          <td className="pr-4">
+                            <StatusChip status={member.status} />
+                          </td>
+                          <td className="pr-4 text-(--cui-color-text-muted)">
+                            <DateCell member={member} />
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--cui-color-stroke-muted) px-4 py-3">
+              <p className="m-0 text-[13px] text-(--cui-color-text-muted)">
+                {localize('com_members_showing', {
+                  shown: formatUsageNumber(data.members.length),
+                  total: formatUsageNumber(data.total),
+                })}
+              </p>
+              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            </div>
+          </section>
+
+          <MemberPanel
+            member={current}
+            onClose={() => setSelected(null)}
+            canManage={canManage}
+            platform={isPlatformSuperadmin}
+          />
+        </div>
       </div>
 
       <CreateUserDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
@@ -399,117 +428,131 @@ export function UsersPage() {
         platform={isPlatformSuperadmin}
         tenantFilter={tenantFilter}
       />
-      <UserDetailDialog
-        member={selectedMember}
-        onClose={() => setSelectedMember(null)}
-        canManage={canManage}
-        platform={isPlatformSuperadmin}
-      />
     </div>
   );
 }
 
-function SummaryCard({ label, value, detail }: { label: string; value: string; detail?: string }) {
-  return (
-    <div className="rounded-lg border border-(--cui-color-stroke-default) bg-(--cui-color-background-panel) p-4">
-      <p className="text-xs text-(--cui-color-text-muted)">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-(--cui-color-text-default)">{value}</p>
-      {detail ? <p className="mt-1 text-xs text-(--cui-color-text-muted)">{detail}</p> : null}
-    </div>
-  );
-}
-
-function UserRowActions({
-  member,
-  canManage,
-  platform,
+function SeatLine({
+  summary,
+  isPlatformSuperadmin,
 }: {
-  member: t.InstitutionMember;
-  canManage: boolean;
-  platform: boolean;
+  summary: t.InstitutionSeatSummary;
+  isPlatformSuperadmin: boolean;
 }) {
-  const queryClient = useQueryClient();
-  const [confirmRemove, setConfirmRemove] = useState(false);
-  const suspendMutation = useMutation({
-    mutationFn: () =>
-      suspendMemberFn({ data: { userId: member.id, tenantId: member.tenantId, platform } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] });
-      queryClient.invalidateQueries({ queryKey: ['user-detail', member.id] });
-      queryClient.invalidateQueries({ queryKey: ['user-usage', member.id] });
-      queryClient.invalidateQueries({ queryKey: ['user-credits', member.id] });
-      notifySuccess('User suspended');
-    },
-    onError: (error: Error) => notifyError(error.message),
-  });
-  const removeMutation = useMutation({
-    mutationFn: () =>
-      removeMemberFn({ data: { userId: member.id, tenantId: member.tenantId, platform } }),
-    onSuccess: () => {
-      setConfirmRemove(false);
-      queryClient.invalidateQueries({ queryKey: ['members'] });
-      queryClient.invalidateQueries({ queryKey: ['user-detail', member.id] });
-      queryClient.invalidateQueries({ queryKey: ['user-usage', member.id] });
-      queryClient.invalidateQueries({ queryKey: ['user-credits', member.id] });
-      notifySuccess('User removed');
-    },
-    onError: (error: Error) => notifyError(error.message),
-  });
-  const busy = suspendMutation.isPending || removeMutation.isPending;
+  const localize = useLocalize();
+  if (isPlatformSuperadmin) {
+    return (
+      <p className="m-0 text-sm text-(--cui-color-text-muted)">
+        {localize('com_members_platform_line', {
+          users: formatUsageNumber(summary.activeMembers),
+          invites: formatUsageNumber(summary.pendingInvites),
+          institutions: formatUsageNumber(summary.institutions ?? 0),
+        })}
+      </p>
+    );
+  }
+  const used = summary.activeMembers + summary.pendingInvites;
+  const max = summary.maxActiveMembers;
+  const line =
+    max != null
+      ? localize('com_members_seat_line', {
+          used: formatUsageNumber(used),
+          max: formatUsageNumber(max),
+          active: formatUsageNumber(summary.activeMembers),
+          invited: formatUsageNumber(summary.pendingInvites),
+          free: formatUsageNumber(Math.max(max - used, 0)),
+        })
+      : localize('com_members_seat_line_unlimited', {
+          active: formatUsageNumber(summary.activeMembers),
+          invited: formatUsageNumber(summary.pendingInvites),
+        });
+  return (
+    <div className="flex min-w-70 flex-col gap-2">
+      {max != null ? (
+        <Meter
+          max={max}
+          ariaLabel={line}
+          className="w-56"
+          segments={[
+            { value: summary.activeMembers, color: 'var(--syn-chart-1)', label: 'active' },
+            { value: summary.pendingInvites, color: 'var(--syn-chart-2)', label: 'invited' },
+          ]}
+        />
+      ) : null}
+      <span className="text-[13px] text-(--cui-color-text-default)">{line}</span>
+    </div>
+  );
+}
 
+function DateCell({ member }: { member: t.InstitutionMember }) {
+  const localize = useLocalize();
+  if (member.kind !== 'invite') {
+    return <>{shortDate(member.createdAt)}</>;
+  }
+  if (member.status === 'expired') {
+    return <>{localize('com_members_expired_on', { date: shortDate(member.expiresAt) })}</>;
+  }
   return (
     <>
-      <div
-        className="flex shrink-0 items-center gap-2"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <a
-          href={buildUserDetailHref(member.id)}
-          className="rounded-lg border border-(--cui-color-stroke-default) px-3 py-1.5 text-xs text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover)"
-        >
-          Open
-        </a>
-        <Button
-          type="secondary"
-          label="Suspend"
-          disabled={!canManage || busy || member.status === 'suspended'}
-          onClick={() => suspendMutation.mutate()}
-        />
-        <Button
-          type="danger"
-          label="Remove"
-          disabled={!canManage || busy}
-          onClick={() => setConfirmRemove(true)}
-        />
-      </div>
-      <ConfirmDialog
-        open={confirmRemove}
-        title="Remove user account"
-        description={`Permanently delete ${member.email} and all account data? This cannot be undone. Choose Suspend to keep the data while blocking access.`}
-        confirmLabel="Remove permanently"
-        confirmType="danger"
-        saving={removeMutation.isPending}
-        onConfirm={() => removeMutation.mutate()}
-        onCancel={() => setConfirmRemove(false)}
-      />
+      {localize('com_members_sent_expires', {
+        sent: shortDate(member.lastSentAt || member.createdAt),
+        expires: shortDate(member.expiresAt),
+      })}
     </>
   );
 }
 
-function buildUserDetailHref(userId: string): string {
-  const basePath = normalizeBasePath(import.meta.env.VITE_BASE_PATH);
-  return `${basePath}/users/${encodeURIComponent(userId)}`;
+function ToolbarButton({
+  onClick,
+  disabled,
+  icon,
+  label,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  icon: ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-(--cui-color-stroke-default) bg-(--syn-surface) px-3.5 text-sm font-semibold text-(--cui-color-text-default) transition-colors hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <span aria-hidden="true" className="flex">
+        {icon}
+      </span>
+      {label}
+    </button>
+  );
 }
 
-function statusBadgeClass(status: t.MemberStatus) {
-  if (status === 'active') {
-    return 'rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400';
-  }
-  if (status === 'suspended') {
-    return 'rounded-full bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400';
-  }
-  if (status === 'invited') {
-    return 'rounded-full bg-sky-500/15 px-2 py-0.5 text-xs text-sky-400';
-  }
-  return 'rounded-full bg-rose-500/15 px-2 py-0.5 text-xs text-rose-400';
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-[13px] font-semibold text-(--cui-color-text-muted)">
+      {label}
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="admin-themed-control h-10 rounded-lg border border-(--cui-color-stroke-default) bg-(--syn-surface) px-2.5 text-sm font-normal text-(--cui-color-text-default)"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 }

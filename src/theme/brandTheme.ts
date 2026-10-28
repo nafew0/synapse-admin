@@ -105,5 +105,34 @@ function patchInPlace(theme: Record<string, unknown>, accentHex: string): void {
   }
 }
 
-patchInPlace(themes.dark as unknown as Record<string, unknown>, '#fba24d');
+/**
+ * click-ui's dark theme paints dialogs, menus, popovers and tables in neutral
+ * greys. Remapping those exact values, wherever they appear in the tree,
+ * puts its components on the same blue-green surfaces as the login page and
+ * the rest of the app (styles.css `.dark`).
+ */
+const DARK_SURFACES: Record<string, string> = {
+  '#1f1f1c': '#0f1f24',
+  '#282828': '#16292e',
+  '#323232': '#23363b',
+  '#414141': '#34464a',
+};
+
+function remapSurfaces(node: Record<string, unknown>): void {
+  for (const [key, value] of Object.entries(node)) {
+    if (typeof value === 'string') {
+      const replacement = DARK_SURFACES[value.toLowerCase()];
+      if (replacement) {
+        node[key] = replacement;
+      }
+      continue;
+    }
+    if (value !== null && typeof value === 'object') {
+      remapSurfaces(value as Record<string, unknown>);
+    }
+  }
+}
+
+remapSurfaces(themes.dark as unknown as Record<string, unknown>);
+patchInPlace(themes.dark as unknown as Record<string, unknown>, '#f0a857');
 patchInPlace(themes.light as unknown as Record<string, unknown>, '#f5871f');

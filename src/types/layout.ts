@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import type { IconName } from './scope';
+import type { TranslationKeys } from './hooks';
 
 export interface SidebarProps {
   user?: {
     name?: string;
     email?: string;
+    tenantId?: string | null;
     isPlatformSuperadmin?: boolean;
   } | null;
   collapsed: boolean;
@@ -12,10 +15,17 @@ export interface SidebarProps {
 }
 
 export interface NavItem {
-  labelKey: string;
+  labelKey: TranslationKeys;
   path: string;
-  icon: IconName;
+  icon: LucideIcon;
+  /** Shown when the admin holds any one of these capabilities. */
   capability?: string | string[];
+  superadminOnly?: boolean;
+}
+
+export interface NavSection {
+  titleKey: TranslationKeys;
+  items: NavItem[];
 }
 
 export interface HeaderProps {

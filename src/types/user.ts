@@ -139,7 +139,7 @@ export interface ImportMembersDialogProps {
   onClose: () => void;
 }
 
-export interface UserDetailDialogProps {
+export interface MemberPanelProps {
   member: InstitutionMember | null;
   onClose: () => void;
   canManage: boolean;
