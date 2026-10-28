@@ -122,7 +122,11 @@ export function RolesTab({ onCreateRole }: t.RolesTabProps) {
                     </span>
                   )}
                   <span className="inline-block rounded-full bg-(--cui-color-background-secondary) px-2 py-0.5 text-[10px] font-medium text-(--cui-color-text-muted)">
-                    {role.tenantId ? `Institution: ${role.tenantId}` : 'Global'}
+                    {localize(
+                      role.tenantId
+                        ? 'com_access_scope_per_institution'
+                        : 'com_access_scope_global',
+                    )}
                   </span>
                 </div>
                 {role.description && (

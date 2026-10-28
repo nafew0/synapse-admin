@@ -989,6 +989,8 @@
   "com_access_reorder_dropped": "Dropped from position {{from}} to {{to}}",
   "com_access_reorder_canceled": "Reorder canceled, returned to position {{position}}",
   "com_access_system_role": "System",
+  "com_access_scope_global": "Global",
+  "com_access_scope_per_institution": "Per institution",
   "com_access_members_of": "Members of {{name}}",
   "com_access_remove_member_title": "Remove member",
   "com_access_remove_member_desc": "Are you sure you want to remove {{user}} from {{name}}?",

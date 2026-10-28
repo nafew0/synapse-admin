@@ -100,9 +100,36 @@ export const rolesQueryOptions = (page = 1) =>
     staleTime: 30_000,
   });
 
+/**
+ * Every institution keeps its own copy of the system roles, so a platform
+ * superadmin's listing repeats USER, INSTITUTION_ADMIN, ... once per
+ * institution. Roles are addressed by name, so keep one row per name: the
+ * API sorts by name then tenantId, which puts the global copy first.
+ */
+function uniqueByName(roles: t.Role[]): t.Role[] {
+  const seen = new Set<string>();
+  return roles.filter((role) => {
+    if (seen.has(role.name)) return false;
+    seen.add(role.name);
+    return true;
+  });
+}
+
+/** Pages past the per-request cap, which the per-institution copies quickly exceed. */
+async function fetchAllRoles(): Promise<t.Role[]> {
+  const first = await getRolesFn({ data: { limit: ALL_ROLES_LIMIT } });
+  const pageCount = Math.ceil(first.total / ALL_ROLES_LIMIT);
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(0, pageCount - 1) }, (_, i) =>
+      getRolesFn({ data: { limit: ALL_ROLES_LIMIT, offset: (i + 1) * ALL_ROLES_LIMIT } }),
+    ),
+  );
+  return uniqueByName([first, ...rest].flatMap((page) => page.roles));
+}
+
 export const allRolesQueryOptions = queryOptions<t.Role[]>({
   queryKey: ['roles', 'all'],
-  queryFn: () => getRolesFn({ data: { limit: ALL_ROLES_LIMIT } }).then((r) => r.roles),
+  queryFn: fetchAllRoles,
   staleTime: 30_000,
 });
 
