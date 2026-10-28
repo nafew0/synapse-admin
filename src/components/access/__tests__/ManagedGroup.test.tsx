@@ -108,7 +108,6 @@ describe('managed groups', () => {
     await screen.findByText('All active members');
     expect(screen.getAllByText('com_access_group_managed_badge')).toHaveLength(1);
     expect(screen.queryByLabelText('com_ui_delete All active members')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('com_ui_delete Faculty')).toBeInTheDocument();
   });
 
   it('opens a managed group read-only without member add or remove controls', async () => {
@@ -125,15 +124,24 @@ describe('managed groups', () => {
     expect(within(dialog).getByText('com_ui_save')).toBeDisabled();
   });
 
-  it('keeps an ordinary group editable', async () => {
+  it('offers no create or delete while Access is view-only', async () => {
+    renderTab();
+
+    await screen.findByText('Faculty');
+    expect(screen.queryByText('com_access_create_group')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('com_ui_delete Faculty')).not.toBeInTheDocument();
+  });
+
+  it('opens an ordinary group read-only while Access is view-only', async () => {
     renderTab();
 
     fireEvent.click(await screen.findByText('Faculty'));
     const dialog = await screen.findByRole('dialog');
 
     await within(dialog).findByText('Ada');
-    expect(within(dialog).queryByText('com_access_group_managed_badge')).not.toBeInTheDocument();
-    expect(within(dialog).getByDisplayValue('Faculty')).not.toBeDisabled();
-    expect(within(dialog).getByLabelText('com_access_remove_member Ada')).toBeInTheDocument();
+    expect(within(dialog).getByDisplayValue('Faculty')).toBeDisabled();
+    expect(within(dialog).queryByLabelText('com_access_remove_member Ada')).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('combobox')).not.toBeInTheDocument();
+    expect(within(dialog).getByText('com_ui_save')).toBeDisabled();
   });
 });

@@ -40,3 +40,10 @@ export const CAPABILITY_CATEGORIES: typeof UPSTREAM_CAPABILITY_CATEGORIES =
       capabilities: [...cat.capabilities, READ_AUDIT_LOG_CAPABILITY],
     } as typeof cat;
   });
+
+/**
+ * Roles and groups are view-only in the Access page while institutions don't
+ * use them: no create, edit or delete, whatever the admin's capabilities.
+ * Set to `false` to bring the editing controls back.
+ */
+export const ACCESS_READ_ONLY = true;

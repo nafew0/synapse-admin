@@ -13,14 +13,14 @@ import { deleteRoleFn, allRolesQueryOptions, ROLES_PAGE_SIZE } from '@/server';
 import { useCapabilities, useLocalize } from '@/hooks';
 import { notifySuccess, notifyError } from '@/utils';
 import { EditRoleDialog } from './EditRoleDialog';
-import { SystemCapabilities } from '@/constants';
+import { SystemCapabilities, ACCESS_READ_ONLY } from '@/constants';
 import { ConfirmDialog } from './ConfirmDialog';
 
 export function RolesTab({ onCreateRole }: t.RolesTabProps) {
   const localize = useLocalize();
   const queryClient = useQueryClient();
   const { hasCapability } = useCapabilities();
-  const canManage = hasCapability(SystemCapabilities.MANAGE_ROLES);
+  const canManage = !ACCESS_READ_ONLY && hasCapability(SystemCapabilities.MANAGE_ROLES);
   const [editTarget, setEditTarget] = useState<t.Role | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<t.Role | null>(null);
   const [search, setSearch] = useState('');
@@ -79,19 +79,21 @@ export function RolesTab({ onCreateRole }: t.RolesTabProps) {
           onChange={handleSearchChange}
           placeholder={localize('com_access_search_roles')}
         />
-        <Button
-          type="secondary"
-          iconLeft="plus"
-          label={localize('com_access_create_role')}
-          onClick={onCreateRole}
-          disabled={!canManage}
-          aria-disabled={!canManage || undefined}
-          title={
-            !canManage
-              ? localize('com_cap_no_permission', { cap: SystemCapabilities.MANAGE_ROLES })
-              : undefined
-          }
-        />
+        {!ACCESS_READ_ONLY && (
+          <Button
+            type="secondary"
+            iconLeft="plus"
+            label={localize('com_access_create_role')}
+            onClick={onCreateRole}
+            disabled={!canManage}
+            aria-disabled={!canManage || undefined}
+            title={
+              !canManage
+                ? localize('com_cap_no_permission', { cap: SystemCapabilities.MANAGE_ROLES })
+                : undefined
+            }
+          />
+        )}
       </div>
 
       {paged.length === 0 ? (

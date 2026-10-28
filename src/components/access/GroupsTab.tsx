@@ -17,7 +17,7 @@ import { deleteGroupFn, groupsQueryOptions, GROUPS_PAGE_SIZE } from '@/server';
 import { cn, notifySuccess, notifyError } from '@/utils';
 import { useCapabilities, useLocalize } from '@/hooks';
 import { EditGroupDialog } from './EditGroupDialog';
-import { SystemCapabilities } from '@/constants';
+import { SystemCapabilities, ACCESS_READ_ONLY } from '@/constants';
 import { ManagedGroupBadge } from './ManagedGroupBadge';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -25,7 +25,7 @@ export function GroupsTab({ onCreateGroup }: t.GroupsTabProps) {
   const localize = useLocalize();
   const queryClient = useQueryClient();
   const { hasCapability } = useCapabilities();
-  const canManage = hasCapability(SystemCapabilities.MANAGE_GROUPS);
+  const canManage = !ACCESS_READ_ONLY && hasCapability(SystemCapabilities.MANAGE_GROUPS);
   const [editTarget, setEditTarget] = useState<t.AccessGroup | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<t.AccessGroup | null>(null);
   const [search, setSearch] = useState('');
@@ -93,19 +93,21 @@ export function GroupsTab({ onCreateGroup }: t.GroupsTabProps) {
           onChange={handleSearchChange}
           placeholder={localize('com_access_search_groups')}
         />
-        <Button
-          type="secondary"
-          iconLeft="plus"
-          label={localize('com_access_create_group')}
-          onClick={onCreateGroup}
-          disabled={!canManage}
-          aria-disabled={!canManage || undefined}
-          title={
-            !canManage
-              ? localize('com_cap_no_permission', { cap: SystemCapabilities.MANAGE_GROUPS })
-              : undefined
-          }
-        />
+        {!ACCESS_READ_ONLY && (
+          <Button
+            type="secondary"
+            iconLeft="plus"
+            label={localize('com_access_create_group')}
+            onClick={onCreateGroup}
+            disabled={!canManage}
+            aria-disabled={!canManage || undefined}
+            title={
+              !canManage
+                ? localize('com_cap_no_permission', { cap: SystemCapabilities.MANAGE_GROUPS })
+                : undefined
+            }
+          />
+        )}
       </div>
 
       {groups.length === 0 ? (
