@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
@@ -12,6 +12,7 @@ import {
   modelRowKey,
   notifyError,
   presetRange,
+  cn,
 } from '@/utils';
 import {
   BAR_STAGGER_MS,
@@ -25,6 +26,8 @@ import { getUserCreditsFn, getUserUsageFn } from '@/server';
 import { ConfirmDialog } from '@/components/access';
 
 const DETAIL_RANGE = '30d';
+/** Stays in view beside a long table; scrolls inside itself when taller than the screen. */
+const PANEL_POSITION = 'sticky top-6 max-h-[calc(100dvh-7rem)] overflow-y-auto';
 
 function formatDate(value?: string | null): string {
   if (!value) {
@@ -48,17 +51,27 @@ export function MemberPanel({ member, onClose, canManage, platform }: t.MemberPa
   const [confirm, setConfirm] = useState<'revoke' | 'remove' | null>(null);
   const actions = useMemberActions(member, platform, onClose);
   const { clearResendLink } = actions;
+  const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setConfirm(null);
     clearResendLink();
   }, [clearResendLink, member?.id]);
 
+  /** When the panel sits below the table (narrow screens), bring it into view on selection. */
+  useEffect(() => {
+    if (!member?.id) {
+      return;
+    }
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    panelRef.current?.scrollIntoView?.({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+  }, [member?.id]);
+
   if (!member) {
     return (
       <aside
         aria-label={localize('com_members_panel')}
-        className="flex min-h-60 flex-[1_1_24rem] items-center justify-center rounded-xl border border-dashed border-(--cui-color-stroke-default) p-6 text-center text-sm text-(--cui-color-text-muted)"
+        className="sticky top-6 flex min-h-60 flex-[1_1_24rem] items-center justify-center rounded-xl border border-dashed border-(--cui-color-stroke-default) p-6 text-center text-sm text-(--cui-color-text-muted)"
       >
         {localize('com_members_panel_empty')}
       </aside>
@@ -69,8 +82,12 @@ export function MemberPanel({ member, onClose, canManage, platform }: t.MemberPa
 
   return (
     <aside
+      ref={panelRef}
       aria-label={localize('com_members_panel')}
-      className="flex max-w-full flex-[1_1_24rem] flex-col gap-5 self-start rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-6"
+      className={cn(
+        'flex max-w-full flex-[1_1_24rem] flex-col gap-5 self-start rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-6',
+        PANEL_POSITION,
+      )}
     >
       <div className="flex items-start gap-3">
         <InitialsAvatar label={member.name || member.email} invite={isInvite} size="lg" />

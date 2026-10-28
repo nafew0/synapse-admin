@@ -1,21 +1,24 @@
 import { useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import type * as t from '@/types';
-import { formatCompact, formatWeekday, localDay, weekdayAverages } from '@/utils';
-import { BAR_STAGGER_MS, Card } from '@/components/shared';
+import { formatCompact, formatWeekday, localDay, weekdayAverages, cn } from '@/utils';
+import { BAR_STAGGER_MS } from '@/components/shared';
 import { useLocalize } from '@/hooks';
 
 const CHART_HEIGHT = 150;
-/** Starts after the tile icons and the trend chart have begun. */
-const START_DELAY_MS = 400;
+const START_DELAY_MS = 150;
 
 /**
- * Average daily tokens for each weekday in the selected range. The busiest day
- * is emphasised and labelled; the rest stay muted, with values in the table.
+ * Average daily tokens for each weekday across the series it is given. Every bar carries
+ * its value; the busiest day is emphasised and the rest stay faded, labelled in muted ink.
  */
 export function WeekdayUsage({ series }: { series: t.TrendDatum[] }) {
   const localize = useLocalize();
-  const averages = useMemo(() => weekdayAverages(series, [localDay()]), [series]);
+  /** Monday first, like the week chart and the allowance week. */
+  const averages = useMemo(() => {
+    const sundayFirst = weekdayAverages(series, [localDay()]);
+    return [...sundayFirst.slice(1), sundayFirst[0]];
+  }, [series]);
   const busiest = averages.reduce<t.WeekdayAverage | null>(
     (best, day) => (day.average > (best?.average ?? 0) ? day : best),
     null,
@@ -23,17 +26,15 @@ export function WeekdayUsage({ series }: { series: t.TrendDatum[] }) {
   const peak = busiest?.average ?? 0;
 
   return (
-    <Card
-      title={localize('com_dash_weekday_title')}
-      description={
-        busiest
+    <div className="flex flex-col gap-3">
+      <p className="m-0 text-[13px] text-(--cui-color-text-muted)">
+        {busiest
           ? localize('com_dash_weekday_desc', {
               day: formatWeekday(busiest.weekday, 'long'),
               tokens: formatCompact(busiest.average),
             })
-          : localize('com_dash_weekday_desc_empty')
-      }
-    >
+          : localize('com_dash_weekday_desc_empty')}
+      </p>
       {busiest == null ? (
         <p className="m-0 py-6 text-center text-sm text-(--cui-color-text-muted)">
           {localize('com_dash_no_usage')}
@@ -54,11 +55,16 @@ export function WeekdayUsage({ series }: { series: t.TrendDatum[] }) {
                   title={`${formatWeekday(day.weekday, 'long')}: ${formatCompact(day.average)}`}
                   className="flex h-full flex-col items-center justify-end gap-1"
                 >
-                  {isBusiest ? (
-                    <span className="text-[11px] font-bold text-(--cui-color-text-default) tabular-nums">
-                      {formatCompact(day.average)}
-                    </span>
-                  ) : null}
+                  <span
+                    className={cn(
+                      'text-[10px] whitespace-nowrap tabular-nums sm:text-[11px]',
+                      isBusiest
+                        ? 'font-bold text-(--cui-color-text-default)'
+                        : 'font-semibold text-(--cui-color-text-muted)',
+                    )}
+                  >
+                    {formatCompact(day.average)}
+                  </span>
                   <div
                     className="syn-bar-rise w-full max-w-9 rounded-t-md"
                     style={
@@ -108,6 +114,6 @@ export function WeekdayUsage({ series }: { series: t.TrendDatum[] }) {
           <p className="m-0 text-xs text-(--cui-color-text-muted)">{localize('com_dash_weekday_note')}</p>
         </figure>
       )}
-    </Card>
+    </div>
   );
 }

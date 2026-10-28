@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Icon } from '@clickhouse/click-ui';
 import { createFileRoute, Outlet, useRouter, Link, redirect } from '@tanstack/react-router';
 import type { ErrorComponentProps } from '@tanstack/react-router';
-import { useCapabilities, useCommandMenu, useLocalize } from '@/hooks';
+import { useCapabilities, useCommandMenu, useMediaQuery, useLocalize } from '@/hooks';
 import { CommandMenu } from '@/components/CommandMenu';
 import { Banner } from '@/components/banner';
 import { AccessDenied } from '@/components/shared';
@@ -62,6 +62,8 @@ function AppLayout() {
     return stored !== null ? stored === 'true' : false;
   });
   const pathname = router.state.location.pathname;
+  /** Phones get the icon rail; an expanded sidebar would take most of the screen. */
+  const isNarrow = useMediaQuery('(max-width: 767px)');
 
   const toggleSidebar = () =>
     setSidebarCollapsed((prev) => {
@@ -99,7 +101,7 @@ function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar user={user} collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+      <Sidebar user={user} collapsed={sidebarCollapsed || isNarrow} onToggle={toggleSidebar} />
       <div className="flex min-w-0 flex-1 flex-col">
         {user?.id && <Banner userId={user.id} />}
         <Header title={title} onSearchClick={() => setOpen(true)} />
