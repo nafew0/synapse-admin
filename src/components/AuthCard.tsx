@@ -1,17 +1,15 @@
 import { z } from 'zod';
+import { CircleX } from 'lucide-react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { useQuery } from '@tanstack/react-query';
+import { TextField } from '@clickhouse/click-ui';
 import { useRouter } from '@tanstack/react-router';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Alert, Title, Panel, Button, Separator, TextField, Container } from '@clickhouse/click-ui';
 import type * as t from '@/types';
 import { adminLoginFn, adminVerify2FAFn, openIdCheckOptions, openidLoginFn } from '@/server';
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from './InputOTP';
-import synapseIcon from '@/assets/synapse-logo.svg';
-import synapseDarkLogo from '@/assets/synapse-logo-dark.svg';
 import { PasswordInput } from './PasswordInput';
 import { useLocalize } from '@/hooks';
-import { useTheme } from '@/contexts/ThemeContext';
 
 export function AuthCard({
   redirectTo = '/',
@@ -20,8 +18,6 @@ export function AuthCard({
 }: t.AuthCardProps) {
   const router = useRouter();
   const localize = useLocalize();
-  const { resolvedTheme } = useTheme();
-  const loginLogo = resolvedTheme === 'dark' ? synapseDarkLogo : synapseIcon;
   const [step, setStep] = useState<t.AuthStep>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -192,8 +188,9 @@ export function AuthCard({
     setGeneralError('');
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleLogin();
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleLogin();
   };
 
   const handleSsoLogin = async () => {
@@ -217,169 +214,144 @@ export function AuthCard({
 
   if (showAutoRedirect) {
     return (
-      <Panel
-        className="auth-card admin-login-card w-full max-w-2xl"
-        padding="xl"
-        radii="lg"
-        hasBorder
-        hasShadow
-        color="default"
-      >
-        <div className="flex flex-col items-stretch gap-8">
-          <div className="admin-login-brand flex items-center gap-3">
-            <img src={loginLogo} alt={localize('com_a11y_logo_alt')} className="h-14 w-14" draggable={false} />
-            <div className="flex flex-col gap-0.5">
-              <Title type="h1">Synapse</Title>
-            </div>
-          </div>
-          <Container
-            orientation="vertical"
-            gap="lg"
-            alignItems="stretch"
-            className="admin-login-form w-full"
-          >
-            <div className="admin-login-heading">
-              <h2>{localize('com_auth_sign_in')}</h2>
-              <p>Enter your admin credentials to continue.</p>
-            </div>
-            <p className="text-center text-sm text-(--cui-color-text-muted)">
-              {localize('com_auth_sso_redirecting_auto')}
-            </p>
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-(--cui-color-stroke-default) border-t-(--cui-color-accent-info)" />
-          </Container>
+      <AuthShell>
+        <div className="flex flex-col items-center gap-4 py-6 text-center">
+          <div
+            className="h-6 w-6 animate-spin rounded-full border-2 border-(--cui-color-stroke-default) border-t-(--syn-brand) motion-reduce:animate-none"
+            aria-hidden="true"
+          />
+          <p className="text-sm text-(--cui-color-text-muted)">
+            {localize('com_auth_sso_redirecting_auto')}
+          </p>
         </div>
-      </Panel>
+      </AuthShell>
     );
   }
 
   return (
-    <Panel
-      className="auth-card admin-login-card w-full max-w-2xl"
-      padding="xl"
-      radii="lg"
-      hasBorder
-      hasShadow
-      color="default"
-    >
-      <div className="flex flex-col items-stretch gap-8">
-        <div className="admin-login-brand flex items-center gap-3">
-          <img src={loginLogo} alt={localize('com_a11y_logo_alt')} className="h-14 w-14" draggable={false} />
-          <div className="flex flex-col gap-0.5">
-            <Title type="h1">Synapse</Title>
-          </div>
-        </div>
-        <Container
-          orientation="vertical"
-          gap="lg"
-          alignItems="stretch"
-          className="admin-login-form w-full"
-        >
-          {generalError && <Alert type="banner" state="danger" text={generalError} />}
+    <AuthShell>
+      {generalError && <AuthError message={generalError} />}
 
-          {step === '2fa' ? (
+      {step === '2fa' ? (
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-[15px] font-semibold">{localize('com_auth_2fa_title')}</h2>
+            <p className="text-[13px] text-(--cui-color-text-muted)">
+              {localize('com_auth_2fa_prompt')}
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <InputOTP
+              maxLength={6}
+              value={totpCode}
+              onChange={(value) => setTotpCode(value)}
+              onComplete={handleVerify2FA}
+              pattern={REGEXP_ONLY_DIGITS}
+              disabled={isSubmitting}
+              aria-label={localize('com_auth_2fa_code_label')}
+              autoFocus
+            >
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+              </InputOTPGroup>
+              <InputOTPSeparator />
+              <InputOTPGroup>
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+          {isSubmitting && (
+            <p className="text-center text-[13px] text-(--cui-color-text-muted)">
+              {localize('com_auth_2fa_verifying')}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={handleBack}
+            disabled={isSubmitting}
+            className={SECONDARY_BUTTON}
+          >
+            {localize('com_auth_2fa_back')}
+          </button>
+        </div>
+      ) : (
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+          <TextField
+            label={localize('com_auth_email_label')}
+            placeholder={localize('com_auth_email_placeholder')}
+            value={email}
+            onChange={(value) => {
+              setEmail(value);
+              if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+            }}
+            error={errors.email}
+          />
+
+          <PasswordInput
+            label={localize('com_auth_password_label')}
+            placeholder={localize('com_auth_password_placeholder')}
+            value={password}
+            onChange={(value) => {
+              setPassword(value);
+              if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+            }}
+            error={errors.password}
+          />
+
+          <button type="submit" disabled={isSubmitting} className={`mt-1 ${PRIMARY_BUTTON}`}>
+            {isSubmitting ? localize('com_auth_signing_in') : localize('com_auth_sign_in')}
+          </button>
+
+          {ssoAvailable && (
             <>
-              <p className="text-center text-sm text-(--cui-color-text-muted)">
-                {localize('com_auth_2fa_prompt')}
-              </p>
-              <div className="flex justify-center">
-                <InputOTP
-                  maxLength={6}
-                  value={totpCode}
-                  onChange={(value) => setTotpCode(value)}
-                  onComplete={handleVerify2FA}
-                  pattern={REGEXP_ONLY_DIGITS}
-                  disabled={isSubmitting}
-                  aria-label={localize('com_auth_2fa_code_label')}
-                  autoFocus
-                >
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                  </InputOTPGroup>
-                  <InputOTPSeparator />
-                  <InputOTPGroup>
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
+              <div className="flex items-center gap-3 text-xs text-(--cui-color-text-muted)">
+                <span className="h-px flex-1 bg-(--cui-color-stroke-muted)" aria-hidden="true" />
+                {localize('com_auth_or')}
+                <span className="h-px flex-1 bg-(--cui-color-stroke-muted)" aria-hidden="true" />
               </div>
-              {isSubmitting && (
-                <p className="text-center text-sm text-(--cui-color-text-muted)">
-                  {localize('com_auth_2fa_verifying')}
-                </p>
-              )}
               <button
                 type="button"
-                onClick={handleBack}
-                disabled={isSubmitting}
-                className="text-sm text-(--cui-color-accent-info) transition-colors hover:underline disabled:pointer-events-none disabled:opacity-50"
+                onClick={handleSsoLogin}
+                disabled={ssoLoading}
+                className={SECONDARY_BUTTON}
               >
-                {localize('com_auth_2fa_back')}
+                {ssoLoading
+                  ? localize('com_auth_sso_redirecting')
+                  : localize('com_auth_sso_sign_in')}
               </button>
             </>
-          ) : (
-            <>
-              <div className="admin-login-heading">
-                <h2>{localize('com_auth_sign_in')}</h2>
-                <p>Enter your admin credentials to continue.</p>
-              </div>
-              <TextField
-                label={localize('com_auth_email_label')}
-                placeholder={localize('com_auth_email_placeholder')}
-                value={email}
-                onChange={(value) => {
-                  setEmail(value);
-                  if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
-                }}
-                onKeyDown={handleKeyDown}
-                error={errors.email}
-              />
-
-              <PasswordInput
-                label={localize('com_auth_password_label')}
-                placeholder={localize('com_auth_password_placeholder')}
-                value={password}
-                onChange={(value) => {
-                  setPassword(value);
-                  if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
-                }}
-                onKeyDown={handleKeyDown}
-                error={errors.password}
-              />
-
-              <Button
-                label={
-                  isSubmitting ? localize('com_auth_signing_in') : localize('com_auth_sign_in')
-                }
-                type="primary"
-                onClick={handleLogin}
-                disabled={isSubmitting}
-              />
-
-              {ssoAvailable && (
-                <>
-                  <Separator size="sm" />
-                  <Button
-                    label={
-                      ssoLoading
-                        ? localize('com_auth_sso_redirecting')
-                        : localize('com_auth_sso_sign_in')
-                    }
-                    type="secondary"
-                    onClick={handleSsoLogin}
-                    disabled={ssoLoading}
-                  />
-                </>
-              )}
-            </>
           )}
-        </Container>
-      </div>
+        </form>
+      )}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </div>
-    </Panel>
+    </AuthShell>
+  );
+}
+
+const BUTTON_BASE =
+  'flex h-10 w-full cursor-pointer items-center justify-center rounded-lg px-4 text-sm transition disabled:cursor-not-allowed disabled:opacity-50';
+const PRIMARY_BUTTON = `${BUTTON_BASE} border-0 bg-(--cui-color-accent) font-bold text-(--syn-on-accent) hover:brightness-95`;
+const SECONDARY_BUTTON = `${BUTTON_BASE} border border-(--cui-color-stroke-default) bg-transparent font-semibold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover)`;
+
+function AuthShell({ children }: { children: React.ReactNode }) {
+  return (
+    <section className="auth-card flex w-full max-w-md flex-col gap-5 rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-6 sm:p-8">
+      {children}
+    </section>
+  );
+}
+
+function AuthError({ message }: { message: string }) {
+  return (
+    <div className="flex items-start gap-2.5 rounded-lg border border-(--syn-danger-border) bg-(--syn-danger-bg) p-3 text-[13px] font-semibold text-(--syn-danger-fg)">
+      <CircleX className="mt-px size-4 shrink-0" aria-hidden="true" />
+      <p>{message}</p>
+    </div>
   );
 }

@@ -36,6 +36,10 @@ colors:
   dark-chart-teal: "#12a7a3"
   dark-chart-orange: "#d97418"
   dark-action-orange: "#f0a857"
+  band: "#134f54"
+  on-band-muted: "#c4dedc"
+  dark-band: "#0f383b"
+  dark-on-band-muted: "#a9c6c7"
 typography:
   headline:
     fontFamily: "Inter, 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
@@ -208,6 +212,8 @@ A two-hue brand world (teal and orange) on cool neutrals, with semantic tints fo
 
 **The Login Dark Rule.** Dark mode follows the admin login page: teal-black ground (dark-ground), deep teal-grey cards (dark-surface), lighter teal (dark-brand-teal) and a lighter orange (dark-action-orange) so text on it stays dark.
 
+**The Band Rule.** Deep Teal Band (band; dark: dark-band) is a brand field, used only for the sign-in page's top band. Text on it is white (`--syn-on-band`) with muted lines in on-band-muted; the white Synapse mark sits on it in both themes. `--syn-band`, `--syn-on-band`, `--syn-on-band-muted`.
+
 ## Typography
 
 **Display Font:** none distinct; the single sans stack carries everything.
@@ -287,6 +293,9 @@ Seven Monday-first bars of average tokens over 30 days; the busiest day full Cha
 
 ### Meter and Share Bar
 Pill tracks in Track Grey. The seat meter stacks joined (Chart Teal) and invited (Chart Orange) segments with a 2px gap and a square-swatch legend in words. Share bars (6px, 8px for models) compare rows to the largest and grow in from the left.
+
+### Sign-in page
+A full-width Deep Teal Band (top third; shorter on phones) holds the white Synapse mark, a 28px bold "Sign in to Synapse Admin" and one muted line of purpose, centred. A 448px Card White card with a 1px Rule Grey border and 12px corners overlaps the band's lower edge by 112px on the Mist Ground, no shadow. Inside: the danger alert when there is an error, email and password fields, the full-width orange Sign in button, then an "or" rule and an outlined SSO button when SSO is configured; the 2FA step swaps the fields for a 15px title, prompt, six-digit code and an outlined back button in the same card. Under the card, a 13px muted support line with the teal `info@bdren.net.bd` link. Theme toggle fixed bottom-left. No background imagery.
 
 ### Alert (danger)
 Danger-tint panel, 8px radius, 12px padding: a circle-x icon, a bold 13px sentence, and its action.
