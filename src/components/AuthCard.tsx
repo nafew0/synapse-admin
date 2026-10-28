@@ -214,7 +214,7 @@ export function AuthCard({
 
   if (showAutoRedirect) {
     return (
-      <AuthShell>
+      <AuthShell title={localize('com_auth_sign_in')}>
         <div className="flex flex-col items-center gap-4 py-6 text-center">
           <div
             className="h-6 w-6 animate-spin rounded-full border-2 border-(--cui-color-stroke-default) border-t-(--syn-brand) motion-reduce:animate-none"
@@ -229,17 +229,14 @@ export function AuthCard({
   }
 
   return (
-    <AuthShell>
+    <AuthShell
+      title={step === '2fa' ? localize('com_auth_2fa_title') : localize('com_auth_sign_in')}
+    >
       {generalError && <AuthError message={generalError} />}
 
       {step === '2fa' ? (
         <div className="flex flex-col gap-5">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-[15px] font-semibold">{localize('com_auth_2fa_title')}</h2>
-            <p className="text-[13px] text-(--cui-color-text-muted)">
-              {localize('com_auth_2fa_prompt')}
-            </p>
-          </div>
+          <p className="text-sm text-(--cui-color-text-muted)">{localize('com_auth_2fa_prompt')}</p>
           <div className="flex justify-center">
             <InputOTP
               maxLength={6}
@@ -339,9 +336,12 @@ const BUTTON_BASE =
 const PRIMARY_BUTTON = `${BUTTON_BASE} border-0 bg-(--cui-color-accent) font-bold text-(--syn-on-accent) hover:brightness-95`;
 const SECONDARY_BUTTON = `${BUTTON_BASE} border border-(--cui-color-stroke-default) bg-transparent font-semibold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover)`;
 
-function AuthShell({ children }: { children: React.ReactNode }) {
+function AuthShell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="auth-card flex w-full max-w-md flex-col gap-5 rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-6 sm:p-8">
+    <section className="auth-card flex w-full max-w-sm flex-col gap-5" aria-labelledby="auth-title">
+      <h2 id="auth-title" className="text-2xl font-bold tracking-tight">
+        {title}
+      </h2>
       {children}
     </section>
   );

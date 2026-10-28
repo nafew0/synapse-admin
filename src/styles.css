@@ -146,9 +146,6 @@
     --syn-info-fg: #1d4ed8;
     --syn-neutral-bg: #ededed;
     --syn-neutral-fg: #2f3b3a;
-    --syn-band: #134f54;
-    --syn-on-band: #ffffff;
-    --syn-on-band-muted: #c4dedc;
   }
 
   .dark {
@@ -219,9 +216,6 @@
     --syn-info-fg: #93c5fd;
     --syn-neutral-bg: #1b2a2e;
     --syn-neutral-fg: #c9d3d4;
-    --syn-band: #0f383b;
-    --syn-on-band: #f2f4f4;
-    --syn-on-band-muted: #a9c6c7;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -293,9 +287,6 @@
       --syn-info-fg: #93c5fd;
       --syn-neutral-bg: #1b2a2e;
       --syn-neutral-fg: #c9d3d4;
-      --syn-band: #0f383b;
-      --syn-on-band: #f2f4f4;
-      --syn-on-band-muted: #a9c6c7;
     }
   }
 }

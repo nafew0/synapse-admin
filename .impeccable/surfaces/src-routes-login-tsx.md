@@ -11,9 +11,9 @@ Mode: operate. Audience: institution admins and BdREN superadmins, signing in a 
 
 ## Direction contract
 
-THESIS: The sign-in is the console's front door: a deep teal band names the product and what it is for, and the sign-in card overlaps its edge on the grey ground, instead of the category's lone card floating on a decorative background.
-OWN-WORLD: The Synapse admin world as built: grey ground (#f7f7f8 / #06161a); a full-width band in deep teal (#134f54 light, #0e2c30 dark) carrying the white Synapse mark; one white or #0f1f24 card with a 1px rule, 12px corners, no shadow; Action Orange sign-in button with dark ink text; teal links.
-STORY: The admin sees the product name and purpose, signs in (password, SSO or 2FA), and if stuck sees the support address under the card.
-FIRST VIEWPORT: Band across the top third: logo and "BdREN Synapse / Admin console" top-left, "Sign in to Synapse Admin" and a one-line purpose centred. A 440px card overlaps the band's lower edge, holding email, password, orange Sign in, an "or" rule and the SSO button. Support line with info@bdren.net.bd beneath. Theme toggle bottom-left. On phones the band shortens and the card fills the width less a 16px gutter.
-FORM: Dealt structure "Teal band, card overlap", the dealt lead (index 5 of the grounded list), chosen by the user after first picking the second card. seed:8de88f4b4f5c4976
+THESIS: The sign-in names what it is before it asks for anything: a teal-wash half says "Synapse Admin" and the three jobs it does, the other half is a plain form.
+OWN-WORLD: Synapse admin tokens only: Teal Wash field with Deep Teal Ink type, Card White pills, Card White form half, Action Orange sign-in with dark ink text; dark mode swaps to the dark tint and surface.
+STORY: The admin sees which console this is and what it manages, signs in (password, SSO or 2FA), and finds the support address at the foot of the teal field.
+FIRST VIEWPORT: Two equal columns. Left: logo top, 40px title, one line, three job pills, support line at the foot. Right: 384px form column centred. Theme toggle top-right. Phones stack teal block over form.
+FORM: Chosen by the user from three samples made with the design-taste-frontend skill ("B: Teal tint split", accent-ladder app style); replaces the earlier teal-band build. seed: none (unavailable)
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
