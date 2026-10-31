@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { MembersIcon, ReportsIcon, UsageIcon } from '@/components/AuthIcons';
 import synapseDarkLogo from '@/assets/synapse-logo-dark.svg';
 import ThemeSelector from '@/components/ThemeSelector';
 import synapseLogo from '@/assets/synapse-logo.svg';
@@ -8,10 +9,19 @@ import { checkOpenIdFn } from '@/server';
 import { useLocalize } from '@/hooks';
 
 const SUPPORT_EMAIL = 'info@bdren.net.bd';
+const PANEL_GUTTER = 'px-5 lg:px-[clamp(1.5rem,5vw,4rem)]';
 const JOBS = [
-  { title: 'com_auth_admin_job_members', detail: 'com_auth_admin_job_members_desc' },
-  { title: 'com_auth_admin_job_usage', detail: 'com_auth_admin_job_usage_desc' },
-  { title: 'com_auth_admin_job_reports', detail: 'com_auth_admin_job_reports_desc' },
+  {
+    title: 'com_auth_admin_job_members',
+    detail: 'com_auth_admin_job_members_desc',
+    Icon: MembersIcon,
+  },
+  { title: 'com_auth_admin_job_usage', detail: 'com_auth_admin_job_usage_desc', Icon: UsageIcon },
+  {
+    title: 'com_auth_admin_job_reports',
+    detail: 'com_auth_admin_job_reports_desc',
+    Icon: ReportsIcon,
+  },
 ] as const;
 
 export const Route = createFileRoute('/login')({
@@ -48,53 +58,56 @@ function LoginPage() {
   );
 
   return (
-    <div className="min-h-screen bg-(--syn-bg) text-(--cui-color-text-default)">
-      <div className="mx-auto flex min-h-screen w-full max-w-300 flex-col px-5 sm:px-8 lg:px-12">
-        <header className="flex h-18 shrink-0 items-center justify-between lg:h-22">
-          <div className="flex items-center gap-2.5">
-            <img
-              src={logo}
-              alt={localize('com_a11y_logo_alt')}
-              className="h-10 w-auto"
-              draggable={false}
-            />
-            <span className="text-lg font-semibold tracking-tight">
-              {localize('com_auth_admin_title')}
-            </span>
-          </div>
-          <ThemeSelector returnThemeOnly />
-        </header>
-        <div className="grid flex-1 grid-cols-1 content-start gap-8 pt-2 pb-12 [grid-template-areas:'intro'_'card'_'jobs'] lg:grid-cols-[minmax(0,1fr)_28rem] lg:content-center lg:items-start lg:gap-x-[clamp(3rem,7vw,7rem)] lg:gap-y-10 lg:pt-6 lg:pb-28 lg:[grid-template-areas:'intro_card'_'jobs_card']">
-          <div className="[grid-area:intro]">
-            <h1 className="max-w-[20ch] text-[28px] leading-[1.05] font-bold tracking-tight text-balance sm:text-[34px] lg:text-[44px]">
-              {localize('com_auth_admin_headline')}
-            </h1>
-            <p className="mt-3 max-w-[38ch] text-base leading-normal text-(--cui-color-text-muted) lg:mt-5 lg:text-[17px]">
-              {localize('com_auth_admin_subtitle')}
-            </p>
-          </div>
-          <dl
-            aria-label={localize('com_auth_admin_jobs')}
-            className="m-0 grid max-w-[44ch] gap-6 [grid-area:jobs]"
-          >
-            {JOBS.map((job) => (
-              <div key={job.title} className="grid gap-1">
-                <dt className="text-base font-semibold">{localize(job.title)}</dt>
-                <dd className="m-0 text-[15px] leading-normal text-(--cui-color-text-muted)">
-                  {localize(job.detail)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <main className="w-full max-w-140 [grid-area:card] lg:max-w-none">
-            <AuthCard
-              redirectTo={redirect}
-              autoRedirectSso={ssoOnly}
-              ssoAvailable={ssoAvailable}
-              footer={help}
-            />
-          </main>
+    <div className="relative isolate grid min-h-screen grid-cols-1 bg-(--syn-bg) text-(--cui-color-text-default) lg:grid-cols-2 lg:grid-rows-[minmax(6.5rem,1fr)_auto_auto_minmax(6.5rem,1fr)]">
+      <div
+        aria-hidden="true"
+        className="admin-login-network -z-10 col-start-1 row-start-1 lg:row-[1/5]"
+      />
+      <section className={`col-start-1 row-start-1 py-6 lg:row-start-2 lg:py-0 ${PANEL_GUTTER}`}>
+        <div className="flex items-center gap-3 lg:absolute lg:top-10 lg:left-[clamp(1.5rem,5vw,4rem)]">
+          <img
+            src={logo}
+            alt={localize('com_a11y_logo_alt')}
+            className="h-12 w-auto"
+            draggable={false}
+          />
+          <span className="text-lg font-semibold tracking-tight">
+            {localize('com_auth_admin_title')}
+          </span>
         </div>
+        <h1 className="mt-6 max-w-[12em] text-[1.75rem] leading-[1.05] font-bold tracking-[-0.03em] text-balance lg:mt-0 lg:text-[2.75rem]">
+          {localize('com_auth_admin_headline')}
+        </h1>
+        <p className="mt-4 max-w-[32ch] text-base leading-[1.45] text-(--cui-color-text-muted) lg:text-[1.2rem]">
+          {localize('com_auth_admin_subtitle')}
+        </p>
+      </section>
+      <dl
+        aria-label={localize('com_auth_admin_jobs')}
+        className={`col-start-1 row-start-3 m-0 grid content-start gap-6 py-8 lg:pt-10 lg:pb-0 ${PANEL_GUTTER}`}
+      >
+        {JOBS.map(({ title, detail, Icon }) => (
+          <div key={title} className="flex items-center gap-4">
+            <Icon className="size-8 shrink-0 text-(--syn-icon)" />
+            <div>
+              <dt className="text-base leading-[1.4] font-semibold">{localize(title)}</dt>
+              <dd className="m-0 text-sm leading-normal text-(--cui-color-text-muted)">
+                {localize(detail)}
+              </dd>
+            </div>
+          </div>
+        ))}
+      </dl>
+      <main className="col-start-1 row-start-2 flex items-center justify-center bg-(--syn-surface) px-5 py-8 lg:col-start-2 lg:row-[1/5] lg:p-6">
+        <AuthCard
+          redirectTo={redirect}
+          autoRedirectSso={ssoOnly}
+          ssoAvailable={ssoAvailable}
+          footer={help}
+        />
+      </main>
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeSelector returnThemeOnly />
       </div>
     </div>
   );

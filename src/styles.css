@@ -127,6 +127,7 @@
     --syn-brand: #186569;
     --syn-on-brand: #ffffff;
     --syn-brand-ink: #134f54;
+    --syn-icon: #328a8a;
     --syn-brand-tint: #e2f0ee;
     --syn-chart-1: #008f88;
     --syn-chart-2: #e8730c;
@@ -197,6 +198,7 @@
     --syn-brand: #4fb6ba;
     --syn-on-brand: #06161a;
     --syn-brand-ink: #7fd0d3;
+    --syn-icon: #7fd0d3;
     --syn-brand-tint: #133a3d;
     --syn-chart-1: #12a7a3;
     --syn-chart-2: #d97418;
@@ -268,6 +270,7 @@
       --syn-brand: #4fb6ba;
       --syn-on-brand: #06161a;
       --syn-brand-ink: #7fd0d3;
+      --syn-icon: #7fd0d3;
       --syn-brand-tint: #133a3d;
       --syn-chart-1: #12a7a3;
       --syn-chart-2: #d97418;
@@ -570,6 +573,25 @@ textarea:focus-visible {
 
 .auth-card {
   box-sizing: border-box;
+}
+
+/* Custom CSS: the network art is a raster per theme. Dark shows only the image's
+   teal left side, keeping its orange corner out of view; light tints blue to teal. */
+.admin-login-network {
+  background: url('./assets/auth-network-background-light.png') center / cover no-repeat;
+  filter: hue-rotate(-28deg) saturate(0.8);
+}
+
+.dark .admin-login-network {
+  background: url('./assets/auth-network-bg-dark.png') left center / 256% auto no-repeat;
+  filter: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .admin-login-network {
+    background: url('./assets/auth-network-bg-dark.png') left center / 256% auto no-repeat;
+    filter: none;
+  }
 }
 
 .auth-card :has(> input:focus-visible),

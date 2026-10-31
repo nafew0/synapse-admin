@@ -335,7 +335,7 @@ export function AuthCard({
 }
 
 const BUTTON_BASE =
-  'flex h-12 w-full cursor-pointer items-center justify-center rounded-lg px-4 text-[15px] transition disabled:cursor-not-allowed disabled:opacity-50';
+  'flex h-11 w-full cursor-pointer items-center justify-center rounded-lg px-4 text-[15px] transition disabled:cursor-not-allowed disabled:opacity-50';
 const PRIMARY_BUTTON = `${BUTTON_BASE} border-0 bg-(--cui-color-accent) font-bold text-(--syn-on-accent) hover:brightness-95`;
 const SECONDARY_BUTTON = `${BUTTON_BASE} border border-(--cui-color-stroke-default) bg-transparent font-semibold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover)`;
 
@@ -352,14 +352,14 @@ function AuthShell({
 }) {
   return (
     <section
-      className="auth-card flex w-full flex-col gap-6 rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-6 sm:p-10"
+      className="auth-card flex w-full max-w-100 flex-col gap-6"
       aria-labelledby="auth-title"
     >
       <div className="flex flex-col gap-1.5">
-        <h2 id="auth-title" className="text-2xl font-bold tracking-tight">
+        <h2 id="auth-title" className="text-[1.75rem] font-bold tracking-tight">
           {title}
         </h2>
-        {lead ? <p className="text-[15px] text-(--cui-color-text-muted)">{lead}</p> : null}
+        {lead ? <p className="text-sm text-(--cui-color-text-muted)">{lead}</p> : null}
       </div>
       {children}
       {footer}
