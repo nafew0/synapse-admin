@@ -1330,7 +1330,7 @@
   "com_usage_by_member_desc": "Every member of the institution, most tokens first",
   "com_usage_no_members": "No members found.",
   "com_usage_members_pages": "Member pages",
-  "com_usage_members_range": "{{from}}–{{to}} of {{total}} members",
+  "com_usage_members_range": "{{to}} of {{total}} members",
   "com_usage_page_previous": "Previous",
   "com_usage_page_next": "Next",
   "com_usage_role": "Role",

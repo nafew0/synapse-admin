@@ -542,7 +542,6 @@ export function UsagePage() {
             <PageStepper
               label={localize('com_usage_members_pages')}
               position={localize('com_usage_members_range', {
-                from: formatUsageNumber(memberOffset + 1),
                 to: formatUsageNumber(memberOffset + members.length),
                 total: formatUsageNumber(memberTotal),
               })}
