@@ -336,7 +336,7 @@ export function AuthCard({
 
 const BUTTON_BASE =
   'flex h-11 w-full cursor-pointer items-center justify-center rounded-lg px-4 text-[15px] transition disabled:cursor-not-allowed disabled:opacity-50';
-const PRIMARY_BUTTON = `${BUTTON_BASE} border-0 bg-(--cui-color-accent) font-bold text-(--syn-on-accent) hover:brightness-95`;
+const PRIMARY_BUTTON = `${BUTTON_BASE} border-0 bg-(--syn-auth-action) font-semibold text-(--syn-on-auth-action) hover:brightness-95`;
 const SECONDARY_BUTTON = `${BUTTON_BASE} border border-(--cui-color-stroke-default) bg-transparent font-semibold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover)`;
 
 function AuthShell({

@@ -9,7 +9,6 @@ import { checkOpenIdFn } from '@/server';
 import { useLocalize } from '@/hooks';
 
 const SUPPORT_EMAIL = 'info@bdren.net.bd';
-const PANEL_GUTTER = 'px-5 lg:px-[clamp(1.5rem,5vw,4rem)]';
 const JOBS = [
   {
     title: 'com_auth_admin_job_members',
@@ -58,55 +57,46 @@ function LoginPage() {
   );
 
   return (
-    <div className="relative isolate grid min-h-screen grid-cols-1 bg-(--syn-bg) text-(--cui-color-text-default) lg:grid-cols-2 lg:grid-rows-[minmax(6.5rem,1fr)_auto_auto_minmax(6.5rem,1fr)]">
-      <div
-        aria-hidden="true"
-        className="admin-login-network -z-10 col-start-1 row-start-1 lg:row-[1/5]"
-      />
-      <section className={`col-start-1 row-start-1 py-6 lg:row-start-2 lg:py-0 ${PANEL_GUTTER}`}>
-        <div className="flex items-center gap-3 lg:absolute lg:top-10 lg:left-[clamp(1.5rem,5vw,4rem)]">
+    <div className="relative isolate flex min-h-screen items-center justify-center bg-(--syn-auth-ground) px-4 py-8 text-(--cui-color-text-default) sm:px-6 lg:py-14">
+      <div aria-hidden="true" className="admin-login-network fixed inset-0 -z-10" />
+      <div className="grid w-full max-w-md overflow-hidden rounded-2xl border border-(--syn-auth-edge) bg-(--syn-surface) shadow-[0_18px_44px_var(--syn-auth-shadow)] lg:min-h-152 lg:max-w-5xl lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
+        <section className="flex flex-col items-center justify-center border-b border-(--syn-auth-edge) bg-(--syn-auth-panel) px-6 py-7 lg:border-r lg:border-b-0 lg:px-12 lg:py-12">
           <img
             src={logo}
             alt={localize('com_a11y_logo_alt')}
-            className="h-12 w-auto"
+            className="h-20 w-auto lg:h-36"
             draggable={false}
           />
-          <span className="text-lg font-semibold tracking-tight">
-            {localize('com_auth_admin_title')}
-          </span>
-        </div>
-        <h1 className="mt-6 max-w-[12em] text-[1.75rem] leading-[1.05] font-bold tracking-[-0.03em] text-balance lg:mt-0 lg:text-[2.75rem]">
-          {localize('com_auth_admin_headline')}
-        </h1>
-        <p className="mt-4 max-w-[32ch] text-base leading-[1.45] text-(--cui-color-text-muted) lg:text-[1.2rem]">
-          {localize('com_auth_admin_subtitle')}
-        </p>
-      </section>
-      <dl
-        aria-label={localize('com_auth_admin_jobs')}
-        className={`col-start-1 row-start-3 m-0 grid content-start gap-6 py-8 lg:pt-10 lg:pb-0 ${PANEL_GUTTER}`}
-      >
-        {JOBS.map(({ title, detail, Icon }) => (
-          <div key={title} className="flex items-center gap-4">
-            <Icon className="size-8 shrink-0 text-(--syn-icon)" />
-            <div>
-              <dt className="text-base leading-[1.4] font-semibold">{localize(title)}</dt>
-              <dd className="m-0 text-sm leading-normal text-(--cui-color-text-muted)">
-                {localize(detail)}
-              </dd>
-            </div>
-          </div>
-        ))}
-      </dl>
-      <main className="col-start-1 row-start-2 flex items-center justify-center bg-(--syn-surface) px-5 py-8 lg:col-start-2 lg:row-[1/5] lg:p-6">
-        <AuthCard
-          redirectTo={redirect}
-          autoRedirectSso={ssoOnly}
-          ssoAvailable={ssoAvailable}
-          footer={help}
-        />
-      </main>
-      <div className="absolute top-4 right-4 z-10">
+          <h1 className="mt-4 max-w-[16em] text-center text-lg leading-snug font-semibold tracking-tight text-balance lg:mt-7 lg:text-2xl">
+            {localize('com_auth_admin_headline')}
+          </h1>
+          <dl
+            aria-label={localize('com_auth_admin_jobs')}
+            className="m-0 mt-9 hidden w-full max-w-sm gap-5 lg:grid"
+          >
+            {JOBS.map(({ title, detail, Icon }) => (
+              <div key={title} className="flex items-start gap-3">
+                <Icon className="mt-0.5 size-6 shrink-0 text-(--syn-icon)" />
+                <div>
+                  <dt className="text-sm font-semibold">{localize(title)}</dt>
+                  <dd className="m-0 mt-0.5 text-[13px] leading-normal text-(--cui-color-text-muted)">
+                    {localize(detail)}
+                  </dd>
+                </div>
+              </div>
+            ))}
+          </dl>
+        </section>
+        <main className="flex items-center justify-center px-6 py-8 sm:px-10 lg:px-14 lg:py-12">
+          <AuthCard
+            redirectTo={redirect}
+            autoRedirectSso={ssoOnly}
+            ssoAvailable={ssoAvailable}
+            footer={help}
+          />
+        </main>
+      </div>
+      <div className="fixed bottom-0 left-0 m-3">
         <ThemeSelector returnThemeOnly />
       </div>
     </div>

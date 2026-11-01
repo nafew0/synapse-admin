@@ -11,9 +11,9 @@ Mode: operate. Audience: institution admins and BdREN superadmins, signing in a 
 
 ## Direction contract
 
-THESIS: The sign-in names what it is before it asks for anything: a teal-wash half says "Synapse Admin" and the three jobs it does, the other half is a plain form.
-OWN-WORLD: Synapse admin tokens only: Teal Wash field with Deep Teal Ink type, Card White pills, Card White form half, Action Orange sign-in with dark ink text; dark mode swaps to the dark tint and surface.
-STORY: The admin sees which console this is and what it manages, signs in (password, SSO or 2FA), and finds the support address at the foot of the teal field.
-FIRST VIEWPORT: Two equal columns. Left: logo top, 40px title, one line, three job pills, support line at the foot. Right: 384px form column centred. Theme toggle top-right. Phones stack teal block over form.
-FORM: Chosen by the user from three samples made with the design-taste-frontend skill ("B: Teal tint split", accent-ladder app style); replaces the earlier teal-band build. seed: none (unavailable)
+THESIS: The admin door is the same door as the chat app: one card on the network, brand on one side, form on the other, plus what the console is for.
+OWN-WORLD: The app login's palette and proportions in admin tokens: network image, white or teal-black card, tone-step brand panel, deep teal or light orange submit, 48px controls.
+STORY: The admin recognises Synapse, sees what the console manages, signs in, and finds the support address under the form.
+FIRST VIEWPORT: Centred 1024px card. Left logo, headline, three jobs. Right heading, lead, fields, submit, support line. Below lg the card narrows, the brand becomes a short header, the jobs drop. Theme toggle bottom-left.
+FORM: Pinned by the user's brief: use the app login as the reference, with the left side chosen as "Logo, line, three jobs". seed: none (pinned)
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
