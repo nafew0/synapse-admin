@@ -50,9 +50,6 @@ import { exportUsageCsvServerFn, listPlatformInstitutionsFn } from '@/server';
 import { SystemCapabilities } from '@/constants';
 
 const PAGE_SIZE = 10;
-/** The member ranking opens on the top 10 and grows by 10 up to the top 50. */
-const MEMBER_STEP = 10;
-const MEMBER_CAP = 50;
 const PRESETS: t.RangePreset[] = ['7d', '30d', 'month', 'lastMonth', 'custom'];
 
 type Metric = 'tokens' | 'requests';
@@ -125,11 +122,11 @@ export function UsagePage() {
   const [metric, setMetric] = useState<Metric>('tokens');
   const [exporting, setExporting] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState('');
-  const [memberLimit, setMemberLimit] = useState(MEMBER_STEP);
+  const [memberPage, setMemberPage] = useState(1);
   const [modelPage, setModelPage] = useState(1);
 
   const resetPages = useCallback(() => {
-    setMemberLimit(MEMBER_STEP);
+    setMemberPage(1);
     setModelPage(1);
   }, []);
 
@@ -157,10 +154,10 @@ export function UsagePage() {
   const summaryQuery = useUsageSummary(scope, scopeReady);
   const previousQuery = useUsageSummary(previousScope, scopeReady);
   const timeseriesQuery = useUsageTimeseries(scope, scopeReady);
-  const membersQuery = useUsageMembers(
-    { ...scope, query: search, limit: memberLimit, offset: 0 },
-    scopeReady,
-  );
+  const membersQuery = useUsageMembers(listScope(memberPage), scopeReady);
+  /** Page 1 is always loaded first, so this is a cache hit that keeps every
+   *  page's bars scaled to the busiest member rather than each page's own top. */
+  const leaderQuery = useUsageMembers(listScope(1), scopeReady);
   const modelsQuery = useUsageModels(listScope(modelPage), scopeReady);
 
   const series = useMemo(() => {
@@ -308,11 +305,12 @@ export function UsagePage() {
   const members = membersQuery.data?.members ?? [];
   const models = modelsQuery.data?.models ?? [];
   const memberTotal = membersQuery.data?.total ?? 0;
-  const memberLimitReached = Math.min(memberTotal, MEMBER_CAP);
-  const loadingMore = membersQuery.isFetching && membersQuery.isPlaceholderData;
+  const memberOffset = membersQuery.data?.offset ?? 0;
+  const memberPages = Math.max(1, Math.ceil(memberTotal / PAGE_SIZE));
+  const memberPaging = membersQuery.isFetching && membersQuery.isPlaceholderData;
   const modelPages = Math.max(1, Math.ceil((modelsQuery.data?.total ?? 0) / PAGE_SIZE));
   const topModel = models[0]?.totalTokens ?? 0;
-  const topMember = members[0]?.totalTokens ?? 0;
+  const topMember = leaderQuery.data?.members[0]?.totalTokens ?? members[0]?.totalTokens ?? 0;
   const perRequest = (tokens: number, events: number) => (events > 0 ? tokens / events : 0);
   const isTokens = metric === 'tokens';
   const plotted = isTokens ? series.tokens : series.requests;
@@ -536,45 +534,23 @@ export function UsagePage() {
                     <td className="pr-4 text-right">{formatUsageCost(member.totalCost ?? 0)}</td>
                   ) : null}
                   <td className="text-right text-(--cui-color-text-muted)">
-                    {formatRelativeTime(member.lastUsedAt)}
+                    {formatRelativeTime(member.lastUsedAt) || '—'}
                   </td>
                 </tr>
               ))}
             </DataTable>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--cui-color-stroke-muted) pt-3">
-              <span className="text-[13px] text-(--cui-color-text-muted)">
-                {localize('com_usage_members_showing', {
-                  shown: formatUsageNumber(members.length),
-                  total: formatUsageNumber(memberTotal),
-                })}
-              </span>
-              <div className="flex gap-2">
-                {memberLimit > MEMBER_STEP ? (
-                  <button
-                    type="button"
-                    onClick={() => setMemberLimit(MEMBER_STEP)}
-                    className="h-9 cursor-pointer rounded-lg border border-(--cui-color-stroke-default) bg-transparent px-3 text-[13px] font-semibold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover)"
-                  >
-                    {localize('com_usage_members_top10')}
-                  </button>
-                ) : null}
-                {members.length < memberLimitReached ? (
-                  <button
-                    type="button"
-                    disabled={loadingMore}
-                    onClick={() => setMemberLimit((limit) => Math.min(limit + MEMBER_STEP, MEMBER_CAP))}
-                    className="h-9 cursor-pointer rounded-lg border border-(--cui-color-stroke-default) bg-(--syn-surface) px-3 text-[13px] font-semibold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover) disabled:cursor-wait disabled:opacity-60"
-                  >
-                    {localize(loadingMore ? 'com_usage_members_loading' : 'com_usage_members_more')}
-                  </button>
-                ) : null}
-              </div>
-            </div>
-            {memberTotal > MEMBER_CAP && members.length >= MEMBER_CAP ? (
-              <p className="m-0 text-xs text-(--cui-color-text-muted)">
-                {localize('com_usage_members_cap_note', { cap: MEMBER_CAP })}
-              </p>
-            ) : null}
+            <PageStepper
+              label={localize('com_usage_members_pages')}
+              position={localize('com_usage_members_range', {
+                from: formatUsageNumber(memberOffset + 1),
+                to: formatUsageNumber(memberOffset + members.length),
+                total: formatUsageNumber(memberTotal),
+              })}
+              page={memberPage}
+              pages={memberPages}
+              busy={memberPaging}
+              onPageChange={setMemberPage}
+            />
           </>
         )}
       </Card>
@@ -632,6 +608,57 @@ function MetricToggle({ value, onChange }: { value: Metric; onChange: (metric: M
         </button>
       ))}
     </div>
+  );
+}
+
+const stepButton =
+  'h-9 cursor-pointer rounded-lg border border-(--cui-color-stroke-default) bg-(--syn-surface) px-3 text-[13px] font-semibold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50';
+
+function PageStepper({
+  label,
+  position,
+  page,
+  pages,
+  busy,
+  onPageChange,
+}: {
+  label: string;
+  /** Where the visible rows sit in the whole list, e.g. "11–20 of 134". */
+  position: string;
+  page: number;
+  pages: number;
+  busy: boolean;
+  onPageChange: (page: number) => void;
+}) {
+  const localize = useLocalize();
+  return (
+    <nav
+      aria-label={label}
+      aria-busy={busy}
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-(--cui-color-stroke-muted) pt-3"
+    >
+      <span aria-live="polite" className="text-[13px] text-(--cui-color-text-muted) tabular-nums">
+        {position}
+      </span>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={page <= 1 || busy}
+          onClick={() => onPageChange(page - 1)}
+          className={stepButton}
+        >
+          {localize('com_usage_page_previous')}
+        </button>
+        <button
+          type="button"
+          disabled={page >= pages || busy}
+          onClick={() => onPageChange(page + 1)}
+          className={stepButton}
+        >
+          {localize('com_usage_page_next')}
+        </button>
+      </div>
+    </nav>
   );
 }
 
