@@ -288,6 +288,9 @@ Seven Monday-first bars of average tokens over 30 days; the busiest day full Cha
 ### Meter and Share Bar
 Pill tracks in Track Grey. The seat meter stacks joined (Chart Teal) and invited (Chart Orange) segments with a 2px gap and a square-swatch legend in words. Share bars (6px, 8px for models) compare rows to the largest and grow in from the left.
 
+### Sign-in page
+A two-column split. The left half is a Teal Wash field (brand-teal-tint; dark: dark-brand-teal-tint) in Deep Teal Ink: the Synapse logo top-left (teal mark in light, white in dark), "Synapse Admin" at 40px bold (28px on phones) with one 17px line on what it is, three Card White pills naming the jobs (Members, Usage, Reports), and the support line with the `info@bdren.net.bd` link at its foot. The right half is Card White and holds the form in a 384px column, vertically centred: a 24px bold "Sign in" (or the 2FA title), the danger alert when there is an error, email and password, the full-width orange Sign in, then an "or" rule and an outlined SSO button when SSO is configured. No card, border or shadow around the form. Theme toggle fixed top-right. On phones the teal field becomes a block above the form.
+
 ### Alert (danger)
 Danger-tint panel, 8px radius, 12px padding: a circle-x icon, a bold 13px sentence, and its action.
 
