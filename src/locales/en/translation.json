@@ -1459,6 +1459,7 @@
   "com_inst_requests_30d": "Requests · 30 days",
   "com_inst_tokens_30d": "Tokens · 30 days",
   "com_inst_cost_estimate": "≈ {{cost}} cost",
+  "com_inst_ocr_pages": "{{count}} scanned pages read",
   "com_inst_trend_title": "Tokens per day · last 30 days",
   "com_inst_last_active": "Last used on {{day}}",
   "com_inst_adoption_title": "Adoption",

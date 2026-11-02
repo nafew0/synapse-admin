@@ -72,6 +72,8 @@ vi.mock('@/server', () => ({
   getPlatformInstitutionQuotaReadinessFn: vi.fn().mockResolvedValue(undefined),
   getMembersFn: vi.fn().mockResolvedValue({ members: [], total: 0 }),
   getPlatformInstitutionAgentAccessFn: vi.fn(),
+  getPlatformInstitutionOcrAccessFn: vi.fn().mockResolvedValue({ enabled: false }),
+  updatePlatformInstitutionOcrAccessFn: vi.fn().mockResolvedValue({ enabled: true }),
   listPlatformInstitutionPoliciesFn: vi.fn().mockResolvedValue({ policies: [] }),
   previewPlatformInstitutionPolicyFn: vi.fn(),
   createPlatformInstitutionPolicyFn: vi.fn(),
@@ -85,6 +87,7 @@ const {
   getPlatformInstitutionAgentAccessFn,
   updatePlatformInstitutionAgentAccessFn,
   reconcilePlatformInstitutionAgentAccessFn,
+  updatePlatformInstitutionOcrAccessFn,
 } = await import('@/server');
 
 const getAccess = vi.mocked(getPlatformInstitutionAgentAccessFn);
@@ -135,6 +138,20 @@ describe('institution agent access', () => {
     reconcile.mockReset();
     createToast.mockReset();
     getAccess.mockResolvedValue(accessResponse());
+  });
+
+  it('keeps document reading off until a superadmin switches it on', async () => {
+    await openAgentsTab();
+    const toggle = await screen.findByRole('switch', {
+      name: 'Send scanned documents to Unstructured for reading',
+    });
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(vi.mocked(updatePlatformInstitutionOcrAccessFn)).toHaveBeenCalledWith({
+        data: { tenantId: 'tenant-a', enabled: true },
+      }),
+    );
   });
 
   it('offers agents to all active members without a group selector', async () => {
@@ -259,6 +276,8 @@ describe('institution agent access', () => {
     fireEvent.click(await screen.findByText('Agents'));
 
     expect(await screen.findByText('Failed to load agent access')).toBeInTheDocument();
-    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('switch', { name: /access for all active members/ }),
+    ).not.toBeInTheDocument();
   });
 });
