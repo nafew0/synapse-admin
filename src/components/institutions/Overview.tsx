@@ -204,6 +204,9 @@ export function InstitutionOverview({
               {current?.totalCost != null ? (
                 <span>{localize('com_inst_cost_estimate', { cost: formatUsageCost(current.totalCost) })}</span>
               ) : null}
+              {current?.ocrPages ? (
+                <span>{localize('com_inst_ocr_pages', { count: current.ocrPages })}</span>
+              ) : null}
             </span>
           }
         >
