@@ -7,7 +7,7 @@ the synapse repo, `deploy/dev/`), pointed at `/opt/synapse-dev/admin`.
 | | |
 |---|---|
 | Folder | `/opt/synapse-dev/admin` (`releases/<sha>`, `current`, `shared/.env`) |
-| PM2 app | `synapse-admin-dev`, Bun, `172.19.0.1:3001` (see `ecosystem.config.js`) |
+| PM2 app | `synapse-admin-dev`, Bun, `172.19.0.1:3001` (see `ecosystem.config.cjs`) |
 | Talks to | the dev chat app at `http://172.19.0.1:3080` (`API_SERVER_URL`) |
 | Pipeline settings | `/opt/synapse-dev/admin/shared/deploy.env` |
 
