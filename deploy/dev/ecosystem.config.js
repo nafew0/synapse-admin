@@ -4,7 +4,7 @@ module.exports = {
       name: 'synapse-admin-dev',
       script: '/home/bdren/.bun/bin/bun',
       args: 'server.ts',
-      cwd: '/opt/synapse-admin-dev/current',
+      cwd: '/opt/synapse-dev/admin/current',
       instances: 1,
       exec_mode: 'fork',
       max_memory_restart: '1G',
