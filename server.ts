@@ -130,6 +130,7 @@ async function buildStaticRoutes(): Promise<Record<string, (req: Request) => Pro
 
 const server = Bun.serve({
   port: Number(process.env.PORT ?? 3000),
+  hostname: process.env.HOST || '0.0.0.0',
   routes: {
     ...(await buildStaticRoutes()),
     '/metrics': (req) => metricsResponse(req),
@@ -151,7 +152,7 @@ const server = Bun.serve({
   },
 });
 
-console.log(`Admin panel listening on http://localhost:${server.port}${BASE_PATH}/`);
+console.log(`Admin panel listening on http://${server.hostname}:${server.port}${BASE_PATH}/`);
 
 if (!process.env.ADMIN_PANEL_METRICS_SECRET) {
   console.warn(
