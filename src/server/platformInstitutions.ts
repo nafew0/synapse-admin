@@ -299,6 +299,7 @@ export const updatePlatformInstitutionChatAccessFn = createServerFn({ method: 'P
       tenantId: z.string().trim().min(1),
       ended: z.boolean(),
       message: z.string().trim().max(500),
+      contact: z.string().trim().max(200),
     }),
   )
   .handler(async ({ data }): Promise<{ institution: t.PlatformInstitution }> => {
@@ -306,7 +307,7 @@ export const updatePlatformInstitutionChatAccessFn = createServerFn({ method: 'P
       `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/chat-access`,
       {
         method: 'PUT',
-        body: JSON.stringify({ ended: data.ended, message: data.message }),
+        body: JSON.stringify({ ended: data.ended, message: data.message, contact: data.contact }),
       },
     );
     if (!response.ok) {
