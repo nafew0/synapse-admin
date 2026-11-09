@@ -20,6 +20,7 @@ import { EmptyState, LoadingState } from '@/components/shared';
 import { notifyError, notifySuccess } from '@/utils';
 import { useLocalize } from '@/hooks';
 import { InstitutionOverview } from './Overview';
+import { ChatAccess } from './ChatAccess';
 
 const Route = getRouteApi('/_app/institutions/$tenantId');
 const AppRoute = getRouteApi('/_app');
@@ -214,6 +215,7 @@ export function InstitutionDetailPage() {
         ))}
       </nav>
 
+      {tab === 'overview' && <ChatAccess institution={institution} />}
       {tab === 'overview' && (
         <InstitutionOverview
           institution={institution}
