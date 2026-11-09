@@ -8,6 +8,7 @@ import { Card } from '@/components/shared';
 import { useLocalize } from '@/hooks';
 
 const MESSAGE_MAX = 500;
+const CONTACT_MAX = 200;
 
 interface ChatAccessProps {
   institution: t.PlatformInstitution;
@@ -20,20 +21,23 @@ interface ChatAccessProps {
 export function ChatAccess({ institution }: ChatAccessProps) {
   const localize = useLocalize();
   const messageId = useId();
+  const contactId = useId();
   const queryClient = useQueryClient();
   const saved = institution.chatAccess;
   const [ended, setEnded] = useState(saved?.ended ?? false);
   const [message, setMessage] = useState(saved?.message ?? '');
+  const [contact, setContact] = useState(saved?.contact ?? '');
 
   useEffect(() => {
     setEnded(saved?.ended ?? false);
     setMessage(saved?.message ?? '');
-  }, [saved?.ended, saved?.message]);
+    setContact(saved?.contact ?? '');
+  }, [saved?.ended, saved?.message, saved?.contact]);
 
   const save = useMutation({
     mutationFn: () =>
       updatePlatformInstitutionChatAccessFn({
-        data: { tenantId: institution.tenantId, ended, message },
+        data: { tenantId: institution.tenantId, ended, message, contact },
       }),
     onSuccess: (result) => {
       queryClient.setQueryData(['platformInstitution', institution.tenantId], result);
@@ -46,7 +50,10 @@ export function ChatAccess({ institution }: ChatAccessProps) {
     onError: (error) => notifyError(error.message),
   });
 
-  const changed = ended !== (saved?.ended ?? false) || message.trim() !== (saved?.message ?? '');
+  const changed =
+    ended !== (saved?.ended ?? false) ||
+    message.trim() !== (saved?.message ?? '') ||
+    contact.trim() !== (saved?.contact ?? '');
   const tooLong = message.trim().length > MESSAGE_MAX;
 
   return (
@@ -85,6 +92,23 @@ export function ChatAccess({ institution }: ChatAccessProps) {
         />
         <span id={`${messageId}-hint`} className="text-xs text-(--cui-color-text-muted)">
           {localize('com_chat_access_message_hint', { max: MESSAGE_MAX })}
+        </span>
+      </div>
+      <div className="flex flex-col gap-1.5 text-sm text-(--cui-color-text-default)">
+        <label htmlFor={contactId} className="font-medium">
+          {localize('com_chat_access_contact')}
+        </label>
+        <input
+          id={contactId}
+          value={contact}
+          onChange={(event) => setContact(event.target.value)}
+          maxLength={CONTACT_MAX}
+          placeholder={localize('com_chat_access_contact_placeholder')}
+          aria-describedby={`${contactId}-hint`}
+          className="config-input w-full"
+        />
+        <span id={`${contactId}-hint`} className="text-xs text-(--cui-color-text-muted)">
+          {localize('com_chat_access_contact_hint')}
         </span>
       </div>
       {saved?.ended && saved.changedAt ? (
