@@ -10,6 +10,8 @@ export interface PlatformInstitutionStats {
 export interface PlatformInstitutionChatAccess {
   ended: boolean;
   message?: string;
+  /** Email address or http(s) link members use to ask for more usage. */
+  contact?: string;
   changedAt?: string | null;
 }
 

@@ -85,10 +85,15 @@ describe('institution chat access', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'com_chat_access_message' }), {
       target: { value: message },
     });
+    fireEvent.change(screen.getByRole('textbox', { name: 'com_chat_access_contact' }), {
+      target: { value: 'help@learn.ac.lk' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'com_chat_access_save' }));
 
     await waitFor(() =>
-      expect(update).toHaveBeenCalledWith({ data: { tenantId: 'learn', ended: true, message } }),
+      expect(update).toHaveBeenCalledWith({
+        data: { tenantId: 'learn', ended: true, message, contact: 'help@learn.ac.lk' },
+      }),
     );
     await waitFor(() =>
       expect(client.getQueryData(['platformInstitution', 'learn'])).toEqual({ institution: ended }),
@@ -113,7 +118,9 @@ describe('institution chat access', () => {
     fireEvent.click(screen.getByRole('button', { name: 'com_chat_access_save' }));
 
     await waitFor(() =>
-      expect(update).toHaveBeenCalledWith({ data: { tenantId: 'learn', ended: false, message } }),
+      expect(update).toHaveBeenCalledWith({
+        data: { tenantId: 'learn', ended: false, message, contact: '' },
+      }),
     );
   });
 
