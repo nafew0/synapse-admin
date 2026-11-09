@@ -7,6 +7,7 @@ import {
   getMembersFn,
   getPlatformInstitutionFn,
   getPlatformInstitutionAgentAccessFn,
+  getPlatformInstitutionOcrAccessFn,
   getPlatformInstitutionQuotaFn,
   getPlatformInstitutionQuotaReadinessFn,
   listPlatformInstitutionPoliciesFn,
@@ -14,6 +15,7 @@ import {
   reconcilePlatformInstitutionAgentAccessFn,
   revokePlatformInstitutionAdminFn,
   updatePlatformInstitutionAgentAccessFn,
+  updatePlatformInstitutionOcrAccessFn,
 } from '@/server';
 import type * as t from '@/types';
 import { EmptyState, LoadingState } from '@/components/shared';
@@ -107,6 +109,21 @@ export function InstitutionDetailPage() {
     queryKey: agentAccessKey,
     queryFn: () => getPlatformInstitutionAgentAccessFn({ data: { tenantId } }),
     enabled: tab === 'agents',
+  });
+  const ocrAccessKey = ['platformInstitutionOcrAccess', tenantId];
+  const ocrAccessQuery = useQuery({
+    queryKey: ocrAccessKey,
+    queryFn: () => getPlatformInstitutionOcrAccessFn({ data: { tenantId } }),
+    enabled: tab === 'agents',
+  });
+  const ocrAccessMutation = useMutation({
+    mutationFn: (enabled: boolean) =>
+      updatePlatformInstitutionOcrAccessFn({ data: { tenantId, enabled } }),
+    onSuccess: (result) => {
+      notifySuccess(result.enabled ? 'Document reading enabled' : 'Document reading disabled');
+    },
+    onError: (error: Error) => notifyError(error.message),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ocrAccessKey }),
   });
   const revokeAdminMutation = useMutation({
     mutationFn: (admin: t.InstitutionMember) =>
@@ -246,6 +263,15 @@ export function InstitutionDetailPage() {
         />
       )}
       {tab === 'agents' && (
+        <OcrAccess
+          enabled={ocrAccessQuery.data?.enabled}
+          loading={ocrAccessQuery.isLoading}
+          error={ocrAccessQuery.isError ? ocrAccessQuery.error?.message : undefined}
+          saving={ocrAccessMutation.isPending || ocrAccessQuery.isFetching}
+          onToggle={(enabled) => ocrAccessMutation.mutate(enabled)}
+        />
+      )}
+      {tab === 'agents' && (
         <AgentAccess
           data={agentAccessQuery.data}
           loading={agentAccessQuery.isLoading}
@@ -353,6 +379,40 @@ function Members({
           disabled={offset + limit >= total || loading}
           onClick={() => onOffsetChange(offset + limit)}
           label="Next"
+        />
+      </div>
+    </Panel>
+  );
+}
+
+function OcrAccess({
+  enabled,
+  loading,
+  error,
+  saving,
+  onToggle,
+}: {
+  enabled?: boolean;
+  loading: boolean;
+  error?: string;
+  saving: boolean;
+  onToggle: (enabled: boolean) => void;
+}) {
+  if (loading) return <LoadingState />;
+  if (error) return <EmptyState message={error} />;
+
+  return (
+    <Panel title="Document reading">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-prose text-sm text-(--cui-color-text-muted)">
+          Send scanned documents to Unstructured for reading when members ask Office Assistant to
+          work with them. Each page read is charged at cost.
+        </p>
+        <Switch
+          checked={enabled === true}
+          disabled={saving}
+          aria-label="Send scanned documents to Unstructured for reading"
+          onCheckedChange={onToggle}
         />
       </div>
     </Panel>
