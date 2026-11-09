@@ -6,6 +6,13 @@ export interface PlatformInstitutionStats {
   activeMembers?: number;
 }
 
+/** When `ended`, members can still sign in but every new chat is refused with `message`. */
+export interface PlatformInstitutionChatAccess {
+  ended: boolean;
+  message?: string;
+  changedAt?: string | null;
+}
+
 export interface PlatformInstitution {
   id?: string;
   _id?: string;
@@ -19,6 +26,7 @@ export interface PlatformInstitution {
   usagePolicyVersion?: number;
   limits?: PlatformInstitutionLimits;
   stats?: PlatformInstitutionStats;
+  chatAccess?: PlatformInstitutionChatAccess | null;
   createdAt?: string;
   updatedAt?: string;
 }

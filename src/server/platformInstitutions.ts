@@ -293,6 +293,28 @@ export const reactivatePlatformInstitutionFn = createServerFn({ method: 'POST' }
     return (await response.json()) as { institution: t.PlatformInstitution };
   });
 
+export const updatePlatformInstitutionChatAccessFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      tenantId: z.string().trim().min(1),
+      ended: z.boolean(),
+      message: z.string().trim().max(500),
+    }),
+  )
+  .handler(async ({ data }): Promise<{ institution: t.PlatformInstitution }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/chat-access`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ ended: data.ended, message: data.message }),
+      },
+    );
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to update chat access');
+    }
+    return (await response.json()) as { institution: t.PlatformInstitution };
+  });
+
 export const removePlatformInstitutionFn = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ tenantId: z.string().trim().min(1) }))
   .handler(async ({ data }): Promise<{ institution: t.PlatformInstitution }> => {

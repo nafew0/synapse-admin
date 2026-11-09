@@ -14,6 +14,9 @@ vi.mock('@clickhouse/click-ui', () => ({
   Icon: () => <span />,
   Pagination: () => null,
   SearchField: () => <input />,
+  Switch: ({ checked, 'aria-label': ariaLabel }: { checked: boolean; 'aria-label'?: string }) => (
+    <button role="switch" aria-checked={checked} aria-label={ariaLabel} />
+  ),
   Button: ({
     label,
     onClick,
