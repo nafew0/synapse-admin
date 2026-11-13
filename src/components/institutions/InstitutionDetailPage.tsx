@@ -23,10 +23,17 @@ import { notifyError, notifySuccess } from '@/utils';
 import { useLocalize } from '@/hooks';
 import { InstitutionOverview } from './Overview';
 import { ChatAccess } from './ChatAccess';
+import { KnowledgeBase } from '@/components/knowledge';
 
 const Route = getRouteApi('/_app/institutions/$tenantId');
 const AppRoute = getRouteApi('/_app');
-type Tab = 'overview' | 'members' | 'agents' | 'usage' | 'policy' | 'history';
+type Tab = 'overview' | 'members' | 'agents' | 'knowledge' | 'usage' | 'policy' | 'history';
+
+function tabLabel(item: Tab, localize: (key: string) => string): string {
+  if (item === 'usage') return 'Usage & limits';
+  if (item === 'knowledge') return localize('com_kb_title');
+  return item[0].toUpperCase() + item.slice(1);
+}
 
 function formatTokens(value: number | null | undefined) {
   return value == null ? 'Unlimited' : new Intl.NumberFormat().format(value);
@@ -216,7 +223,9 @@ export function InstitutionDetailPage() {
       </header>
 
       <nav className="flex flex-wrap gap-2 border-b border-(--cui-color-stroke-default) pb-3">
-        {(['overview', 'members', 'agents', 'usage', 'policy', 'history'] as const).map((item) => (
+        {(
+          ['overview', 'members', 'agents', 'knowledge', 'usage', 'policy', 'history'] as const
+        ).map((item) => (
           <button
             key={item}
             type="button"
@@ -227,12 +236,14 @@ export function InstitutionDetailPage() {
                 : 'rounded-lg px-3 py-2 text-sm text-(--cui-color-text-muted) hover:bg-(--cui-color-background-hover)'
             }
           >
-            {item === 'usage' ? 'Usage & limits' : item[0].toUpperCase() + item.slice(1)}
+            {tabLabel(item, localize)}
           </button>
         ))}
       </nav>
 
       {tab === 'overview' && <ChatAccess institution={institution} />}
+      {tab === 'knowledge' && <KnowledgeBase tenantId={tenantId} />}
+
       {tab === 'overview' && (
         <InstitutionOverview
           institution={institution}

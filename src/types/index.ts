@@ -17,3 +17,4 @@ export type * from './user';
 export type * from './usage';
 export type * from './billing';
 export type * from './charts';
+export type * from './kb';

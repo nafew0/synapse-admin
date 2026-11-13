@@ -19,6 +19,10 @@ export {
  */
 export const READ_AUDIT_LOG_CAPABILITY = 'read:audit_log' as const;
 
+/** Synapse's knowledge base capabilities; not in the pinned upstream data-schemas. */
+export const READ_KB_CAPABILITY = 'read:kb' as const;
+export const MANAGE_KB_CAPABILITY = 'manage:kb' as const;
+
 /**
  * Local override of the upstream `CAPABILITY_CATEGORIES` so the System
  * category surfaces `READ_AUDIT_LOG` in the grants editing UI even while the
@@ -32,6 +36,13 @@ export const READ_AUDIT_LOG_CAPABILITY = 'read:audit_log' as const;
  */
 export const CAPABILITY_CATEGORIES: typeof UPSTREAM_CAPABILITY_CATEGORIES =
   UPSTREAM_CAPABILITY_CATEGORIES.map((cat) => {
+    if (cat.key === 'content') {
+      const present = cat.capabilities as readonly string[];
+      const missing = [MANAGE_KB_CAPABILITY, READ_KB_CAPABILITY].filter(
+        (c) => !present.includes(c),
+      );
+      return { ...cat, capabilities: [...cat.capabilities, ...missing] } as typeof cat;
+    }
     if (cat.key !== 'system') return cat;
     const caps = cat.capabilities as readonly string[];
     if (caps.includes(READ_AUDIT_LOG_CAPABILITY)) return cat;

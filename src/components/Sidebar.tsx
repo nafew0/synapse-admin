@@ -3,6 +3,7 @@ import { Dropdown } from '@clickhouse/click-ui';
 import { Link, useRouter } from '@tanstack/react-router';
 import {
   Bot,
+  BookOpen,
   Building2,
   ChartColumn,
   CircleHelp,
@@ -18,17 +19,12 @@ import {
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import type * as t from '@/types';
-import {
-  useStripAriaExpanded,
-  useMemberSummary,
-  useCapabilities,
-  useLocalize,
-} from '@/hooks';
+import { useStripAriaExpanded, useMemberSummary, useCapabilities, useLocalize } from '@/hooks';
 import { useTheme } from '@/contexts/ThemeContext';
 import synapseDarkLogo from '@/assets/synapse-logo-dark.svg';
 import synapseLogo from '@/assets/synapse-logo.svg';
 import { SettingsDialog } from './SettingsDialog';
-import { SystemCapabilities } from '@/constants';
+import { READ_KB_CAPABILITY, SystemCapabilities } from '@/constants';
 import { getInitials, cn } from '@/utils';
 import { adminLogoutFn } from '@/server';
 
@@ -48,6 +44,16 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
           icon: ChartColumn,
           capability: SystemCapabilities.READ_USAGE,
         },
+        ...(isPlatformSuperadmin
+          ? []
+          : [
+              {
+                labelKey: 'com_nav_knowledge' as const,
+                path: '/knowledge',
+                icon: BookOpen,
+                capability: READ_KB_CAPABILITY,
+              },
+            ]),
       ],
     },
     {
@@ -143,7 +149,9 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
 
   const pendingInvites = seatSummary?.pendingInvites ?? 0;
   const nextTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
-  const themeLabel = localize(nextTheme === 'dark' ? 'com_nav_switch_dark' : 'com_nav_switch_light');
+  const themeLabel = localize(
+    nextTheme === 'dark' ? 'com_nav_switch_dark' : 'com_nav_switch_light',
+  );
   const ThemeIcon = nextTheme === 'dark' ? Moon : Sun;
 
   const handleLogout = async () => {
@@ -190,7 +198,9 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
                 {localize('com_auth_title')}
               </span>
               <span className="truncate text-xs text-(--cui-color-text-muted)">
-                {localize(isPlatformSuperadmin ? 'com_nav_platform_admin' : 'com_nav_institution_admin')}
+                {localize(
+                  isPlatformSuperadmin ? 'com_nav_platform_admin' : 'com_nav_institution_admin',
+                )}
               </span>
             </div>
           ) : null}
@@ -203,7 +213,10 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
           {sections.map((section) => (
             <div key={section.titleKey} className="flex flex-col gap-0.5">
               {collapsed ? (
-                <div aria-hidden="true" className="mx-2 mb-1 border-t border-(--cui-color-stroke-muted)" />
+                <div
+                  aria-hidden="true"
+                  className="mx-2 mb-1 border-t border-(--cui-color-stroke-muted)"
+                />
               ) : (
                 <span className="px-3 pb-1.5 text-[11px] font-semibold tracking-[0.08em] text-(--cui-color-text-muted) uppercase">
                   {localize(section.titleKey)}
