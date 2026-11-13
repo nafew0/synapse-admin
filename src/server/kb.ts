@@ -62,6 +62,17 @@ export const updateKbDocumentFn = createServerFn({ method: 'POST' })
     return response.json();
   });
 
+export const retryKbDocumentFn = createServerFn({ method: 'POST' })
+  .inputValidator(documentInput)
+  .handler(async ({ data }): Promise<{ document: t.KbDocument }> => {
+    const response = await apiFetch(
+      withTenant(`${BASE}/${encodeURIComponent(data.documentId)}/retry`, data.tenantId),
+      { method: 'POST' },
+    );
+    if (!response.ok) await extractApiError(response, 'Failed to retry the document');
+    return response.json();
+  });
+
 export const deleteKbDocumentFn = createServerFn({ method: 'POST' })
   .inputValidator(documentInput)
   .handler(async ({ data }): Promise<void> => {

@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, LoaderCircle, RefreshCw, Trash2, Upload } from 'lucide-react';
+import { FileText, LoaderCircle, RefreshCw, RotateCcw, Trash2, Upload } from 'lucide-react';
 import type * as t from '@/types';
-import { deleteKbDocumentFn, uploadKbDocumentFn } from '@/server';
+import { deleteKbDocumentFn, retryKbDocumentFn, uploadKbDocumentFn } from '@/server';
 import { kbQueryKey, isInProgress, useKbDocuments } from './useKbDocuments';
 import { ConfirmDialog } from '@/components/access/ConfirmDialog';
 import { MANAGE_KB_CAPABILITY } from '@/constants';
@@ -117,6 +117,13 @@ export function KnowledgeBase({ tenantId }: { tenantId?: string }) {
     mutationFn: (document: t.KbDocument) =>
       deleteKbDocumentFn({ data: { documentId: document.id, tenantId } }),
     onSuccess: () => setDeleting(null),
+    onError: (error: Error) => notifyError(error.message),
+    onSettled: refresh,
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: (document: t.KbDocument) =>
+      retryKbDocumentFn({ data: { documentId: document.id, tenantId } }),
     onError: (error: Error) => notifyError(error.message),
     onSettled: refresh,
   });
@@ -282,6 +289,18 @@ export function KnowledgeBase({ tenantId }: { tenantId?: string }) {
                   {canManage && (
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
+                        {document.status === 'failed' && (
+                          <button
+                            type="button"
+                            title={localize('com_kb_retry')}
+                            aria-label={`${localize('com_kb_retry')}: ${document.title}`}
+                            disabled={retryMutation.isPending}
+                            onClick={() => retryMutation.mutate(document)}
+                            className="rounded-lg p-2 text-(--cui-color-text-muted) hover:bg-(--cui-color-background-hover) disabled:opacity-40"
+                          >
+                            <RotateCcw className="size-4" aria-hidden />
+                          </button>
+                        )}
                         <button
                           type="button"
                           title={localize('com_kb_replace')}
