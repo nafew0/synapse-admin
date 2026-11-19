@@ -87,9 +87,35 @@ describe('usage server functions', () => {
       '/api/admin/usage/export.csv?start=2026-07-01&end=2026-08-01',
       {
         method: 'GET',
-        headers: { Accept: 'text/csv' },
+        headers: {
+          Accept: 'text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        },
       },
     );
     expect(response.headers.get('Content-Type')).toMatch(/text\/csv/);
+    expect(response.headers.get('Content-Disposition')).toMatch(/filename="usage-\d{4}-\d{2}-\d{2}\.csv"/);
+  });
+
+  it('passes a superadmin workbook through with its own type and filename', async () => {
+    const xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    apiFetch.mockResolvedValueOnce(
+      new Response(new Uint8Array([0x50, 0x4b, 0x03, 0x04]), {
+        status: 200,
+        headers: {
+          'Content-Type': xlsx,
+          'Content-Disposition': 'attachment; filename="member-usage-2026-10-27.xlsx"',
+        },
+      }),
+    );
+
+    const response = await exportUsageCsvServerFn({
+      data: { start: '2026-07-01', end: '2026-08-01', tenantId: 'tenant-a' },
+    });
+
+    expect(response.headers.get('Content-Type')).toBe(xlsx);
+    expect(response.headers.get('Content-Disposition')).toBe(
+      'attachment; filename="member-usage-2026-10-27.xlsx"',
+    );
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([0x50, 0x4b, 0x03, 0x04]));
   });
 });

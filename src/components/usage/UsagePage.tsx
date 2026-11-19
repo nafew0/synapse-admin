@@ -11,6 +11,7 @@ import {
   useUsageModels,
   useCapabilities,
   useAdminScope,
+  useMediaQuery,
   useLocalize,
 } from '@/hooks';
 import {
@@ -19,11 +20,14 @@ import {
   formatUsageCost,
   previousRange,
   formatDayLabel,
+  filenameFromDisposition,
   datedFilename,
   formatCompact,
   modelRowKey,
   presetRange,
   downloadBlob,
+  rollingAverage,
+  localDay,
   fillDaily,
   cn,
 } from '@/utils';
@@ -31,7 +35,6 @@ import {
   PermissionsUnavailable,
   LoadingState,
   AccessDenied,
-  ChartLegend,
   RangePicker,
   SearchInput,
   EmptyState,
@@ -99,6 +102,7 @@ function DateField({
 
 export function UsagePage() {
   const localize = useLocalize();
+  const isNarrow = useMediaQuery('(max-width: 639px)');
   const {
     hasCapability,
     isLoading: capabilitiesLoading,
@@ -151,6 +155,9 @@ export function UsagePage() {
   const previousQuery = useUsageSummary(previousScope, scopeReady);
   const timeseriesQuery = useUsageTimeseries(scope, scopeReady);
   const membersQuery = useUsageMembers(listScope(memberPage), scopeReady);
+  /** Page 1 is always loaded first, so this is a cache hit that keeps every
+   *  page's bars scaled to the busiest member rather than each page's own top. */
+  const leaderQuery = useUsageMembers(listScope(1), scopeReady);
   const modelsQuery = useUsageModels(listScope(modelPage), scopeReady);
 
   const series = useMemo(() => {
@@ -165,7 +172,11 @@ export function UsagePage() {
     setExporting(true);
     try {
       const response = await exportUsageCsvServerFn({ data: scope });
-      downloadBlob(await response.blob(), datedFilename('usage', 'csv'));
+      const filename = filenameFromDisposition(
+        response.headers.get('Content-Disposition'),
+        datedFilename('usage', 'csv'),
+      );
+      downloadBlob(await response.blob(), filename);
     } finally {
       setExporting(false);
     }
@@ -293,14 +304,21 @@ export function UsagePage() {
   const comparedTo = localize('com_usage_vs_previous');
   const members = membersQuery.data?.members ?? [];
   const models = modelsQuery.data?.models ?? [];
-  const memberPages = Math.max(1, Math.ceil((membersQuery.data?.total ?? 0) / PAGE_SIZE));
+  const memberTotal = membersQuery.data?.total ?? 0;
+  const memberOffset = membersQuery.data?.offset ?? 0;
+  const memberPages = Math.max(1, Math.ceil(memberTotal / PAGE_SIZE));
+  const memberPaging = membersQuery.isFetching && membersQuery.isPlaceholderData;
   const modelPages = Math.max(1, Math.ceil((modelsQuery.data?.total ?? 0) / PAGE_SIZE));
   const topModel = models[0]?.totalTokens ?? 0;
-  const topMember = members[0]?.totalTokens ?? 0;
+  const topMember = leaderQuery.data?.members[0]?.totalTokens ?? members[0]?.totalTokens ?? 0;
   const perRequest = (tokens: number, events: number) => (events > 0 ? tokens / events : 0);
   const isTokens = metric === 'tokens';
   const plotted = isTokens ? series.tokens : series.requests;
-  const seriesLabel = localize(isTokens ? 'com_usage_tokens_per_day' : 'com_usage_requests_per_day');
+  const formatMetric = isTokens ? formatCompact : formatUsageNumber;
+  const weekAverage = latestAverage(plotted, localDay());
+  const dayFormat: Intl.DateTimeFormatOptions = isNarrow
+    ? { day: 'numeric', month: 'short' }
+    : { weekday: 'short', day: 'numeric', month: 'short' };
 
   const tiles: Array<{ label: string; value: string; current: number; previous?: number }> = [
     {
@@ -372,15 +390,20 @@ export function UsagePage() {
 
       <Card
         title={localize(isTokens ? 'com_usage_token_trend' : 'com_usage_request_trend')}
-        description={localize('com_usage_trend_desc')}
+        description={localize(isTokens ? 'com_usage_trend_desc_tokens' : 'com_usage_trend_desc_requests')}
         action={
-          <div className="flex flex-wrap items-center gap-3">
-            <ChartLegend
-              items={[
-                { label: seriesLabel, color: 'var(--syn-chart-1)' },
-                { label: localize('com_chart_7d_average'), color: 'var(--syn-chart-avg)' },
-              ]}
-            />
+          <div className="flex flex-wrap items-center gap-5">
+            {weekAverage != null ? (
+              <div className="flex flex-col gap-0.5 border-l border-(--cui-color-stroke-default) pl-5">
+                <span className="text-[13px] text-(--cui-color-text-muted)">{localize('com_chart_7d_average')}</span>
+                <span className="text-xl leading-tight font-bold tabular-nums">
+                  {formatMetric(weekAverage)}
+                  <span className="ml-1.5 text-sm font-medium text-(--cui-color-text-muted)">
+                    {localize(isTokens ? 'com_usage_tokens_per_day_unit' : 'com_usage_requests_per_day_unit')}
+                  </span>
+                </span>
+              </div>
+            ) : null}
             <MetricToggle value={metric} onChange={setMetric} />
           </div>
         }
@@ -389,11 +412,12 @@ export function UsagePage() {
           <EmptyState message={localize('com_dash_no_usage')} />
         ) : (
           <TrendChart
+            variant="bars"
             data={plotted}
-            label={seriesLabel}
+            label={localize('com_usage_daily_total')}
             averageLabel={localize('com_chart_7d_average')}
-            formatValue={isTokens ? formatCompact : formatUsageNumber}
-            formatDay={(day) => formatDayLabel(day, { weekday: 'short', day: 'numeric', month: 'short' })}
+            formatValue={formatMetric}
+            formatDay={(day) => formatDayLabel(day, dayFormat)}
             detailRows={(index) =>
               isTokens
                 ? [{ label: localize('com_usage_requests'), value: formatUsageNumber(series.requests[index]?.value ?? 0) }]
@@ -510,12 +534,22 @@ export function UsagePage() {
                     <td className="pr-4 text-right">{formatUsageCost(member.totalCost ?? 0)}</td>
                   ) : null}
                   <td className="text-right text-(--cui-color-text-muted)">
-                    {formatRelativeTime(member.lastUsedAt)}
+                    {formatRelativeTime(member.lastUsedAt) || '—'}
                   </td>
                 </tr>
               ))}
             </DataTable>
-            <Pagination currentPage={memberPage} totalPages={memberPages} onPageChange={setMemberPage} />
+            <PageStepper
+              label={localize('com_usage_members_pages')}
+              position={localize('com_usage_members_range', {
+                to: formatUsageNumber(memberOffset + members.length),
+                total: formatUsageNumber(memberTotal),
+              })}
+              page={memberPage}
+              pages={memberPages}
+              busy={memberPaging}
+              onPageChange={setMemberPage}
+            />
           </>
         )}
       </Card>
@@ -531,6 +565,19 @@ function PageFrame({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * The average of the last seven complete days, or of every complete day when there
+ * are fewer. Today is left out: a day still in progress would drag the figure down.
+ */
+function latestAverage(series: t.TrendDatum[], today: string): number | null {
+  const complete = series.filter((datum) => datum.day < today).map((datum) => datum.value);
+  if (complete.length === 0) {
+    return null;
+  }
+  const rolling = rollingAverage(complete, 7).at(-1);
+  return rolling ?? complete.reduce((sum, value) => sum + value, 0) / complete.length;
+}
+
 function MetricToggle({ value, onChange }: { value: Metric; onChange: (metric: Metric) => void }) {
   const localize = useLocalize();
   const options: Array<{ key: Metric; label: string }> = [
@@ -538,7 +585,11 @@ function MetricToggle({ value, onChange }: { value: Metric; onChange: (metric: M
     { key: 'requests', label: localize('com_usage_requests') },
   ];
   return (
-    <div role="group" aria-label={localize('com_usage_metric')} className="flex rounded-lg bg-(--cui-color-background-muted) p-0.5">
+    <div
+      role="group"
+      aria-label={localize('com_usage_metric')}
+      className="flex overflow-hidden rounded-lg border border-(--cui-color-stroke-default)"
+    >
       {options.map((option) => (
         <button
           key={option.key}
@@ -546,16 +597,67 @@ function MetricToggle({ value, onChange }: { value: Metric; onChange: (metric: M
           aria-pressed={option.key === value}
           onClick={() => onChange(option.key)}
           className={cn(
-            'h-8 cursor-pointer rounded-md border-0 px-3 text-[13px]',
+            'h-9 cursor-pointer border-0 px-4 text-[13px]',
             option.key === value
-              ? 'bg-(--syn-surface) font-semibold text-(--syn-brand-ink) shadow-sm'
-              : 'bg-transparent font-medium text-(--cui-color-text-muted)',
+              ? 'bg-(--syn-brand-tint) font-semibold text-(--syn-brand-ink)'
+              : 'bg-transparent font-medium text-(--cui-color-text-muted) hover:text-(--cui-color-text-default)',
           )}
         >
           {option.label}
         </button>
       ))}
     </div>
+  );
+}
+
+const stepButton =
+  'h-9 cursor-pointer rounded-lg border border-(--cui-color-stroke-default) bg-(--syn-surface) px-3 text-[13px] font-semibold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50';
+
+function PageStepper({
+  label,
+  position,
+  page,
+  pages,
+  busy,
+  onPageChange,
+}: {
+  label: string;
+  /** Where the visible rows sit in the whole list, e.g. "11–20 of 134". */
+  position: string;
+  page: number;
+  pages: number;
+  busy: boolean;
+  onPageChange: (page: number) => void;
+}) {
+  const localize = useLocalize();
+  return (
+    <nav
+      aria-label={label}
+      aria-busy={busy}
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-(--cui-color-stroke-muted) pt-3"
+    >
+      <span aria-live="polite" className="text-[13px] text-(--cui-color-text-muted) tabular-nums">
+        {position}
+      </span>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={page <= 1 || busy}
+          onClick={() => onPageChange(page - 1)}
+          className={stepButton}
+        >
+          {localize('com_usage_page_previous')}
+        </button>
+        <button
+          type="button"
+          disabled={page >= pages || busy}
+          onClick={() => onPageChange(page + 1)}
+          className={stepButton}
+        >
+          {localize('com_usage_page_next')}
+        </button>
+      </div>
+    </nav>
   );
 }
 

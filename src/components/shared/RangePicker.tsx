@@ -3,6 +3,7 @@ import { useLocalize } from '@/hooks';
 import { cn } from '@/utils';
 
 const PRESET_LABELS: Record<t.RangePreset, string> = {
+  week: 'com_range_week',
   '7d': 'com_range_7d',
   '30d': 'com_range_30d',
   month: 'com_range_month',

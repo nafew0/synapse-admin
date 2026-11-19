@@ -72,6 +72,27 @@ export const updatePlatformInstitutionAgentAccessFn = createServerFn({ method: '
     return (await response.json()) as t.PlatformAgentAccessUpdateResult;
   });
 
+export const getPlatformInstitutionOcrAccessFn = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ tenantId: z.string().min(1) }))
+  .handler(async ({ data }): Promise<{ enabled: boolean }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/ocr-access`,
+    );
+    if (!response.ok) await extractApiError(response, 'Failed to load OCR access');
+    return (await response.json()) as { enabled: boolean };
+  });
+
+export const updatePlatformInstitutionOcrAccessFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ tenantId: z.string().min(1), enabled: z.boolean() }))
+  .handler(async ({ data }): Promise<{ enabled: boolean }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/ocr-access`,
+      { method: 'PATCH', body: JSON.stringify({ enabled: data.enabled }) },
+    );
+    if (!response.ok) await extractApiError(response, 'Failed to update OCR access');
+    return (await response.json()) as { enabled: boolean };
+  });
+
 export const reconcilePlatformInstitutionAgentAccessFn = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ tenantId: z.string().min(1) }))
   .handler(async ({ data }): Promise<t.PlatformAgentAccessReconcileResult> => {

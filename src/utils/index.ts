@@ -9,3 +9,4 @@ export * from './toast';
 export * from './usage';
 export * from './trend';
 export * from './packages';
+export * from './attention';

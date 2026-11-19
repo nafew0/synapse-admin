@@ -7,6 +7,7 @@ import {
   getMembersFn,
   getPlatformInstitutionFn,
   getPlatformInstitutionAgentAccessFn,
+  getPlatformInstitutionOcrAccessFn,
   getPlatformInstitutionQuotaFn,
   getPlatformInstitutionQuotaReadinessFn,
   listPlatformInstitutionPoliciesFn,
@@ -14,11 +15,14 @@ import {
   reconcilePlatformInstitutionAgentAccessFn,
   revokePlatformInstitutionAdminFn,
   updatePlatformInstitutionAgentAccessFn,
+  updatePlatformInstitutionOcrAccessFn,
 } from '@/server';
 import type * as t from '@/types';
 import { EmptyState, LoadingState } from '@/components/shared';
 import { CreditUsage, InstitutionPackageCard } from '@/components/packages';
 import { notifyError, notifySuccess } from '@/utils';
+import { useLocalize } from '@/hooks';
+import { InstitutionOverview } from './Overview';
 
 const Route = getRouteApi('/_app/institutions/$tenantId');
 const AppRoute = getRouteApi('/_app');
@@ -45,6 +49,7 @@ function parseLimit(value: string): number | null {
 export function InstitutionDetailPage() {
   const { tenantId } = Route.useParams();
   const { user } = AppRoute.useRouteContext();
+  const localize = useLocalize();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('overview');
   const [memberQuery, setMemberQuery] = useState('');
@@ -104,6 +109,21 @@ export function InstitutionDetailPage() {
     queryKey: agentAccessKey,
     queryFn: () => getPlatformInstitutionAgentAccessFn({ data: { tenantId } }),
     enabled: tab === 'agents',
+  });
+  const ocrAccessKey = ['platformInstitutionOcrAccess', tenantId];
+  const ocrAccessQuery = useQuery({
+    queryKey: ocrAccessKey,
+    queryFn: () => getPlatformInstitutionOcrAccessFn({ data: { tenantId } }),
+    enabled: tab === 'agents',
+  });
+  const ocrAccessMutation = useMutation({
+    mutationFn: (enabled: boolean) =>
+      updatePlatformInstitutionOcrAccessFn({ data: { tenantId, enabled } }),
+    onSuccess: (result) => {
+      notifySuccess(result.enabled ? 'Document reading enabled' : 'Document reading disabled');
+    },
+    onError: (error: Error) => notifyError(error.message),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ocrAccessKey }),
   });
   const revokeAdminMutation = useMutation({
     mutationFn: (admin: t.InstitutionMember) =>
@@ -186,12 +206,12 @@ export function InstitutionDetailPage() {
         </div>
         <span
           className={
-            institution.status === 'suspended'
-              ? 'rounded-full bg-amber-500/15 px-3 py-1 text-xs text-amber-400'
-              : 'rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-400'
+            institution.status === 'active'
+              ? 'rounded-full bg-(--syn-success-bg) px-3 py-1 text-xs font-semibold text-(--syn-success-fg)'
+              : 'rounded-full bg-(--syn-warning-bg) px-3 py-1 text-xs font-semibold text-(--syn-warning-fg)'
           }
         >
-          {institution.status}
+          {localize(`com_inst_status_${institution.status}`)}
         </span>
       </header>
 
@@ -214,13 +234,14 @@ export function InstitutionDetailPage() {
 
       {tab === 'overview' && (
         <>
-          <Overview
+          <InstitutionOverview
             institution={institution}
-            policy={quota.policy}
             admins={admins}
+            adminsLoading={adminsQuery.isLoading}
             adminsError={adminsQuery.isError}
             revoking={revokeAdminMutation.isPending}
             onRevokeAdmin={(admin) => revokeAdminMutation.mutate(admin)}
+            onOpenMembers={() => setTab('members')}
           />
           <InstitutionPackageCard tenantId={tenantId} current={institution.usagePackage} />
         </>
@@ -241,6 +262,15 @@ export function InstitutionDetailPage() {
             setMemberOffset(0);
           }}
           onOffsetChange={setMemberOffset}
+        />
+      )}
+      {tab === 'agents' && (
+        <OcrAccess
+          enabled={ocrAccessQuery.data?.enabled}
+          loading={ocrAccessQuery.isLoading}
+          error={ocrAccessQuery.isError ? ocrAccessQuery.error?.message : undefined}
+          saving={ocrAccessMutation.isPending || ocrAccessQuery.isFetching}
+          onToggle={(enabled) => ocrAccessMutation.mutate(enabled)}
         />
       )}
       {tab === 'agents' && (
@@ -290,59 +320,6 @@ export function InstitutionDetailPage() {
         ) : (
           <History policies={historyQuery.data?.policies ?? []} />
         ))}
-    </div>
-  );
-}
-
-function Overview({
-  institution,
-  policy,
-  admins,
-  adminsError,
-  revoking,
-  onRevokeAdmin,
-}: {
-  institution: t.PlatformInstitution;
-  policy: t.UsagePolicy;
-  admins: t.InstitutionMember[];
-  adminsError: boolean;
-  revoking: boolean;
-  onRevokeAdmin: (admin: t.InstitutionMember) => void;
-}) {
-  return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Panel title="Institution">
-        <Detail label="Timezone" value={institution.timezone ?? policy.timezone} />
-        <Detail label="Slug" value={institution.slug ?? 'Not configured'} />
-        <Detail
-          label="Seats"
-          value={`${institution.stats?.activeMembers ?? 0} / ${formatTokens(
-            institution.limits?.maxActiveMembers,
-          )}`}
-        />
-      </Panel>
-      <Panel title="Administrators">
-        {adminsError && (
-          <p className="text-sm text-(--cui-color-text-muted)">
-            Could not load administrators — retry before acting on this.
-          </p>
-        )}
-        {!adminsError && admins.length === 0 && (
-          <p className="text-sm text-amber-400">No active institution administrator.</p>
-        )}
-        {!adminsError &&
-          admins.map((admin) => (
-            <div key={admin.id} className="flex items-center justify-between gap-2">
-              <Detail label={admin.name || admin.email} value={admin.email} />
-              <Button
-                type="secondary"
-                label="Revoke"
-                disabled={revoking}
-                onClick={() => onRevokeAdmin(admin)}
-              />
-            </div>
-          ))}
-      </Panel>
     </div>
   );
 }
@@ -405,6 +382,40 @@ function Members({
           disabled={offset + limit >= total || loading}
           onClick={() => onOffsetChange(offset + limit)}
           label="Next"
+        />
+      </div>
+    </Panel>
+  );
+}
+
+function OcrAccess({
+  enabled,
+  loading,
+  error,
+  saving,
+  onToggle,
+}: {
+  enabled?: boolean;
+  loading: boolean;
+  error?: string;
+  saving: boolean;
+  onToggle: (enabled: boolean) => void;
+}) {
+  if (loading) return <LoadingState />;
+  if (error) return <EmptyState message={error} />;
+
+  return (
+    <Panel title="Document reading">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-prose text-sm text-(--cui-color-text-muted)">
+          Send scanned documents to Unstructured for reading when members ask Office Assistant to
+          work with them. Each page read is charged at cost.
+        </p>
+        <Switch
+          checked={enabled === true}
+          disabled={saving}
+          aria-label="Send scanned documents to Unstructured for reading"
+          onCheckedChange={onToggle}
         />
       </div>
     </Panel>

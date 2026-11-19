@@ -7,7 +7,7 @@ export interface DateRange {
   end: string;
 }
 
-export type RangePreset = '7d' | '30d' | 'month' | 'lastMonth' | 'custom';
+export type RangePreset = 'week' | '7d' | '30d' | 'month' | 'lastMonth' | 'custom';
 
 export interface TrendDatum {
   day: string;
@@ -30,6 +30,9 @@ export interface TrendChartProps {
   detailRows?: (index: number) => TrendTooltipRow[];
   height?: number;
   averageWindow?: number;
+  /** `line` draws the series with its rolling average; `bars` draws one bar per
+   *  day and leaves the average to the tooltip. */
+  variant?: 'line' | 'bars';
 }
 
 export interface SparklineProps {
@@ -103,4 +106,12 @@ export interface WeekdayAverage {
   average: number;
   /** How many of this weekday fell in the range; 0 means no data, not no usage. */
   days: number;
+}
+
+export interface WeekChartProps {
+  /** Monday to Sunday of the current week. */
+  thisWeek: TrendDatum[];
+  /** Monday to Sunday of the week before, aligned day for day. */
+  lastWeek: TrendDatum[];
+  today: string;
 }
