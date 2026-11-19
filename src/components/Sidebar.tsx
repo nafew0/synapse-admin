@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Dropdown } from '@clickhouse/click-ui';
 import { Link, useRouter } from '@tanstack/react-router';
 import {
+  Bell,
   Bot,
   Building2,
   ChartColumn,
@@ -86,6 +87,7 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
         },
         { labelKey: 'com_nav_agents', path: '/agents', icon: Bot, superadminOnly: true },
         { labelKey: 'com_nav_packages', path: '/packages', icon: Package, superadminOnly: true },
+        { labelKey: 'com_nav_alerts', path: '/alerts', icon: Bell, superadminOnly: true },
         {
           labelKey: 'com_nav_configuration',
           path: '/configuration',
