@@ -23,6 +23,7 @@ import { InstitutionTable } from './Institutions';
 import { InstitutionCost } from './Institution';
 import { CostSettingsCard } from './Settings';
 import { useCostRange } from './useCostRange';
+import { Reconciliation } from './Reconciliation';
 import { CostFilters } from './Filters';
 import { ServiceTable } from './Services';
 import { CostDelta } from './CostDelta';
@@ -185,11 +186,41 @@ function Overview({ summary }: { summary: t.CostSummary }) {
   );
 }
 
+type CostsView = 'overview' | 'reconcile';
+
+function ViewTabs({ view, onView }: { view: CostsView; onView: (view: CostsView) => void }) {
+  const localize = useLocalize();
+  return (
+    <div
+      role="group"
+      aria-label={localize('com_costs_title')}
+      className="flex w-fit overflow-hidden rounded-lg border border-(--cui-color-stroke-default)"
+    >
+      {(['overview', 'reconcile'] as const).map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={view === option}
+          onClick={() => onView(option)}
+          className={`h-9 cursor-pointer border-0 px-4 text-[13px] ${
+            view === option
+              ? 'bg-(--syn-brand-tint) font-semibold text-(--syn-brand-ink)'
+              : 'bg-transparent font-medium text-(--cui-color-text-muted) hover:text-(--cui-color-text-default)'
+          }`}
+        >
+          {localize(`com_costs_tab_${option}`)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** Superadmin view of what every paid service costs, in taka and dollars. */
 export function CostsPage() {
   const localize = useLocalize();
   const { preset, setPreset, range } = useCostRange();
   const [selected, setSelected] = useState<t.CostInstitutionRow | null>(null);
+  const [view, setView] = useState<CostsView>('overview');
   const summary = useCostSummary(range);
   const institutions = useCostInstitutions(range);
   const services = useCostServices(range);
@@ -266,7 +297,8 @@ export function CostsPage() {
           onPreset={(next) => next !== 'custom' && setPreset(next)}
           range={range}
         />
-        {content()}
+        <ViewTabs view={view} onView={setView} />
+        {view === 'reconcile' ? <Reconciliation range={range} /> : content()}
       </div>
     </div>
   );

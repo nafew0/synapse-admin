@@ -8,6 +8,9 @@ import {
   getCostSettingsFn,
   getCostSummaryFn,
   getCostTimeseriesFn,
+  getReconciliationFn,
+  refreshProviderFiguresFn,
+  saveUnstructuredEntryFn,
   updateCostSettingsFn,
 } from '@/server';
 
@@ -77,6 +80,36 @@ export function useSaveCostSettings(onDone?: () => void) {
     mutationFn: (data: t.CostSettingsInput) => updateCostSettingsFn({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: COSTS_QUERY_KEY });
+      onDone?.();
+    },
+  });
+}
+
+export function useReconciliation(range: t.DateRange, enabled = true) {
+  return useQuery({
+    queryKey: [...COSTS_QUERY_KEY, 'reconciliation', range],
+    queryFn: () => getReconciliationFn({ data: range }),
+    enabled,
+  });
+}
+
+export function useRefreshProviderFigures(onDone?: (result: t.ReconcileRefreshResult) => void) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => refreshProviderFiguresFn(),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: [...COSTS_QUERY_KEY, 'reconciliation'] });
+      onDone?.(result);
+    },
+  });
+}
+
+export function useSaveUnstructuredEntry(onDone?: () => void) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: t.UnstructuredEntryInput) => saveUnstructuredEntryFn({ data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...COSTS_QUERY_KEY, 'reconciliation'] });
       onDone?.();
     },
   });

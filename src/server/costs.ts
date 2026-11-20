@@ -129,3 +129,37 @@ export const exportCostCsvFn = createServerFn({ method: 'POST' })
       },
     });
   });
+
+export const getReconciliationFn = createServerFn({ method: 'GET' })
+  .inputValidator(rangeSchema)
+  .handler(
+    async ({ data }): Promise<t.Reconciliation> =>
+      load(`${BASE}/reconciliation${buildQuery(data)}`, 'Failed to load the reconciliation'),
+  );
+
+export const refreshProviderFiguresFn = createServerFn({ method: 'POST' }).handler(
+  async (): Promise<t.ReconcileRefreshResult> =>
+    load(`${BASE}/reconciliation/refresh`, 'Failed to refresh provider figures', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    }),
+);
+
+export const saveUnstructuredEntryFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
+      amountUsd: z.number().min(0).max(1_000_000),
+      pages: z.number().int().min(0).optional(),
+      note: z.string().trim().max(200).optional(),
+    }),
+  )
+  .handler(
+    async ({ data }): Promise<{ month: string; amountUsd: number }> =>
+      load(`${BASE}/reconciliation/unstructured`, 'Failed to save the Unstructured figure', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }),
+  );

@@ -161,3 +161,67 @@ export type CostSettingsInput = Partial<Pick<CostSettings, 'bdtPerUsd' | 'provid
 };
 
 export type CostExportSheet = 'institutions' | 'members' | 'daily';
+
+export type ReconcileStatus = 'ok' | 'flagged' | 'missing_provider' | 'missing_ledger' | 'empty';
+
+export interface ReconcileFigure {
+  ledger: number;
+  provider: number | null;
+  gap: number | null;
+  gapPct: number | null;
+  status: ReconcileStatus;
+}
+
+export interface ReconcilePeriod extends ReconcileFigure {
+  period: string;
+  days: number;
+  daysCovered: number;
+  ledgerAll: number;
+}
+
+export interface ReconcileService {
+  service: 'openrouter' | 'firecrawl';
+  label: string;
+  unit: 'usd' | 'credits';
+  source: {
+    status: 'ok' | 'not_configured' | 'rejected' | 'unreadable' | 'unreachable' | 'never_run';
+    message?: string;
+    lastRunAt?: string;
+  };
+  usdPerUnit: number | null;
+  total: ReconcilePeriod;
+  weeks: ReconcilePeriod[];
+  days: Array<ReconcileFigure & { day: string }>;
+  flagged: number;
+}
+
+export interface ReconcileUnstructuredMonth extends ReconcilePeriod {
+  pages: number | null;
+  note: string | null;
+  enteredBy: string | null;
+  enteredAt: string | null;
+}
+
+export interface Reconciliation {
+  range: { start: string; end: string; days: number };
+  thresholdPct: number;
+  notes: string[];
+  services: ReconcileService[];
+  unstructured: ReconcileUnstructuredMonth[];
+}
+
+export interface ReconcileRefreshResult {
+  results: Array<{
+    service: string;
+    status: string;
+    stored: number;
+    message?: string;
+  }>;
+}
+
+export interface UnstructuredEntryInput {
+  month: string;
+  amountUsd: number;
+  pages?: number;
+  note?: string;
+}
