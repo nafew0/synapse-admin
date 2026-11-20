@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Activity, Layers, Plus, UserCheck, IdCard } from 'lucide-react';
+import { Activity, Layers, UserCheck, IdCard } from 'lucide-react';
 import type * as t from '@/types';
 import {
   formatRelativeTime,
@@ -22,7 +22,6 @@ import {
   useUsageSummary,
   useUsageMembers,
   useUsageModels,
-  useCapabilities,
   useLocalize,
 } from '@/hooks';
 import {
@@ -35,7 +34,6 @@ import {
   Card,
   BAR_STAGGER_MS,
 } from '@/components/shared';
-import { SystemCapabilities } from '@/constants';
 import { WeekdayUsage } from './WeekdayUsage';
 import { WeekChart } from './WeekChart';
 import { FollowUp } from './FollowUp';
@@ -56,8 +54,6 @@ const ICON_SIZE = 16;
  */
 export function Overview() {
   const localize = useLocalize();
-  const { hasCapability } = useCapabilities();
-  const canManage = hasCapability(SystemCapabilities.MANAGE_USERS);
   const [period, setPeriod] = useState<Period>('week');
 
   const today = localDay();
@@ -136,15 +132,6 @@ export function Overview() {
           </p>
           <div className="flex flex-wrap items-center gap-2.5">
             <RangePicker value={period} presets={PERIODS} onChange={(next) => setPeriod(next as Period)} />
-            {canManage ? (
-              <Link
-                to="/users"
-                className="flex h-10 items-center gap-2 rounded-lg bg-(--cui-color-accent) px-4 text-sm font-bold text-(--syn-on-accent) no-underline transition hover:brightness-95"
-              >
-                <Plus aria-hidden="true" size={16} strokeWidth={2.4} />
-                {localize('com_users_invite_member')}
-              </Link>
-            ) : null}
           </div>
         </div>
 
@@ -289,7 +276,7 @@ export function Overview() {
           </Card>
 
           <div className="flex min-w-0 flex-col gap-4">
-            <FollowUp canManage={canManage} />
+            <FollowUp />
             <Card title={localize('com_dash_most_used_models')} description={listNote} action={<DetailsLink />}>
               {mostUsed.top.length === 0 ? (
                 <EmptyRow text={localize(models.isLoading ? 'com_ui_loading' : 'com_dash_no_usage')} />

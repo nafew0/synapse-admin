@@ -1,3 +1,4 @@
+export * from './bdren';
 export * from './auth';
 export * from './banner';
 export * from './capabilities';

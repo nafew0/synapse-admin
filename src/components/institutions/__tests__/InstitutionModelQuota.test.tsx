@@ -124,7 +124,6 @@ vi.mock('@/server', () => ({
     requiresOverageAcknowledgement: false,
   }),
   createPlatformInstitutionPolicyFn: vi.fn(),
-  revokePlatformInstitutionAdminFn: vi.fn(),
   updatePlatformInstitutionAgentAccessFn: vi.fn(),
   reconcilePlatformInstitutionAgentAccessFn: vi.fn(),
 }));

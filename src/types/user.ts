@@ -42,100 +42,12 @@ export interface InstitutionMember {
   acceptedAt?: string | null;
 }
 
-export interface StandaloneInviteResponse {
-  invite: {
-    _id?: string;
-    accountScope?: 'standalone';
-    email: string;
-    username?: string | null;
-    inviteLink?: string | null;
-    status?: string;
-  };
-  inviteLink?: string | null;
-}
-
 export interface InstitutionMemberListResponse {
   members: InstitutionMember[];
   total: number;
   limit: number;
   offset: number;
   summary: InstitutionSeatSummary;
-}
-
-export interface InstitutionImportRowResult {
-  rowNumber: number;
-  email?: string;
-  name?: string;
-  requestedRole?: MemberRole;
-  action: 'invite' | 'update_member' | 'skip' | 'error';
-  message: string;
-}
-
-export interface InstitutionImportSummary {
-  totalRows: number;
-  invitesCreated: number;
-  membersUpdated: number;
-  skipped: number;
-  errors: number;
-}
-
-export interface InstitutionImportJob {
-  id: string;
-  tenantId: string;
-  idempotencyKey: string;
-  status: 'pending' | 'completed' | 'failed';
-  summary: InstitutionImportSummary;
-  results: InstitutionImportRowResult[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export type InviteAudience = 'expired' | 'pending' | 'all';
-
-export interface ResendableInviteCounts {
-  expired: number;
-  pending: number;
-  all: number;
-}
-
-export type InviteResendOutcome = 'sent' | 'link_only' | 'skipped_cooldown' | 'failed';
-
-export interface InviteResendResult {
-  inviteId: string;
-  email: string;
-  outcome: InviteResendOutcome;
-  inviteLink?: string;
-  error?: string;
-}
-
-export interface InviteResendSummary {
-  total: number;
-  sent: number;
-  linkOnly: number;
-  skipped: number;
-  failed: number;
-}
-
-export interface InviteResendResponse {
-  summary: InviteResendSummary;
-  results: InviteResendResult[];
-}
-
-export interface ResendInvitesDialogProps {
-  open: boolean;
-  onClose: () => void;
-  platform: boolean;
-  tenantFilter: string;
-}
-
-export interface CreateUserDialogProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-export interface ImportMembersDialogProps {
-  open: boolean;
-  onClose: () => void;
 }
 
 export interface MemberPanelProps {

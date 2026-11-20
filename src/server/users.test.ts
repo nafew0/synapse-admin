@@ -19,12 +19,9 @@ vi.mock('./utils/api', () => ({
 
 import {
   changeMemberRoleFn,
-  createMemberImportFn,
-  dryRunMemberImportFn,
   getUserDetailFn,
   getUserUsageFn,
   getMembersFn,
-  inviteMemberFn,
   resendMemberVerificationFn,
 } from './users';
 
@@ -107,54 +104,6 @@ describe('member admin server functions', () => {
     expect(apiFetch).toHaveBeenCalledWith('/api/platform/users/member-1/resend-verification', {
       method: 'POST',
       body: JSON.stringify({ tenantId: 'tenant-a' }),
-    });
-  });
-
-  it('posts invite requests to the tenant member invite endpoint', async () => {
-    apiFetch.mockResolvedValueOnce(jsonResponse(201, { inviteLink: null }));
-
-    await inviteMemberFn({
-      data: {
-        name: 'Ada Lovelace',
-        email: 'ada@example.com',
-        role: 'INSTITUTION_ADMIN',
-      },
-    });
-
-    expect(apiFetch).toHaveBeenCalledWith('/api/admin/users/invite', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: 'Ada Lovelace',
-        email: 'ada@example.com',
-        role: 'INSTITUTION_ADMIN',
-      }),
-    });
-  });
-
-  it('posts dry-run CSV payloads to the import preview endpoint', async () => {
-    apiFetch.mockResolvedValueOnce(
-      jsonResponse(200, {
-        summary: { totalRows: 1, invitesCreated: 1, membersUpdated: 0, skipped: 0, errors: 0 },
-        results: [],
-      }),
-    );
-
-    await dryRunMemberImportFn({ data: { csvText: 'email,name\nada@example.com,Ada' } });
-
-    expect(apiFetch).toHaveBeenCalledWith('/api/admin/users/invites/import/dry-run', {
-      method: 'POST',
-      body: JSON.stringify({ csvText: 'email,name\nada@example.com,Ada' }),
-    });
-  });
-
-  it('posts CSV payloads to create import jobs', async () => {
-    apiFetch.mockResolvedValueOnce(jsonResponse(201, { job: { id: 'job-1' } }));
-
-    await createMemberImportFn({ data: { csvText: 'email\nada@example.com' } });
-
-    expect(apiFetch).toHaveBeenCalledWith('/api/admin/users/invites/import', {
-      method: 'POST',
-      body: JSON.stringify({ csvText: 'email\nada@example.com' }),
     });
   });
 

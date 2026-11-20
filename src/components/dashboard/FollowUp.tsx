@@ -1,12 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Clock, CircleX } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type * as t from '@/types';
-import { formatRelativeTime, notifyError, notifySuccess } from '@/utils';
+import { formatRelativeTime } from '@/utils';
 import { useMemberStatusCounts, useLocalize } from '@/hooks';
-import { ResendInvitesDialog } from '@/components/users';
-import { getMembersFn, resendInviteFn } from '@/server';
+import { getMembersFn } from '@/server';
 import { Card } from '@/components/shared';
 
 const SHOWN = 4;
@@ -18,10 +17,9 @@ function byExpiry(a: t.InstitutionMember, b: t.InstitutionMember): number {
 }
 
 /** Pending invites closest to expiring, plus the count of ones that already lapsed. */
-export function FollowUp({ canManage }: { canManage: boolean }) {
+export function FollowUp() {
   const localize = useLocalize();
   const counts = useMemberStatusCounts();
-  const [resendAllOpen, setResendAllOpen] = useState(false);
   const pending = useQuery({
     queryKey: ['members', 'pending-invites'],
     queryFn: () =>
@@ -55,7 +53,7 @@ export function FollowUp({ canManage }: { canManage: boolean }) {
       ) : (
         <ul className="m-0 flex list-none flex-col p-0">
           {soonest.map((invite) => (
-            <InviteRow key={invite.id} invite={invite} canManage={canManage} />
+            <InviteRow key={invite.id} invite={invite} />
           ))}
         </ul>
       )}
@@ -65,39 +63,14 @@ export function FollowUp({ canManage }: { canManage: boolean }) {
           <span className="flex-1 text-[13px] font-semibold">
             {localize('com_dash_invites_expired', { count: expired })}
           </span>
-          {canManage ? (
-            <button
-              type="button"
-              onClick={() => setResendAllOpen(true)}
-              className="h-8 cursor-pointer rounded-md border border-(--syn-danger-border) bg-(--syn-surface) px-2.5 text-xs font-bold text-(--syn-danger-fg)"
-            >
-              {localize('com_dash_resend_all')}
-            </button>
-          ) : null}
         </div>
       ) : null}
-      <ResendInvitesDialog
-        open={resendAllOpen}
-        onClose={() => setResendAllOpen(false)}
-        platform={false}
-        tenantFilter="all"
-      />
     </Card>
   );
 }
 
-function InviteRow({ invite, canManage }: { invite: t.InstitutionMember; canManage: boolean }) {
+function InviteRow({ invite }: { invite: t.InstitutionMember }) {
   const localize = useLocalize();
-  const queryClient = useQueryClient();
-  const resend = useMutation({
-    mutationFn: () => resendInviteFn({ data: { inviteId: invite.id } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] });
-      notifySuccess(localize('com_dash_invite_resent', { email: invite.email }));
-    },
-    onError: (error: Error) => notifyError(error.message),
-  });
-
   return (
     <li className="flex items-center gap-2.5 border-t border-(--cui-color-stroke-muted) py-2.5 first:border-t-0">
       <Clock aria-hidden="true" size={16} className="shrink-0 text-(--syn-warning-fg)" />
@@ -107,17 +80,6 @@ function InviteRow({ invite, canManage }: { invite: t.InstitutionMember; canMana
           {localize('com_dash_invite_expires', { when: formatRelativeTime(invite.expiresAt) })}
         </span>
       </div>
-      {canManage ? (
-        <button
-          type="button"
-          disabled={resend.isPending}
-          onClick={() => resend.mutate()}
-          aria-label={localize('com_dash_resend_to', { email: invite.email })}
-          className="h-8 cursor-pointer rounded-md border border-(--cui-color-stroke-default) bg-transparent px-2.5 text-xs font-bold text-(--cui-color-text-default) hover:bg-(--cui-color-background-hover) disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {localize('com_dash_resend')}
-        </button>
-      ) : null}
     </li>
   );
 }

@@ -77,7 +77,6 @@ vi.mock('@/server', () => ({
   listPlatformInstitutionPoliciesFn: vi.fn().mockResolvedValue({ policies: [] }),
   previewPlatformInstitutionPolicyFn: vi.fn(),
   createPlatformInstitutionPolicyFn: vi.fn(),
-  revokePlatformInstitutionAdminFn: vi.fn(),
   updatePlatformInstitutionAgentAccessFn: vi.fn(),
   reconcilePlatformInstitutionAgentAccessFn: vi.fn(),
 }));

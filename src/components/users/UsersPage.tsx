@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Download, Plus, Send, Upload } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { getRouteApi } from '@tanstack/react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -12,6 +12,7 @@ import {
 } from '@/hooks';
 import {
   PermissionsUnavailable,
+  BdrenNote,
   InitialsAvatar,
   AccessDenied,
   LoadingState,
@@ -24,9 +25,6 @@ import {
 } from '@/components/shared';
 import { cn, datedFilename, downloadBlob, formatUsageNumber, notifyError } from '@/utils';
 import { exportMembersFn, getMembersFn, listPlatformInstitutionsFn } from '@/server';
-import { ImportMembersDialog } from './ImportMembersDialog';
-import { ResendInvitesDialog } from './ResendInvitesDialog';
-import { CreateUserDialog } from './CreateUserDialog';
 import { SystemCapabilities } from '@/constants';
 import { MemberPanel } from './MemberPanel';
 
@@ -83,9 +81,6 @@ export function UsersPage() {
   /** The input follows every keystroke; the query key follows only the settled
    *  value, so typing a name issues one request rather than one per letter. */
   const search = useDebouncedFilter('', () => setPage(1));
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
-  const [resendOpen, setResendOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [selected, setSelected] = useState<t.InstitutionMember | null>(null);
   const statusCounts = useMemberStatusCounts();
@@ -182,6 +177,7 @@ export function UsersPage() {
   return (
     <div className="flex flex-1 flex-col overflow-auto">
       <div className="flex w-full flex-col gap-4 p-6">
+        <BdrenNote />
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SeatLine summary={data.summary} isPlatformSuperadmin={isPlatformSuperadmin} />
           <div className="flex flex-wrap gap-2">
@@ -191,31 +187,6 @@ export function UsersPage() {
               icon={<Download size={16} />}
               label={localize(exporting ? 'com_members_exporting' : 'com_members_export')}
             />
-            <ToolbarButton
-              onClick={() => setResendOpen(true)}
-              disabled={!canManage}
-              icon={<Send size={16} />}
-              label={localize('com_members_resend_invites')}
-            />
-            {!isPlatformSuperadmin ? (
-              <>
-                <ToolbarButton
-                  onClick={() => setImportOpen(true)}
-                  disabled={!canManage}
-                  icon={<Upload size={16} />}
-                  label={localize('com_members_import')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setInviteOpen(true)}
-                  disabled={!canManage}
-                  className="flex h-10 cursor-pointer items-center gap-2 rounded-lg border-0 bg-(--cui-color-accent) px-4 text-sm font-bold text-(--syn-on-accent) transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Plus aria-hidden="true" size={16} strokeWidth={2.4} />
-                  {localize('com_users_invite_member')}
-                </button>
-              </>
-            ) : null}
           </div>
         </div>
 
@@ -420,14 +391,6 @@ export function UsersPage() {
         </div>
       </div>
 
-      <CreateUserDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
-      <ImportMembersDialog open={importOpen} onClose={() => setImportOpen(false)} />
-      <ResendInvitesDialog
-        open={resendOpen}
-        onClose={() => setResendOpen(false)}
-        platform={isPlatformSuperadmin}
-        tenantFilter={tenantFilter}
-      />
     </div>
   );
 }

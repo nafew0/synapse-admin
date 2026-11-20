@@ -31,10 +31,7 @@ vi.mock('@/hooks/useCapabilities', () => ({
   useCapabilities: () => ({ hasCapability: () => true, isLoading: false, isError: false }),
 }));
 
-vi.mock('../CreateUserDialog', () => ({ CreateUserDialog: () => null }));
-vi.mock('../ImportMembersDialog', () => ({ ImportMembersDialog: () => null }));
 vi.mock('../MemberPanel', () => ({ MemberPanel: () => null }));
-vi.mock('../ResendInvitesDialog', () => ({ ResendInvitesDialog: () => null }));
 vi.mock('../../access', () => ({ ConfirmDialog: () => null }));
 
 const pending = vi.hoisted(() => ({ release: [] as Array<() => void> }));
@@ -73,8 +70,8 @@ vi.mock('@/server', () => ({
   ),
   exportMembersFn: vi.fn(),
   listPlatformInstitutionsFn: vi.fn().mockResolvedValue({ institutions: [] }),
-  removeMemberFn: vi.fn(),
   suspendMemberFn: vi.fn(),
+  getBdrenAdminUrlFn: vi.fn().mockResolvedValue('https://bdren.ai/admin'),
 }));
 
 const { UsersPage } = await import('../UsersPage');
