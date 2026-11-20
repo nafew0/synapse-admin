@@ -1743,5 +1743,5 @@
   "com_recon_invoice_invalid": "Enter a month and an amount.",
   "com_recon_month_open": "Month not finished",
   "com_recon_none": "No data in this period.",
-  "com_recon_flagged_days": "{{count}} days outside the limit"
+  "com_recon_flagged_days": "Days outside the limit: {{count}}"
 }

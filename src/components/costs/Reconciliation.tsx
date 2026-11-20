@@ -36,10 +36,12 @@ function StatusBadge({ status, pct }: { status: t.ReconcileStatus; pct: number }
 const formatPct = (value: number | null): string =>
   value === null ? '—' : `${value >= 0 ? '+' : ''}${(value * 100).toFixed(1)}%`;
 
+/** Money or credits, with the minus sign in front of the symbol ("-$0.30", not "$-0.30"). */
 function useAmount(unit: 'usd' | 'credits') {
   return (value: number | null): string => {
     if (value === null) return '—';
-    return unit === 'usd' ? formatUsd(value) : formatCompact(value);
+    const text = unit === 'usd' ? formatUsd(Math.abs(value)) : formatCompact(Math.abs(value));
+    return value < 0 ? `-${text}` : text;
   };
 }
 
@@ -50,9 +52,11 @@ interface RowProps {
   amount: (value: number | null) => string;
   pct: number;
   strong?: boolean;
+  /** Replaces the status badge, e.g. for a month that is not finished. */
+  badge?: string;
 }
 
-function FigureRow({ label, figure, coverage, amount, pct, strong }: RowProps) {
+function FigureRow({ label, figure, coverage, amount, pct, strong, badge }: RowProps) {
   return (
     <tr className={`border-t border-(--cui-color-stroke-muted) ${strong ? 'font-semibold' : ''}`}>
       <td className="py-2.5 pr-4">
@@ -66,7 +70,13 @@ function FigureRow({ label, figure, coverage, amount, pct, strong }: RowProps) {
       <td className="pr-4 text-right">{amount(figure.gap)}</td>
       <td className="pr-4 text-right">{formatPct(figure.gapPct)}</td>
       <td className="text-right">
-        <StatusBadge status={figure.status} pct={pct} />
+        {badge ? (
+          <span className="inline-block rounded-full bg-(--cui-color-background-muted) px-2.5 py-0.5 text-xs font-semibold text-(--cui-color-text-muted)">
+            {badge}
+          </span>
+        ) : (
+          <StatusBadge status={figure.status} pct={pct} />
+        )}
       </td>
     </tr>
   );
@@ -100,6 +110,7 @@ function ServiceBlock({ service, pct }: { service: t.ReconcileService; pct: numb
     row.daysCovered < row.days
       ? localize('com_recon_days_covered', { covered: row.daysCovered, days: row.days })
       : undefined;
+  const weeks = service.weeks.filter((week) => week.status !== 'empty');
   const unit = service.unit === 'credits' ? ` (${localize('com_recon_credits')})` : '';
   return (
     <Card
@@ -112,7 +123,7 @@ function ServiceBlock({ service, pct }: { service: t.ReconcileService; pct: numb
         </div>
       }
     >
-      {service.weeks.length === 0 ? (
+      {weeks.length === 0 ? (
         <EmptyState message={localize('com_recon_none')} />
       ) : (
         <DataTable head={head} numericFrom={1} minWidth="min-w-180">
@@ -124,7 +135,7 @@ function ServiceBlock({ service, pct }: { service: t.ReconcileService; pct: numb
             amount={amount}
             pct={pct}
           />
-          {service.weeks.map((week) => (
+          {weeks.map((week) => (
             <FigureRow
               key={week.period}
               label={`${localize('com_recon_week')} ${week.period}`}
@@ -168,6 +179,7 @@ function UnstructuredCard({
   pct: number;
 }) {
   const localize = useLocalize();
+  const usd = useAmount('usd');
   const [month, setMonth] = useState(months[months.length - 1]?.period ?? '');
   const [amount, setAmount] = useState('');
   const [pages, setPages] = useState('');
@@ -226,8 +238,13 @@ function UnstructuredCard({
               key={row.period}
               label={row.period}
               figure={row}
-              amount={(value) => (value === null ? '—' : formatUsd(value))}
+              amount={usd}
               pct={pct}
+              badge={
+                row.provider !== null && row.status === 'empty'
+                  ? localize('com_recon_month_open')
+                  : undefined
+              }
             />
           ))}
         </DataTable>

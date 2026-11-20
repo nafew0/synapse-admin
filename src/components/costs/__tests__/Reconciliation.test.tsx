@@ -132,7 +132,7 @@ describe('Reconciliation', () => {
     expect(firecrawl.getAllByText('Outside 3%').length).toBeGreaterThan(0);
     expect(firecrawl.getAllByText('+20.0%').length).toBeGreaterThan(0);
     expect(firecrawl.getAllByText('5 of 7 days')).toHaveLength(2);
-    expect(firecrawl.getByText('1 days outside the limit')).toBeInTheDocument();
+    expect(firecrawl.getByText('Days outside the limit: 1')).toBeInTheDocument();
   });
 
   it('asks for the range it is given', async () => {
@@ -214,6 +214,25 @@ describe('Reconciliation', () => {
       pages: 1200,
       note: 'inv 118',
     });
+  });
+
+  it('marks a month that is not finished instead of judging it', async () => {
+    server.getFn.mockResolvedValue(
+      reconciliation({
+        unstructured: [
+          {
+            ...period('2026-11', figure(9, 9.1, 'empty'), 0, 1),
+            pages: null,
+            note: null,
+            enteredBy: null,
+            enteredAt: null,
+          },
+        ],
+      }),
+    );
+    renderView();
+    expect(await screen.findByText('Month not finished')).toBeInTheDocument();
+    expect(screen.getByText('-$0.10')).toBeInTheDocument();
   });
 
   it('does not save without an amount', async () => {
