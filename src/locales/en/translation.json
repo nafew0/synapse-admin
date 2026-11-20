@@ -1615,6 +1615,7 @@
   "com_alerts_desc": "Checked every 15 minutes: OpenRouter key and credit, Firecrawl credits and spend spikes. Shown here only; no email is sent.",
   "com_nav_costs": "Costs",
   "com_costs_title": "Costs",
+  "com_costs_share": "Share of cost",
   "com_costs_total": "Total cost",
   "com_costs_billable": "Billable (user work)",
   "com_costs_platform": "Our own cost",

@@ -80,7 +80,7 @@ export function InstitutionTable({ institutions, onOpen }: InstitutionsProps) {
                   {localize('com_costs_cost_usd')}
                 </th>
                 <th scope="col" className="py-2 pr-4 text-right font-medium">
-                  {localize('com_usage_share')}
+                  {localize('com_costs_share')}
                 </th>
                 <th scope="col" className="py-2 pr-4 text-right">
                   {head('members', localize('com_costs_active_members'))}

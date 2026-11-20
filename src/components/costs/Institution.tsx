@@ -24,6 +24,7 @@ import {
 import { useCostInstitution, useCostRequests, useLocalize } from '@/hooks';
 import { CostFilters } from './Filters';
 import { useCostRange } from './useCostRange';
+import type { CostRangeControl } from './useCostRange';
 
 const MEMBER_ROWS = 20;
 
@@ -196,9 +197,16 @@ function ServiceShares({ detail }: { detail: t.CostInstitutionDetail }) {
 }
 
 /** One institution's cost by service, model, member and day, plus its costliest ledger rows. */
-export function InstitutionCost({ tenantId }: { tenantId: string }) {
+export function InstitutionCost({
+  tenantId,
+  control,
+}: {
+  tenantId: string;
+  control?: CostRangeControl;
+}) {
   const localize = useLocalize();
-  const { preset, setPreset, range } = useCostRange();
+  const own = useCostRange();
+  const { preset, setPreset, range } = control ?? own;
   const detail = useCostInstitution(tenantId, range);
   const requests = useCostRequests(tenantId, range);
 

@@ -33,7 +33,7 @@ export function ServiceTable({ services }: { services: t.CostServiceRow[] }) {
             localize('com_usage_requests'),
             localize('com_costs_cost_bdt'),
             localize('com_costs_cost_usd'),
-            localize('com_usage_share'),
+            localize('com_costs_share'),
             localize('com_costs_top_institutions'),
           ]}
         >

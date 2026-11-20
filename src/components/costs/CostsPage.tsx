@@ -1,15 +1,8 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft, CircleDollarSign, Receipt, Users, UserRound } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
+import { ArrowLeft, CircleDollarSign, Receipt, Users, UserRound } from 'lucide-react';
 import type * as t from '@/types';
-import {
-  formatBdt,
-  formatDayLabel,
-  formatUsd,
-  serviceColor,
-  serviceLabelKey,
-  sortedServices,
-} from '@/utils';
+import { formatBdt, formatDayLabel, formatUsd, serviceColor, serviceLabelKey } from '@/utils';
 import {
   AccessDenied,
   Card,
@@ -126,9 +119,7 @@ function DailyCost({ range }: { range: t.DateRange }) {
             formatDay={formatDayLabel}
             height={260}
           />
-          <ChartLegend
-            items={series.slice(0, 8).map((item) => ({ label: item.label, color: item.color }))}
-          />
+          <ChartLegend items={series.map((item) => ({ label: item.label, color: item.color }))} />
         </>
       ) : null}
     </Card>
@@ -150,7 +141,6 @@ function Overview({ summary }: { summary: t.CostSummary }) {
   const localize = useLocalize();
   const { current, previous, change } = summary;
   const suffix = localize('com_costs_vs_previous', { count: summary.range.days });
-  const top = sortedServices(current.byService)[0];
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <StatTile
@@ -170,9 +160,7 @@ function Overview({ summary }: { summary: t.CostSummary }) {
         icon={<Receipt size={16} />}
         label={localize('com_costs_billable')}
         value={formatUsd(current.cost.billableUsd)}
-        detail={`${localize('com_costs_platform')}: ${formatUsd(current.cost.platformUsd)}${
-          top ? ` · ${localize(serviceLabelKey(top))}` : ''
-        }`}
+        detail={`${localize('com_costs_platform')}: ${formatUsd(current.cost.platformUsd)}`}
       />
       <StatTile
         index={2}
@@ -219,11 +207,19 @@ export function CostsPage() {
       <>
         <Overview summary={summary.data} />
         <DailyCost range={range} />
-        <ServiceTable services={services.data?.services ?? []} />
-        <InstitutionTable
-          institutions={institutions.data?.institutions ?? []}
-          onOpen={setSelected}
-        />
+        {services.isError ? (
+          <EmptyState message={services.error?.message || localize('com_costs_failed')} />
+        ) : (
+          <ServiceTable services={services.data?.services ?? []} />
+        )}
+        {institutions.isError ? (
+          <EmptyState message={institutions.error?.message || localize('com_costs_failed')} />
+        ) : (
+          <InstitutionTable
+            institutions={institutions.data?.institutions ?? []}
+            onOpen={setSelected}
+          />
+        )}
         <FixedCosts summary={summary.data} />
         <CostSettingsCard />
       </>
@@ -256,7 +252,7 @@ export function CostsPage() {
               </Link>
             ) : null}
           </div>
-          <InstitutionCost tenantId={selected.tenantId} />
+          <InstitutionCost tenantId={selected.tenantId} control={{ preset, setPreset, range }} />
         </div>
       </div>
     );
