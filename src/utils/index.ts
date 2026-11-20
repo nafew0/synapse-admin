@@ -11,3 +11,4 @@ export * from './costs';
 export * from './trend';
 export * from './packages';
 export * from './attention';
+export * from './prices';

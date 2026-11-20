@@ -19,3 +19,4 @@ export type * from './billing';
 export type * from './charts';
 export type * from './alerts';
 export type * from './costs';
+export type * from './prices';

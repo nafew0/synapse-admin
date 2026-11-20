@@ -23,6 +23,7 @@ const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/help': 'com_help_title',
   '/alerts': 'com_alerts_title',
   '/costs': 'com_costs_title',
+  '/prices': 'com_prices_title',
 };
 
 
