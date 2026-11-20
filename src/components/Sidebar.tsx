@@ -17,6 +17,7 @@ import {
   Settings2,
   ShieldCheck,
   Sun,
+  Tags,
   UserRound,
   Users,
 } from 'lucide-react';
@@ -89,6 +90,7 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
         { labelKey: 'com_nav_agents', path: '/agents', icon: Bot, superadminOnly: true },
         { labelKey: 'com_nav_packages', path: '/packages', icon: Package, superadminOnly: true },
         { labelKey: 'com_nav_costs', path: '/costs', icon: Coins, superadminOnly: true },
+        { labelKey: 'com_nav_prices', path: '/prices', icon: Tags, superadminOnly: true },
         { labelKey: 'com_nav_alerts', path: '/alerts', icon: Bell, superadminOnly: true },
         {
           labelKey: 'com_nav_configuration',

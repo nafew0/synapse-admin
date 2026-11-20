@@ -1078,6 +1078,12 @@ input[type='number'].config-input::-webkit-outer-spin-button {
   overscroll-behavior: contain;
 }
 
+/* A form dialog opened from a drawer (z-overlay) must paint above it. */
+body > .modal-frost,
+body > div:has(+ .modal-frost) {
+  z-index: var(--z-overlay);
+}
+
 body > div:has(+ .modal-frost) {
   background: rgba(0, 0, 0, 0.35) !important;
   backdrop-filter: blur(4px) !important;
