@@ -23,6 +23,8 @@ export interface PlatformInstitution {
   usagePackage?: InstitutionUsagePackage | null;
   limits?: PlatformInstitutionLimits;
   stats?: PlatformInstitutionStats;
+  /** The linked bdren.ai organization id, set from the Synapse side. */
+  bdrenOrganizationId?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -152,40 +154,6 @@ export interface UsagePolicyPreview {
   impacts: UsagePolicyPreviewImpact[];
   blocked: UsagePolicyPreviewImpact[];
   requiresOverageAcknowledgement: boolean;
-}
-
-export interface PlatformInstitutionAdminResult {
-  user?: {
-    id?: string;
-    _id?: string;
-    email?: string;
-    role?: string;
-  };
-  invite?: {
-    _id?: string;
-    email?: string;
-    status?: string;
-    requestedRole?: string;
-    accountScope?: 'institution' | 'standalone';
-    username?: string | null;
-    inviteLink?: string | null;
-  };
-  inviteLink?: string | null;
-}
-
-export interface CreatePlatformInstitutionInput {
-  tenantId: string;
-  name: string;
-  slug?: string;
-  adminEmail?: string;
-  adminName?: string;
-  maxActiveMembers?: number | null;
-}
-
-export interface AssignPlatformInstitutionAdminInput {
-  tenantId: string;
-  email: string;
-  name?: string;
 }
 
 export interface PlatformAgentAccessAgent {

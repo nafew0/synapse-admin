@@ -13,7 +13,6 @@ import {
   listPlatformInstitutionPoliciesFn,
   previewPlatformInstitutionPolicyFn,
   reconcilePlatformInstitutionAgentAccessFn,
-  revokePlatformInstitutionAdminFn,
   updatePlatformInstitutionAgentAccessFn,
   updatePlatformInstitutionOcrAccessFn,
 } from '@/server';
@@ -133,16 +132,6 @@ export function InstitutionDetailPage() {
     onError: (error: Error) => notifyError(error.message),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ocrAccessKey }),
   });
-  const revokeAdminMutation = useMutation({
-    mutationFn: (admin: t.InstitutionMember) =>
-      revokePlatformInstitutionAdminFn({ data: { tenantId, userId: admin.id } }),
-    onSuccess: () => {
-      notifySuccess('Institution administrator revoked');
-      queryClient.invalidateQueries({ queryKey: ['platformInstitutionAdmins', tenantId] });
-      queryClient.invalidateQueries({ queryKey: ['platformInstitutionMembers', tenantId] });
-    },
-    onError: (error: Error) => notifyError(error.message),
-  });
   const agentAccessMutation = useMutation({
     mutationFn: (input: { agentId: string; enabled: boolean }) =>
       updatePlatformInstitutionAgentAccessFn({ data: { tenantId, ...input } }),
@@ -251,8 +240,6 @@ export function InstitutionDetailPage() {
             admins={admins}
             adminsLoading={adminsQuery.isLoading}
             adminsError={adminsQuery.isError}
-            revoking={revokeAdminMutation.isPending}
-            onRevokeAdmin={(admin) => revokeAdminMutation.mutate(admin)}
             onOpenMembers={() => setTab('members')}
           />
           <InstitutionPackageCard tenantId={tenantId} current={institution.usagePackage} />
