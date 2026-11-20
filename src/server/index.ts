@@ -14,3 +14,4 @@ export * from './packages';
 export * from './alerts';
 export * from './costs';
 export * from './prices';
+export * from './kb';

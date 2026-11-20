@@ -16,6 +16,7 @@ import { Route as AppUsersRouteImport } from './routes/_app/users'
 import { Route as AppUsageRouteImport } from './routes/_app/usage'
 import { Route as AppPricesRouteImport } from './routes/_app/prices'
 import { Route as AppPackagesRouteImport } from './routes/_app/packages'
+import { Route as AppKnowledgeRouteImport } from './routes/_app/knowledge'
 import { Route as AppInstitutionsRouteImport } from './routes/_app/institutions'
 import { Route as AppIndividualsRouteImport } from './routes/_app/individuals'
 import { Route as AppHelpRouteImport } from './routes/_app/help'
@@ -61,6 +62,11 @@ const AppPricesRoute = AppPricesRouteImport.update({
 const AppPackagesRoute = AppPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppKnowledgeRoute = AppKnowledgeRouteImport.update({
+  id: '/knowledge',
+  path: '/knowledge',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInstitutionsRoute = AppInstitutionsRouteImport.update({
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/help': typeof AppHelpRoute
   '/individuals': typeof AppIndividualsRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
+  '/knowledge': typeof AppKnowledgeRoute
   '/packages': typeof AppPackagesRoute
   '/prices': typeof AppPricesRoute
   '/usage': typeof AppUsageRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/help': typeof AppHelpRoute
   '/individuals': typeof AppIndividualsRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
+  '/knowledge': typeof AppKnowledgeRoute
   '/packages': typeof AppPackagesRoute
   '/prices': typeof AppPricesRoute
   '/usage': typeof AppUsageRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/_app/help': typeof AppHelpRoute
   '/_app/individuals': typeof AppIndividualsRoute
   '/_app/institutions': typeof AppInstitutionsRouteWithChildren
+  '/_app/knowledge': typeof AppKnowledgeRoute
   '/_app/packages': typeof AppPackagesRoute
   '/_app/prices': typeof AppPricesRoute
   '/_app/usage': typeof AppUsageRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/individuals'
     | '/institutions'
+    | '/knowledge'
     | '/packages'
     | '/prices'
     | '/usage'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/individuals'
     | '/institutions'
+    | '/knowledge'
     | '/packages'
     | '/prices'
     | '/usage'
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/_app/help'
     | '/_app/individuals'
     | '/_app/institutions'
+    | '/_app/knowledge'
     | '/_app/packages'
     | '/_app/prices'
     | '/_app/usage'
@@ -305,6 +317,13 @@ declare module '@tanstack/react-router' {
       path: '/packages'
       fullPath: '/packages'
       preLoaderRoute: typeof AppPackagesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/knowledge': {
+      id: '/_app/knowledge'
+      path: '/knowledge'
+      fullPath: '/knowledge'
+      preLoaderRoute: typeof AppKnowledgeRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/institutions': {
@@ -427,6 +446,7 @@ interface AppRouteChildren {
   AppHelpRoute: typeof AppHelpRoute
   AppIndividualsRoute: typeof AppIndividualsRoute
   AppInstitutionsRoute: typeof AppInstitutionsRouteWithChildren
+  AppKnowledgeRoute: typeof AppKnowledgeRoute
   AppPackagesRoute: typeof AppPackagesRoute
   AppPricesRoute: typeof AppPricesRoute
   AppUsageRoute: typeof AppUsageRoute
@@ -444,6 +464,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHelpRoute: AppHelpRoute,
   AppIndividualsRoute: AppIndividualsRoute,
   AppInstitutionsRoute: AppInstitutionsRouteWithChildren,
+  AppKnowledgeRoute: AppKnowledgeRoute,
   AppPackagesRoute: AppPackagesRoute,
   AppPricesRoute: AppPricesRoute,
   AppUsageRoute: AppUsageRoute,

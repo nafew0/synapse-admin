@@ -6,8 +6,9 @@ import { useCapabilities, useCommandMenu, useMediaQuery, useLocalize } from '@/h
 import { CommandMenu } from '@/components/CommandMenu';
 import { Banner } from '@/components/banner';
 import { AlertsBanner } from '@/components/alerts';
+import { KbWatcher } from '@/components/knowledge';
 import { AccessDenied } from '@/components/shared';
-import { SystemCapabilities } from '@/constants';
+import { READ_KB_CAPABILITY, SystemCapabilities } from '@/constants';
 import { Sidebar } from '@/components/Sidebar';
 import { verifyAdminTokenFn } from '@/server';
 import { Header } from '@/components/Header';
@@ -18,6 +19,7 @@ const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/institutions': 'com_institutions_title',
   '/users': 'com_users_title',
   '/usage': 'com_usage_title',
+  '/knowledge': 'com_kb_title',
   '/access': 'com_access_title',
   '/grants': 'com_grants_title',
   '/help': 'com_help_title',
@@ -25,7 +27,6 @@ const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/costs': 'com_costs_title',
   '/prices': 'com_prices_title',
 };
-
 
 /** Institution admins manage members and groups; the platform-wide names describe a superadmin's view. */
 function scopedTitleKey(
@@ -109,6 +110,9 @@ function AppLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         {user?.isPlatformSuperadmin === true && <AlertsBanner />}
         {user?.id && <Banner userId={user.id} />}
+        {user?.id && !user.isPlatformSuperadmin && hasCapability(READ_KB_CAPABILITY) && (
+          <KbWatcher />
+        )}
         <Header title={title} onSearchClick={() => setOpen(true)} />
         <main className="flex min-h-0 flex-1 flex-col overflow-auto">
           <Outlet />
