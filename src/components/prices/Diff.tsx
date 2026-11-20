@@ -40,7 +40,7 @@ export function DiffTable({ lines, className }: { lines: t.PriceDiffLine[]; clas
   const localize = useLocalize();
   return (
     <div className={cn('overflow-x-auto', className)}>
-      <table className="w-full min-w-96 border-collapse text-left text-[13px] tabular-nums">
+      <table className="w-full border-collapse text-left text-[13px] tabular-nums">
         <thead>
           <tr className="text-xs text-(--cui-color-text-muted)">
             <th scope="col" className="py-2 pr-3 font-medium">

@@ -195,7 +195,9 @@ function History({ detail }: { detail: t.ModelPriceDetail }) {
             <span className="w-full tabular-nums">
               {formatRate(item.price.prompt)} / {formatRate(item.price.completion)}
               {item.note ? (
-                <span className="ml-2 text-xs text-(--cui-color-text-muted)">{item.note}</span>
+                <span className="block text-xs break-words text-(--cui-color-text-muted)">
+                  {item.note}
+                </span>
               ) : null}
             </span>
           </li>

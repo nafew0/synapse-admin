@@ -14,13 +14,13 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppUsersRouteImport } from './routes/_app/users'
 import { Route as AppUsageRouteImport } from './routes/_app/usage'
+import { Route as AppPricesRouteImport } from './routes/_app/prices'
 import { Route as AppPackagesRouteImport } from './routes/_app/packages'
 import { Route as AppInstitutionsRouteImport } from './routes/_app/institutions'
 import { Route as AppIndividualsRouteImport } from './routes/_app/individuals'
 import { Route as AppHelpRouteImport } from './routes/_app/help'
 import { Route as AppGrantsRouteImport } from './routes/_app/grants'
 import { Route as AppCostsRouteImport } from './routes/_app/costs'
-import { Route as AppPricesRouteImport } from './routes/_app/prices'
 import { Route as AppAlertsRouteImport } from './routes/_app/alerts'
 import { Route as AppAgentsRouteImport } from './routes/_app/agents'
 import { Route as AppAccessRouteImport } from './routes/_app/access'
@@ -53,6 +53,11 @@ const AppUsageRoute = AppUsageRouteImport.update({
   path: '/usage',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPricesRoute = AppPricesRouteImport.update({
+  id: '/prices',
+  path: '/prices',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPackagesRoute = AppPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
@@ -81,11 +86,6 @@ const AppGrantsRoute = AppGrantsRouteImport.update({
 const AppCostsRoute = AppCostsRouteImport.update({
   id: '/costs',
   path: '/costs',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPricesRoute = AppPricesRouteImport.update({
-  id: '/prices',
-  path: '/prices',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAlertsRoute = AppAlertsRouteImport.update({
@@ -131,12 +131,12 @@ export interface FileRoutesByFullPath {
   '/agents': typeof AppAgentsRoute
   '/alerts': typeof AppAlertsRoute
   '/costs': typeof AppCostsRoute
-  '/prices': typeof AppPricesRoute
   '/grants': typeof AppGrantsRoute
   '/help': typeof AppHelpRoute
   '/individuals': typeof AppIndividualsRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
   '/packages': typeof AppPackagesRoute
+  '/prices': typeof AppPricesRoute
   '/usage': typeof AppUsageRoute
   '/users': typeof AppUsersRouteWithChildren
   '/institutions/$tenantId': typeof AppInstitutionsTenantIdRoute
@@ -150,12 +150,12 @@ export interface FileRoutesByTo {
   '/agents': typeof AppAgentsRoute
   '/alerts': typeof AppAlertsRoute
   '/costs': typeof AppCostsRoute
-  '/prices': typeof AppPricesRoute
   '/grants': typeof AppGrantsRoute
   '/help': typeof AppHelpRoute
   '/individuals': typeof AppIndividualsRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
   '/packages': typeof AppPackagesRoute
+  '/prices': typeof AppPricesRoute
   '/usage': typeof AppUsageRoute
   '/users': typeof AppUsersRouteWithChildren
   '/': typeof AppIndexRoute
@@ -172,12 +172,12 @@ export interface FileRoutesById {
   '/_app/agents': typeof AppAgentsRoute
   '/_app/alerts': typeof AppAlertsRoute
   '/_app/costs': typeof AppCostsRoute
-  '/_app/prices': typeof AppPricesRoute
   '/_app/grants': typeof AppGrantsRoute
   '/_app/help': typeof AppHelpRoute
   '/_app/individuals': typeof AppIndividualsRoute
   '/_app/institutions': typeof AppInstitutionsRouteWithChildren
   '/_app/packages': typeof AppPackagesRoute
+  '/_app/prices': typeof AppPricesRoute
   '/_app/usage': typeof AppUsageRoute
   '/_app/users': typeof AppUsersRouteWithChildren
   '/_app/': typeof AppIndexRoute
@@ -195,12 +195,12 @@ export interface FileRouteTypes {
     | '/agents'
     | '/alerts'
     | '/costs'
-    | '/prices'
     | '/grants'
     | '/help'
     | '/individuals'
     | '/institutions'
     | '/packages'
+    | '/prices'
     | '/usage'
     | '/users'
     | '/institutions/$tenantId'
@@ -214,12 +214,12 @@ export interface FileRouteTypes {
     | '/agents'
     | '/alerts'
     | '/costs'
-    | '/prices'
     | '/grants'
     | '/help'
     | '/individuals'
     | '/institutions'
     | '/packages'
+    | '/prices'
     | '/usage'
     | '/users'
     | '/'
@@ -235,12 +235,12 @@ export interface FileRouteTypes {
     | '/_app/agents'
     | '/_app/alerts'
     | '/_app/costs'
-    | '/_app/prices'
     | '/_app/grants'
     | '/_app/help'
     | '/_app/individuals'
     | '/_app/institutions'
     | '/_app/packages'
+    | '/_app/prices'
     | '/_app/usage'
     | '/_app/users'
     | '/_app/'
@@ -293,6 +293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsageRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/prices': {
+      id: '/_app/prices'
+      path: '/prices'
+      fullPath: '/prices'
+      preLoaderRoute: typeof AppPricesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/packages': {
       id: '/_app/packages'
       path: '/packages'
@@ -333,13 +340,6 @@ declare module '@tanstack/react-router' {
       path: '/costs'
       fullPath: '/costs'
       preLoaderRoute: typeof AppCostsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/prices': {
-      id: '/_app/prices'
-      path: '/prices'
-      fullPath: '/prices'
-      preLoaderRoute: typeof AppPricesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/alerts': {
@@ -423,12 +423,12 @@ interface AppRouteChildren {
   AppAgentsRoute: typeof AppAgentsRoute
   AppAlertsRoute: typeof AppAlertsRoute
   AppCostsRoute: typeof AppCostsRoute
-  AppPricesRoute: typeof AppPricesRoute
   AppGrantsRoute: typeof AppGrantsRoute
   AppHelpRoute: typeof AppHelpRoute
   AppIndividualsRoute: typeof AppIndividualsRoute
   AppInstitutionsRoute: typeof AppInstitutionsRouteWithChildren
   AppPackagesRoute: typeof AppPackagesRoute
+  AppPricesRoute: typeof AppPricesRoute
   AppUsageRoute: typeof AppUsageRoute
   AppUsersRoute: typeof AppUsersRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
@@ -440,12 +440,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppAgentsRoute: AppAgentsRoute,
   AppAlertsRoute: AppAlertsRoute,
   AppCostsRoute: AppCostsRoute,
-  AppPricesRoute: AppPricesRoute,
   AppGrantsRoute: AppGrantsRoute,
   AppHelpRoute: AppHelpRoute,
   AppIndividualsRoute: AppIndividualsRoute,
   AppInstitutionsRoute: AppInstitutionsRouteWithChildren,
   AppPackagesRoute: AppPackagesRoute,
+  AppPricesRoute: AppPricesRoute,
   AppUsageRoute: AppUsageRoute,
   AppUsersRoute: AppUsersRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
