@@ -37,6 +37,7 @@ import {
   TILE_STAGGER_MS,
 } from '@/components/shared';
 import { getMembersFn } from '@/server';
+import { BdrenLink } from './BdrenLink';
 
 const TOP_ROWS = 5;
 const ALL_MODELS = 100;
@@ -345,10 +346,10 @@ export function InstitutionOverview({
             />
             <DetailRow label={localize('com_inst_detail_slug')} value={institution.slug ?? '—'} />
             <DetailRow label={localize('com_inst_detail_tenant')} value={tenantId} />
-            <DetailRow
-              label={localize('com_inst_detail_bdren_org')}
-              value={institution.bdrenOrganizationId ?? localize('com_inst_detail_bdren_org_none')}
-            />
+            <dt className="text-(--cui-color-text-muted)">{localize('com_inst_detail_bdren_org')}</dt>
+            <dd className="m-0 min-w-0 font-medium">
+              <BdrenLink tenantId={tenantId} organizationId={institution.bdrenOrganizationId} />
+            </dd>
           </dl>
         </Card>
       </section>

@@ -213,3 +213,51 @@ export const createPlatformInstitutionPolicyFn = createServerFn({ method: 'POST'
     if (!response.ok) await extractApiError(response, 'Failed to create policy');
     return (await response.json()) as { policy: t.UsagePolicy; preview: t.UsagePolicyPreview };
   });
+
+export const suspendPlatformInstitutionFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ tenantId: z.string().trim().min(1) }))
+  .handler(async ({ data }): Promise<{ institution: t.PlatformInstitution }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/suspend`,
+      { method: 'POST' },
+    );
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to suspend institution');
+    }
+    return (await response.json()) as { institution: t.PlatformInstitution };
+  });
+
+export const reactivatePlatformInstitutionFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ tenantId: z.string().trim().min(1) }))
+  .handler(async ({ data }): Promise<{ institution: t.PlatformInstitution }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/reactivate`,
+      { method: 'POST' },
+    );
+    if (!response.ok) {
+      await extractApiError(response, 'Failed to reactivate institution');
+    }
+    return (await response.json()) as { institution: t.PlatformInstitution };
+  });
+
+export const updatePlatformInstitutionBdrenOrganizationFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      tenantId: z.string().trim().min(1),
+      bdrenOrganizationId: z.string().trim().min(1).max(100).nullable(),
+    }),
+  )
+  .handler(
+    async ({ data }): Promise<{ tenantId: string; bdrenOrganizationId: string | null }> => {
+      const response = await apiFetch(
+        `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/bdren-organization`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({ bdrenOrganizationId: data.bdrenOrganizationId }),
+        },
+      );
+      if (!response.ok) await extractApiError(response, 'Failed to link the bdren.ai organization');
+      return (await response.json()) as { tenantId: string; bdrenOrganizationId: string | null };
+    },
+  );
+

@@ -14,6 +14,11 @@ vi.mock('@tanstack/react-router', () => ({
 const createToast = vi.fn();
 
 vi.mock('@clickhouse/click-ui', () => ({
+  Dialog: Object.assign(
+    ({ open, children }: { open: boolean; children?: React.ReactNode }) =>
+      open ? <div>{children}</div> : null,
+    { Content: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
+  ),
   createToast: (...args: unknown[]) => createToast(...args),
   Icon: () => <span />,
   Button: ({

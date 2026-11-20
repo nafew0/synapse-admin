@@ -11,6 +11,11 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@clickhouse/click-ui', () => ({
+  Dialog: Object.assign(
+    ({ open, children }: { open: boolean; children?: React.ReactNode }) =>
+      open ? <div>{children}</div> : null,
+    { Content: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
+  ),
   Icon: () => <span />,
   Pagination: () => null,
   SearchField: () => <input />,

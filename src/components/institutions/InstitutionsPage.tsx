@@ -1,15 +1,20 @@
 import { useState } from 'react';
 import { Button } from '@clickhouse/click-ui';
 import { Link, getRouteApi } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type * as t from '@/types';
-import { listPlatformInstitutionsFn } from '@/server';
-import { BdrenNote, EmptyState, LoadingState, SearchInput } from '@/components/shared';
+import { listPlatformInstitutionsFn, reactivatePlatformInstitutionFn, suspendPlatformInstitutionFn } from '@/server';
+import { BdrenNote, EmptyState, FormDialog, LoadingState, SearchInput } from '@/components/shared';
+import { notifyError, notifySuccess } from '@/utils';
+import { useLocalize } from '@/hooks';
 
 const Route = getRouteApi('/_app');
 
 export function InstitutionsPage() {
   const { user } = Route.useRouteContext();
+  const localize = useLocalize();
+  const queryClient = useQueryClient();
+  const [lifecycleTarget, setLifecycleTarget] = useState<t.PlatformInstitution | null>(null);
   const [search, setSearch] = useState('');
   const [offset, setOffset] = useState(0);
 
@@ -19,6 +24,25 @@ export function InstitutionsPage() {
       listPlatformInstitutionsFn({
         data: { q: search.trim() || undefined, limit: 25, offset },
       }),
+  });
+
+  const lifecycleMutation = useMutation({
+    mutationFn: (institution: t.PlatformInstitution) =>
+      institution.status === 'suspended'
+        ? reactivatePlatformInstitutionFn({ data: { tenantId: institution.tenantId } })
+        : suspendPlatformInstitutionFn({ data: { tenantId: institution.tenantId } }),
+    onSuccess: (_result, institution) => {
+      notifySuccess(
+        localize(
+          institution.status === 'suspended' ? 'com_inst_reactivated' : 'com_inst_suspended',
+          { name: institution.name },
+        ),
+      );
+      queryClient.invalidateQueries({ queryKey: ['platformInstitutions'] });
+      queryClient.invalidateQueries({ queryKey: ['platformInstitution', institution.tenantId] });
+      setLifecycleTarget(null);
+    },
+    onError: (error: Error) => notifyError(error.message),
   });
 
   const filtered = institutionsQuery.data?.institutions ?? [];
@@ -127,6 +151,16 @@ export function InstitutionsPage() {
                       >
                         Open
                       </Link>
+                      <Button
+                        type="secondary"
+                        label={localize(
+                          institution.status === 'suspended'
+                            ? 'com_inst_reactivate'
+                            : 'com_inst_suspend',
+                        )}
+                        disabled={institution.status === 'closed' || lifecycleMutation.isPending}
+                        onClick={() => setLifecycleTarget(institution)}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -154,6 +188,32 @@ export function InstitutionsPage() {
           onClick={() => setOffset(offset + 25)}
         />
       </div>
+
+      <FormDialog
+        open={lifecycleTarget != null}
+        title={localize(
+          lifecycleTarget?.status === 'suspended'
+            ? 'com_inst_reactivate_title'
+            : 'com_inst_suspend_title',
+        )}
+        submitLabel={localize(
+          lifecycleTarget?.status === 'suspended' ? 'com_inst_reactivate' : 'com_inst_suspend',
+        )}
+        saving={lifecycleMutation.isPending}
+        onSubmit={() => {
+          if (lifecycleTarget) lifecycleMutation.mutate(lifecycleTarget);
+        }}
+        onClose={() => setLifecycleTarget(null)}
+      >
+        <p className="text-sm text-(--cui-color-text-default)">
+          {localize(
+            lifecycleTarget?.status === 'suspended'
+              ? 'com_inst_reactivate_desc'
+              : 'com_inst_suspend_desc',
+            { name: lifecycleTarget?.name ?? '' },
+          )}
+        </p>
+      </FormDialog>
     </div>
   );
 }
