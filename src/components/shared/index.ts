@@ -26,9 +26,11 @@ export {
   StatTile,
   Delta,
   TrendChart,
+  StackedBars,
   TILE_STAGGER_MS,
   BAR_STAGGER_MS,
 } from './charts';
 export { Card } from './Card';
+export { DataTable } from './DataTable';
 export { RangePicker } from './RangePicker';
 export { InitialsAvatar, RoleChip, StatusChip } from './Chips';

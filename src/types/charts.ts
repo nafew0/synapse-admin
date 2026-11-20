@@ -115,3 +115,21 @@ export interface WeekChartProps {
   lastWeek: TrendDatum[];
   today: string;
 }
+
+export interface StackedBarSeries {
+  key: string;
+  label: string;
+  /** A CSS color, normally a `var(--syn-…)` token. */
+  color: string;
+  /** One value per day, in the order of `days`. */
+  values: number[];
+}
+
+export interface StackedBarsProps {
+  days: string[];
+  series: StackedBarSeries[];
+  label: string;
+  formatValue: (value: number) => string;
+  formatDay: (day: string) => string;
+  height?: number;
+}

@@ -12,3 +12,4 @@ export * from './agentsCatalog';
 export * from './usage';
 export * from './packages';
 export * from './alerts';
+export * from './costs';

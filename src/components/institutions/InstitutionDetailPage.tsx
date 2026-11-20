@@ -20,13 +20,14 @@ import {
 import type * as t from '@/types';
 import { EmptyState, LoadingState } from '@/components/shared';
 import { CreditUsage, InstitutionPackageCard } from '@/components/packages';
+import { InstitutionCost } from '@/components/costs';
 import { notifyError, notifySuccess } from '@/utils';
 import { useLocalize } from '@/hooks';
 import { InstitutionOverview } from './Overview';
 
 const Route = getRouteApi('/_app/institutions/$tenantId');
 const AppRoute = getRouteApi('/_app');
-type Tab = 'overview' | 'members' | 'agents' | 'usage' | 'policy' | 'history';
+type Tab = 'overview' | 'members' | 'agents' | 'usage' | 'cost' | 'policy' | 'history';
 
 function formatTokens(value: number | null | undefined) {
   return value == null ? 'Unlimited' : new Intl.NumberFormat().format(value);
@@ -216,7 +217,7 @@ export function InstitutionDetailPage() {
       </header>
 
       <nav className="flex flex-wrap gap-2 border-b border-(--cui-color-stroke-default) pb-3">
-        {(['overview', 'members', 'agents', 'usage', 'policy', 'history'] as const).map((item) => (
+        {(['overview', 'members', 'agents', 'usage', 'cost', 'policy', 'history'] as const).map((item) => (
           <button
             key={item}
             type="button"
@@ -299,6 +300,7 @@ export function InstitutionDetailPage() {
           readinessError={readinessQuery.isError}
         />
       )}
+      {tab === 'cost' && <InstitutionCost tenantId={tenantId} />}
       {tab === 'policy' && (
         <PolicyEditor
           /** Remount when the loaded version changes so the form values and the

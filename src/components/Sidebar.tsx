@@ -7,6 +7,7 @@ import {
   Building2,
   ChartColumn,
   CircleHelp,
+  Coins,
   KeyRound,
   LayoutDashboard,
   Moon,
@@ -87,6 +88,7 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
         },
         { labelKey: 'com_nav_agents', path: '/agents', icon: Bot, superadminOnly: true },
         { labelKey: 'com_nav_packages', path: '/packages', icon: Package, superadminOnly: true },
+        { labelKey: 'com_nav_costs', path: '/costs', icon: Coins, superadminOnly: true },
         { labelKey: 'com_nav_alerts', path: '/alerts', icon: Bell, superadminOnly: true },
         {
           labelKey: 'com_nav_configuration',
