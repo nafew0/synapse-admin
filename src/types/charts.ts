@@ -91,7 +91,7 @@ export interface CardProps {
   title: string;
   description?: ReactNode;
   action?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   className?: string;
 }
 

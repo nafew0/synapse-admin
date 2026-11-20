@@ -140,16 +140,6 @@ export const getPlatformInstitutionQuotaFn = createServerFn({ method: 'GET' })
     },
   );
 
-export const getPlatformInstitutionQuotaReadinessFn = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ tenantId: z.string().min(1) }))
-  .handler(async ({ data }): Promise<t.QuotaReadinessReport> => {
-    const response = await apiFetch(
-      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/quota/readiness`,
-    );
-    if (!response.ok) await extractApiError(response, 'Failed to fetch quota readiness');
-    return (await response.json()) as t.QuotaReadinessReport;
-  });
-
 export const listPlatformInstitutionPoliciesFn = createServerFn({ method: 'GET' })
   .inputValidator(z.object({ tenantId: z.string().min(1) }))
   .handler(async ({ data }): Promise<{ policies: t.UsagePolicy[]; total: number }> => {
@@ -161,7 +151,6 @@ export const listPlatformInstitutionPoliciesFn = createServerFn({ method: 'GET' 
   });
 
 const policyInput = z.object({
-  mode: z.enum(['shadow', 'enforce']),
   timezone: z.string().min(1),
   limits: z.object({
     institutionTokens: z.number().int().nonnegative().nullable(),

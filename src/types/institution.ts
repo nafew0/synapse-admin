@@ -44,7 +44,6 @@ export interface UsageModelLimit {
 /** The editable subset of a policy — what the editor submits to preview/create.
  *  Version, tenant and provenance are assigned by the server. */
 export interface UsagePolicyInput {
-  mode: 'shadow' | 'enforce';
   timezone: string;
   limits: {
     institutionTokens: number | null;
@@ -57,7 +56,6 @@ export interface UsagePolicyInput {
 export interface UsagePolicy {
   tenantId: string;
   version: number;
-  mode: 'shadow' | 'enforce';
   timezone: string;
   period: 'calendar_month';
   limits: {
@@ -114,26 +112,6 @@ export interface UsageWarning {
   reservedTokens: number;
   limit: number;
   createdAt: string;
-}
-
-export interface QuotaReadinessReport {
-  ready: boolean;
-  generatedAt: string;
-  metrics: {
-    observedDays: number;
-    attributableCalls: number;
-    settledCalls: number;
-    unattributedEvents: number;
-    duplicateGroups: number;
-    staleReservations: number;
-    staleRate: number;
-    underestimatedCalls: number;
-    underestimateRate: number;
-    estimationOverageRate: number;
-    ledgerCalls: number;
-    uncoveredLedgerCalls: number;
-    reservationCoverageRate: number;
-  };
 }
 
 export interface UsagePolicyPreviewImpact {

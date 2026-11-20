@@ -62,7 +62,6 @@ vi.mock('@/server', () => ({
   getPlatformInstitutionQuotaFn: vi.fn().mockResolvedValue({
     policy: {
       version: 1,
-      mode: 'shadow',
       timezone: 'Asia/Dhaka',
       limits: { institutionTokens: null, memberTokens: null, modelTokens: [] },
       warningThresholds: [],
@@ -74,7 +73,6 @@ vi.mock('@/server', () => ({
     },
     models: [],
   }),
-  getPlatformInstitutionQuotaReadinessFn: vi.fn().mockResolvedValue(undefined),
   getMembersFn: vi.fn().mockResolvedValue({ members: [], total: 0 }),
   getPlatformInstitutionAgentAccessFn: vi.fn(),
   getPlatformInstitutionOcrAccessFn: vi.fn().mockResolvedValue({ enabled: false }),

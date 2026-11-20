@@ -73,13 +73,7 @@ function IndividualsSummary({ credits }: { credits: t.CreditConsole }) {
         trial: credits.defaultMemberPackage ?? localize('com_credit_none'),
         count: String(credits.memberTotal ?? credits.members.length),
       })}
-    >
-      {!credits.enforced && (
-        <p className="m-0 text-[13px] text-(--cui-color-text-muted)">
-          {localize('com_credit_not_enforced')}
-        </p>
-      )}
-    </Card>
+    />
   );
 }
 
@@ -99,11 +93,6 @@ function PoolSummary({
         member: credits.defaultMemberPackage ?? localize('com_credit_none'),
       })}
     >
-      {!credits.enforced && (
-        <p className="m-0 text-[13px] text-(--cui-color-text-muted)">
-          {localize('com_credit_not_enforced')}
-        </p>
-      )}
       <div className="grid gap-4 md:grid-cols-2">
         <WindowMeter title={localize('com_credit_this_week')} meter={pool.week} />
         <WindowMeter title={localize('com_credit_this_month')} meter={pool.month} />

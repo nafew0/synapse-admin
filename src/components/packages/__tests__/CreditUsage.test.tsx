@@ -20,7 +20,6 @@ const meter = (
 });
 
 const credits: t.CreditConsole = {
-  enforced: false,
   institutionPackage: 'Pool',
   defaultMemberPackage: 'Standard',
   institution: { week: meter(120, 10500), month: meter(400, 30000) },
@@ -54,7 +53,7 @@ describe('CreditUsage', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('৳120 of ৳10,500')).toBeInTheDocument();
     expect(screen.getByText('৳400 of ৳30,000')).toBeInTheDocument();
-    expect(screen.getByText(/Shadow mode/)).toBeInTheDocument();
+    expect(screen.queryByText(/Shadow mode/)).toBeNull();
   });
 
   it('lists members against their own packages and marks a used-up week', () => {
