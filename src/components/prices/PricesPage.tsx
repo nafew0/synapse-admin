@@ -57,8 +57,14 @@ function SyncBar({ list }: { list: t.ModelPriceList }) {
       );
       return;
     }
+    if (outcome.reason === 'busy') {
+      notifyError(localize('com_prices_sync_busy'));
+      return;
+    }
     notifyError(
-      localize(outcome.reason === 'busy' ? 'com_prices_sync_busy' : 'com_prices_sync_failed'),
+      outcome.message
+        ? localize('com_prices_sync_failed_reason', { reason: outcome.message })
+        : localize('com_prices_sync_failed'),
     );
   });
   return (
