@@ -69,7 +69,6 @@ export type CreditMemberUsage = {
 
 /** An institution, or the individuals account, on usage packages, as the platform console shows it. */
 export type CreditConsole = {
-  enforced: boolean;
   /** `false` for the individuals account, which has no shared pool. */
   pooled?: boolean;
   /** Everyone who used the allowance this month; `members` lists the busiest of them. */

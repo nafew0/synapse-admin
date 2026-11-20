@@ -1,13 +1,9 @@
 import { useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type * as t from '@/types';
-import {
-  getPlatformInstitutionQuotaFn,
-  listPlatformInstitutionPoliciesFn,
-  getPlatformInstitutionQuotaReadinessFn,
-} from '@/server';
-import { History, PolicyEditor, Usage } from '@/components/institutions/InstitutionDetailPage';
+import { getPlatformInstitutionQuotaFn, listPlatformInstitutionPoliciesFn } from '@/server';
+import { History, Usage } from '@/components/institutions/InstitutionDetailPage';
 import { EmptyState, LoadingState } from '@/components/shared';
 import { TrialPackageCard } from '@/components/packages';
 import { cn, INDIVIDUAL_ACCOUNT } from '@/utils';
@@ -15,30 +11,23 @@ import { useLocalize } from '@/hooks';
 
 const AppRoute = getRouteApi('/_app');
 
-type Tab = 'usage' | 'policy' | 'history';
+type Tab = 'usage' | 'history';
 
 const TAB_KEYS: Record<Tab, t.TranslationKeys> = {
   usage: 'com_individuals_tab_usage',
-  policy: 'com_individuals_tab_policy',
   history: 'com_individuals_tab_history',
 };
 
 const tenantId = INDIVIDUAL_ACCOUNT;
 
-/** People outside any institution: their trial package, their usage, and when limits are enforced. */
+/** People outside any institution: their trial package and their usage. */
 export function IndividualsPage() {
   const localize = useLocalize();
   const { user } = AppRoute.useRouteContext();
-  const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('usage');
   const quotaQuery = useQuery({
     queryKey: ['platformInstitutionQuota', tenantId],
     queryFn: () => getPlatformInstitutionQuotaFn({ data: { tenantId } }),
-  });
-  const readinessQuery = useQuery({
-    queryKey: ['platformInstitutionQuotaReadiness', tenantId],
-    queryFn: () => getPlatformInstitutionQuotaReadinessFn({ data: { tenantId } }),
-    enabled: tab === 'usage',
   });
   const historyQuery = useQuery({
     queryKey: ['platformInstitutionPolicies', tenantId],
@@ -101,21 +90,6 @@ export function IndividualsPage() {
           health={quota.health}
           models={quota.models}
           credits={quota.credits}
-          readiness={readinessQuery.data}
-          readinessError={readinessQuery.isError}
-        />
-      )}
-      {tab === 'policy' && (
-        <PolicyEditor
-          key={`${tenantId}:${quota.policy.version}`}
-          tenantId={tenantId}
-          policy={quota.policy}
-          models={quota.models}
-          creditOnly
-          onSaved={() => {
-            queryClient.invalidateQueries({ queryKey: ['platformInstitutionQuota', tenantId] });
-            queryClient.invalidateQueries({ queryKey: ['platformInstitutionPolicies', tenantId] });
-          }}
         />
       )}
       {tab === 'history' &&

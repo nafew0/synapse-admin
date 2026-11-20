@@ -9,7 +9,6 @@ import {
   getPlatformInstitutionAgentAccessFn,
   getPlatformInstitutionOcrAccessFn,
   getPlatformInstitutionQuotaFn,
-  getPlatformInstitutionQuotaReadinessFn,
   listPlatformInstitutionPoliciesFn,
   previewPlatformInstitutionPolicyFn,
   reconcilePlatformInstitutionAgentAccessFn,
@@ -100,11 +99,6 @@ export function InstitutionDetailPage() {
         },
       }),
     enabled: tab === 'overview',
-  });
-  const readinessQuery = useQuery({
-    queryKey: ['platformInstitutionQuotaReadiness', tenantId],
-    queryFn: () => getPlatformInstitutionQuotaReadinessFn({ data: { tenantId } }),
-    enabled: tab === 'usage',
   });
   const historyQuery = useQuery({
     queryKey: ['platformInstitutionPolicies', tenantId],
@@ -294,8 +288,6 @@ export function InstitutionDetailPage() {
           health={quota.health}
           models={quota.models}
           credits={quota.credits}
-          readiness={readinessQuery.data}
-          readinessError={readinessQuery.isError}
         />
       )}
       {tab === 'cost' && <InstitutionCost tenantId={tenantId} />}
@@ -554,8 +546,6 @@ export function Usage({
   health,
   models,
   credits,
-  readiness,
-  readinessError,
 }: {
   policy: t.UsagePolicy;
   models: t.QuotaModelRow[];
@@ -566,8 +556,6 @@ export function Usage({
     buckets: t.UsageBucketHealth[];
     warnings: t.UsageWarning[];
   };
-  readiness?: t.QuotaReadinessReport;
-  readinessError?: boolean;
 }) {
   const institutionBucket = health.buckets.find((bucket) => bucket.scopeType === 'institution');
   return (
@@ -603,50 +591,6 @@ export function Usage({
           </Panel>
         </>
       )}
-      {readinessError && (
-        <div className="md:col-span-3">
-          <Panel title="Shadow rollout gate">
-            <p className="text-sm text-(--cui-color-text-muted)">
-              Could not load the readiness report. This panel is not a pass or a fail — retry.
-            </p>
-          </Panel>
-        </div>
-      )}
-      {readiness && (
-        <Panel title="Shadow rollout gate" className="md:col-span-3">
-          <p className={readiness.ready ? 'text-sm text-emerald-400' : 'text-sm text-amber-400'}>
-            {readiness.ready ? 'Ready for manual enforcement review' : 'Not ready for enforcement'}
-          </p>
-          <div className="mt-2 grid gap-x-6 md:grid-cols-3">
-            <Detail label="Observed days" value={readiness.metrics.observedDays.toFixed(1)} />
-            <Detail
-              label="Attributable calls"
-              value={formatTokens(readiness.metrics.attributableCalls)}
-            />
-            <Detail
-              label="Unattributed events"
-              value={String(readiness.metrics.unattributedEvents)}
-            />
-            <Detail label="Duplicate groups" value={String(readiness.metrics.duplicateGroups)} />
-            <Detail
-              label="Stale reservations"
-              value={`${(readiness.metrics.staleRate * 100).toFixed(3)}%`}
-            />
-            <Detail
-              label="Estimation overage"
-              value={`${(readiness.metrics.estimationOverageRate * 100).toFixed(3)}%`}
-            />
-            <Detail
-              label="Reservation coverage"
-              value={`${(readiness.metrics.reservationCoverageRate * 100).toFixed(2)}%`}
-            />
-            <Detail
-              label="Uncovered model calls"
-              value={String(readiness.metrics.uncoveredLedgerCalls)}
-            />
-          </div>
-        </Panel>
-      )}
       {health.warnings.length > 0 && (
         <Panel title="Usage warnings" className="md:col-span-3">
           {health.warnings.map((warning) => (
@@ -665,16 +609,12 @@ export function PolicyEditor({
   policy,
   models,
   onSaved,
-  creditOnly = false,
 }: {
   tenantId: string;
   policy: t.UsagePolicy;
   models: t.QuotaModelRow[];
   onSaved: () => void;
-  /** Accounts metered only in credits edit the mode alone: their limits come from packages. */
-  creditOnly?: boolean;
 }) {
-  const [mode, setMode] = useState(policy.mode);
   const [timezone, setTimezone] = useState(policy.timezone);
   const [institutionLimit, setInstitutionLimit] = useState(
     policy.limits.institutionTokens?.toString() ?? '',
@@ -694,7 +634,6 @@ export function PolicyEditor({
     try {
       return {
         input: {
-          mode,
           timezone,
           limits: {
             institutionTokens: parseLimit(institutionLimit),
@@ -710,7 +649,7 @@ export function PolicyEditor({
     } catch (error) {
       return { error: error instanceof Error ? error.message : 'Invalid limit' };
     }
-  }, [institutionLimit, memberLimit, mode, modelLimits, timezone]);
+  }, [institutionLimit, memberLimit, modelLimits, timezone]);
 
   useEffect(() => setPreview(null), [parsed]);
   const previewMutation = useMutation({
@@ -750,36 +689,26 @@ export function PolicyEditor({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Panel title={`Policy version ${policy.version + 1}`}>
-        <Field label="Mode">
-          <select value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
-            <option value="shadow">Shadow</option>
-            <option value="enforce">Enforce</option>
-          </select>
+        <Field label="Institution timezone">
+          <input value={timezone} onChange={(event) => setTimezone(event.target.value)} />
         </Field>
-        {!creditOnly && (
-          <>
-            <Field label="Institution timezone">
-              <input value={timezone} onChange={(event) => setTimezone(event.target.value)} />
-            </Field>
-            <Field label="Institution token limit (blank = unlimited)">
-              <input
-                type="number"
-                min={0}
-                value={institutionLimit}
-                onChange={(event) => setInstitutionLimit(event.target.value)}
-              />
-            </Field>
-            <Field label="Per-member token limit (blank = unlimited)">
-              <input
-                type="number"
-                min={0}
-                value={memberLimit}
-                onChange={(event) => setMemberLimit(event.target.value)}
-              />
-            </Field>
-            <ModelLimitsField models={models} limits={modelLimits} onChange={setModelLimits} />
-          </>
-        )}
+        <Field label="Institution token limit (blank = unlimited)">
+          <input
+            type="number"
+            min={0}
+            value={institutionLimit}
+            onChange={(event) => setInstitutionLimit(event.target.value)}
+          />
+        </Field>
+        <Field label="Per-member token limit (blank = unlimited)">
+          <input
+            type="number"
+            min={0}
+            value={memberLimit}
+            onChange={(event) => setMemberLimit(event.target.value)}
+          />
+        </Field>
+        <ModelLimitsField models={models} limits={modelLimits} onChange={setModelLimits} />
         <Field label="Change reason">
           <input value={reason} onChange={(event) => setReason(event.target.value)} />
         </Field>
@@ -837,9 +766,6 @@ function describePolicyChanges(next: t.UsagePolicy, previous: t.UsagePolicy | un
     return ['Initial policy'];
   }
   const changes: string[] = [];
-  if (previous.mode !== next.mode) {
-    changes.push(`Mode ${previous.mode} → ${next.mode}`);
-  }
   if (previous.timezone !== next.timezone) {
     changes.push(`Timezone ${previous.timezone} → ${next.timezone}`);
   }
@@ -902,7 +828,7 @@ export function History({ policies }: { policies: t.UsagePolicy[] }) {
       {[...ascending].reverse().map((policy) => (
         <div key={policy.version} className="border-b border-(--cui-color-stroke-default) py-3">
           <p className="text-sm font-medium text-(--cui-color-text-default)">
-            Version {policy.version} · {policy.mode}
+            Version {policy.version}
           </p>
           <p className="text-xs text-(--cui-color-text-muted)">
             {policy.reason ?? 'No reason recorded'} ·{' '}
