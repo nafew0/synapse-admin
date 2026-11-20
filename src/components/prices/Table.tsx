@@ -164,7 +164,7 @@ export function ModelTable({
   const localize = useLocalize();
   return (
     <div className="overflow-x-auto rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-3 max-md:border-0 max-md:bg-transparent max-md:p-0">
-      <table className="w-full min-w-[1040px] border-collapse text-left text-[13px] tabular-nums max-md:block max-md:min-w-0">
+      <table className="w-full min-w-260 border-collapse text-left text-[13px] tabular-nums max-md:block max-md:min-w-0">
         <thead className="max-md:sr-only">
           <tr className="text-xs text-(--cui-color-text-muted)">
             {COLUMNS.map((key) => (
