@@ -190,7 +190,7 @@ function History({ detail }: { detail: t.ModelPriceDetail }) {
             </span>
             <span className="text-xs text-(--cui-color-text-muted)">
               {localize(`com_prices_vsource_${item.source}`)}
-              {item.actor ? ` · ${item.actor}` : ''}
+              {item.actor ? ` · ${item.actorName ?? item.actor}` : ''}
             </span>
             <span className="w-full tabular-nums">
               {formatRate(item.price.prompt)} / {formatRate(item.price.completion)}
@@ -234,7 +234,7 @@ function OverrideBar({ row }: { row: t.ModelPriceRow }) {
         <p className="m-0 text-[13px]">
           <strong>{localize('com_prices_manual_active')}</strong> {override.reason}
           <span className="block text-xs text-(--cui-color-text-muted)">
-            {localize('com_prices_set_by', { name: override.setBy ?? '—' })} ·{' '}
+            {localize('com_prices_set_by', { name: override.setByName ?? override.setBy ?? '—' })} ·{' '}
             {formatDateTime(override.setAt)}
             {override.until
               ? ` · ${localize('com_prices_until', { date: formatDateTime(override.until) })}`

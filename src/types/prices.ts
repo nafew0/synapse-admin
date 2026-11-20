@@ -43,6 +43,7 @@ export interface PriceDiffLine {
 export interface PriceOverrideInfo {
   reason: string;
   setBy: string | null;
+  setByName?: string | null;
   setAt: string;
   until: string | null;
 }
@@ -114,6 +115,7 @@ export interface PriceVersion {
   previous?: PriceBlock | null;
   diff: PriceDiffLine[];
   actor?: string;
+  actorName?: string | null;
   note?: string;
 }
 

@@ -137,7 +137,7 @@ function ModelRow({
           : localize(manual ? 'com_prices_source_manual' : 'com_prices_source_openrouter')}
         {manual && row.override?.setBy ? (
           <span className="block text-[11px] text-(--cui-color-text-muted)">
-            {localize('com_prices_set_by', { name: row.override.setBy })}
+            {localize('com_prices_set_by', { name: row.override.setByName ?? row.override.setBy })}
           </span>
         ) : null}
       </td>

@@ -1757,6 +1757,7 @@
   "com_prices_syncing": "Syncing…",
   "com_prices_sync_done": "Prices synced: {{models}} models, {{changed}} changed.",
   "com_prices_sync_failed": "OpenRouter could not be reached. The last prices are kept.",
+  "com_prices_sync_failed_reason": "Price sync failed: {{reason}}. The last prices are kept.",
   "com_prices_sync_busy": "Another server is already syncing. Try again in a minute.",
   "com_prices_warnings": "Price warnings",
   "com_prices_warn_no_price": "{{count}} model(s) in use have no price and are billed at the highest price in the table.",

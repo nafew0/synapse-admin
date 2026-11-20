@@ -316,6 +316,18 @@ describe('PricesPage', () => {
         title: 'OpenRouter could not be reached. The last prices are kept.',
       }),
     );
+    server.sync.mockResolvedValueOnce({
+      ok: false,
+      reason: 'failed',
+      message: 'OpenRouter /models answered 500',
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Sync now/ }));
+    await waitFor(() =>
+      expect(createToast).toHaveBeenCalledWith({
+        type: 'danger',
+        title: 'Price sync failed: OpenRouter /models answered 500. The last prices are kept.',
+      }),
+    );
     server.sync.mockResolvedValueOnce({ ok: false, reason: 'busy', message: '' });
     fireEvent.click(screen.getByRole('button', { name: /Sync now/ }));
     await waitFor(() =>
@@ -416,7 +428,8 @@ describe('PricesPage', () => {
       source: 'manual',
       override: {
         reason: 'Negotiated rate',
-        setBy: 'ada',
+        setBy: '65f0c0ffee0000000000abcd',
+        setByName: 'Ada Admin',
         setAt: '2026-11-18T10:00:00Z',
         until: null,
       },
@@ -426,6 +439,8 @@ describe('PricesPage', () => {
     renderPage();
     fireEvent.click(await screen.findByRole('button', { name: 'Open Claude Haiku 5.5' }));
     expect(await screen.findByText('Negotiated rate')).toBeInTheDocument();
+    expect(screen.getAllByText(/Ada Admin/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/65f0c0ffee/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Remove manual price' }));
     await waitFor(() =>
       expect(server.clearOverride).toHaveBeenCalledWith({
