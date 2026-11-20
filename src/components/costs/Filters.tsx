@@ -39,7 +39,9 @@ export function CostFilters({ preset, onPreset, range }: FiltersProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-(--cui-color-stroke-default) bg-(--syn-surface) p-3">
-      <RangePicker value={preset} presets={COST_PRESETS} onChange={onPreset} />
+      <div className="max-w-full overflow-x-auto">
+        <RangePicker value={preset} presets={COST_PRESETS} onChange={onPreset} />
+      </div>
       <span className="text-[13px] text-(--cui-color-text-muted) tabular-nums">
         {range.start} – {range.end}
       </span>
