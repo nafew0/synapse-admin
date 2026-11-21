@@ -82,3 +82,27 @@ export const deleteKbDocumentFn = createServerFn({ method: 'POST' })
     );
     if (!response.ok) await extractApiError(response, 'Failed to delete the document');
   });
+
+const daysInput = z.object({ days: z.number().int().min(1).max(365).optional() });
+
+const withDays = (path: string, days?: number): string =>
+  days ? `${path}?days=${encodeURIComponent(String(days))}` : path;
+
+/** Superadmin: every institution's knowledge base disk use now, with a daily total trend. */
+export const listKbStorageFn = createServerFn({ method: 'GET' })
+  .inputValidator(daysInput)
+  .handler(async ({ data }): Promise<t.KbPlatformStorage> => {
+    const response = await apiFetch(withDays('/api/platform/kb/storage', data.days));
+    if (!response.ok) await extractApiError(response, 'Failed to load knowledge base storage');
+    return response.json();
+  });
+
+/** Superadmin: one institution's knowledge base disk use now and per day. */
+export const getKbStorageFn = createServerFn({ method: 'GET' })
+  .inputValidator(daysInput.extend({ tenantId: z.string().min(1).max(128) }))
+  .handler(async ({ data }): Promise<t.KbInstitutionStorage> => {
+    const path = `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/kb/storage`;
+    const response = await apiFetch(withDays(path, data.days));
+    if (!response.ok) await extractApiError(response, 'Failed to load knowledge base storage');
+    return response.json();
+  });

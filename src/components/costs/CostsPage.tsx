@@ -19,6 +19,7 @@ import {
   useCostTimeseries,
   useLocalize,
 } from '@/hooks';
+import { KbStorageTable } from '@/components/knowledge';
 import { InstitutionTable } from './Institutions';
 import { InstitutionCost } from './Institution';
 import { CostSettingsCard } from './Settings';
@@ -251,6 +252,7 @@ export function CostsPage() {
             onOpen={setSelected}
           />
         )}
+        <KbStorageTable />
         <FixedCosts summary={summary.data} />
         <CostSettingsCard />
       </>

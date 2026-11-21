@@ -16,3 +16,4 @@ export * from './useStripAriaExpanded';
 export * from './useUsage';
 export * from './useCosts';
 export * from './usePrices';
+export * from './useKbStorage';

@@ -110,3 +110,11 @@ export function unflattenObject(flat: t.FlatConfigMap): Record<string, t.ConfigV
   }
   return result;
 }
+
+/** Bytes as KB, MB or GB with one decimal; anything above zero shows at least 1 KB. */
+export function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 KB';
+  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+  if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}

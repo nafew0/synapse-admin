@@ -3,25 +3,19 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, LoaderCircle, RefreshCw, RotateCcw, Trash2, Upload } from 'lucide-react';
 import type * as t from '@/types';
 import { deleteKbDocumentFn, retryKbDocumentFn, uploadKbDocumentFn } from '@/server';
+import { KB_STORAGE_QUERY_KEY, useCapabilities, useLocalize } from '@/hooks';
 import { kbQueryKey, isInProgress, useKbDocuments } from './useKbDocuments';
 import { ConfirmDialog } from '@/components/access/ConfirmDialog';
 import { MANAGE_KB_CAPABILITY } from '@/constants';
 import { notifyError } from '@/utils/toast';
-import { useCapabilities, useLocalize } from '@/hooks';
-import { cn } from '@/utils';
+import { cn, formatBytes } from '@/utils';
+import { StoragePanel } from './Storage';
 
 const STATUS_STYLE: Record<t.KbDocumentStatus, string> = {
   queued: 'bg-(--cui-color-background-muted) text-(--cui-color-text-muted)',
   processing: 'bg-(--syn-warning-bg) text-(--syn-warning-fg)',
   ready: 'bg-(--syn-success-bg) text-(--syn-success-fg)',
   failed: 'bg-(--cui-color-background-danger) text-(--cui-color-text-danger)',
-};
-
-const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return '0 KB';
-  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
-  if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 };
 
 function StatusBadge({ document }: { document: t.KbDocument }) {
@@ -88,7 +82,11 @@ export function KnowledgeBase({ tenantId }: { tenantId?: string }) {
   const [replacing, setReplacing] = useState<t.KbDocument | null>(null);
   const [deleting, setDeleting] = useState<t.KbDocument | null>(null);
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: kbQueryKey(tenantId) });
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: kbQueryKey(tenantId) }),
+      queryClient.invalidateQueries({ queryKey: KB_STORAGE_QUERY_KEY }),
+    ]);
 
   const uploadMutation = useMutation({
     mutationFn: (input: { file: File; documentId?: string }) => {
@@ -150,6 +148,8 @@ export function KnowledgeBase({ tenantId }: { tenantId?: string }) {
           </p>
         )}
       </section>
+
+      {tenantId && <StoragePanel tenantId={tenantId} />}
 
       {canManage && (
         <section
