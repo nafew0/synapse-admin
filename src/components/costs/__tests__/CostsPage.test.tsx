@@ -91,6 +91,20 @@ const server = vi.hoisted(() => ({
 }));
 
 vi.mock('@/server', () => ({
+  listKbStorageFn: vi.fn(async () => ({
+    days: 90,
+    measuredAt: '2026-11-21T00:00:00.000Z',
+    limitBytes: null,
+    totals: {
+      documents: 0,
+      versions: 0,
+      originalBytes: 0,
+      parsedBytes: 0,
+      indexChunks: 0,
+      totalBytes: 0,
+    },
+    institutions: [],
+  })),
   getCostSummaryFn: vi.fn(async () => summary),
   getCostInstitutionsFn: vi.fn(async () => ({
     range,
