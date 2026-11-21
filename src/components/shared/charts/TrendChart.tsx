@@ -280,25 +280,27 @@ export function TrendChart({
           </span>
         ))}
       </div>
-      <table className="sr-only">
-        <caption>{label}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{localize('com_chart_day')}</th>
-            <th scope="col">{label}</th>
-            <th scope="col">{averageLabel}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((datum, index) => (
-            <tr key={datum.day}>
-              <td>{formatDay(datum.day)}</td>
-              <td>{formatValue(datum.value)}</td>
-              <td>{geometry.averages[index] == null ? '' : formatValue(geometry.averages[index] ?? 0)}</td>
+      <div className="sr-only">
+        <table>
+          <caption>{label}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{localize('com_chart_day')}</th>
+              <th scope="col">{label}</th>
+              <th scope="col">{averageLabel}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((datum, index) => (
+              <tr key={datum.day}>
+                <td>{formatDay(datum.day)}</td>
+                <td>{formatValue(datum.value)}</td>
+                <td>{geometry.averages[index] == null ? '' : formatValue(geometry.averages[index] ?? 0)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }
