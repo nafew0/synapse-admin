@@ -1,3 +1,5 @@
+import type { InstitutionUsagePackage } from './billing';
+
 export interface PlatformInstitutionLimits {
   maxActiveMembers?: number | null;
 }
@@ -26,9 +28,13 @@ export interface PlatformInstitution {
   authDomains?: string[];
   timezone?: string;
   usagePolicyVersion?: number;
+  /** The institution's own usage package and the default for its members. */
+  usagePackage?: InstitutionUsagePackage | null;
   limits?: PlatformInstitutionLimits;
   stats?: PlatformInstitutionStats;
   chatAccess?: PlatformInstitutionChatAccess | null;
+  /** The linked bdren.ai organization id, set from the Synapse side. */
+  bdrenOrganizationId?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -40,16 +46,6 @@ export interface PlatformInstitutionListResponse {
   offset: number;
 }
 
-export interface InstitutionPackage {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  currency: string;
-  monthlyTokenLimit: number;
-  active: boolean;
-}
-
 export interface UsageModelLimit {
   modelKey: string;
   maxTokens: number | null;
@@ -58,7 +54,6 @@ export interface UsageModelLimit {
 /** The editable subset of a policy — what the editor submits to preview/create.
  *  Version, tenant and provenance are assigned by the server. */
 export interface UsagePolicyInput {
-  mode: 'shadow' | 'enforce';
   timezone: string;
   limits: {
     institutionTokens: number | null;
@@ -71,7 +66,6 @@ export interface UsagePolicyInput {
 export interface UsagePolicy {
   tenantId: string;
   version: number;
-  mode: 'shadow' | 'enforce';
   timezone: string;
   period: 'calendar_month';
   limits: {
@@ -130,26 +124,6 @@ export interface UsageWarning {
   createdAt: string;
 }
 
-export interface QuotaReadinessReport {
-  ready: boolean;
-  generatedAt: string;
-  metrics: {
-    observedDays: number;
-    attributableCalls: number;
-    settledCalls: number;
-    unattributedEvents: number;
-    duplicateGroups: number;
-    staleReservations: number;
-    staleRate: number;
-    underestimatedCalls: number;
-    underestimateRate: number;
-    estimationOverageRate: number;
-    ledgerCalls: number;
-    uncoveredLedgerCalls: number;
-    reservationCoverageRate: number;
-  };
-}
-
 export interface UsagePolicyPreviewImpact {
   scope: 'institution' | 'member' | 'model';
   scopeKey: string;
@@ -168,40 +142,6 @@ export interface UsagePolicyPreview {
   impacts: UsagePolicyPreviewImpact[];
   blocked: UsagePolicyPreviewImpact[];
   requiresOverageAcknowledgement: boolean;
-}
-
-export interface PlatformInstitutionAdminResult {
-  user?: {
-    id?: string;
-    _id?: string;
-    email?: string;
-    role?: string;
-  };
-  invite?: {
-    _id?: string;
-    email?: string;
-    status?: string;
-    requestedRole?: string;
-    accountScope?: 'institution' | 'standalone';
-    username?: string | null;
-    inviteLink?: string | null;
-  };
-  inviteLink?: string | null;
-}
-
-export interface CreatePlatformInstitutionInput {
-  tenantId: string;
-  name: string;
-  slug?: string;
-  adminEmail?: string;
-  adminName?: string;
-  maxActiveMembers?: number | null;
-}
-
-export interface AssignPlatformInstitutionAdminInput {
-  tenantId: string;
-  email: string;
-  name?: string;
 }
 
 export interface PlatformAgentAccessAgent {

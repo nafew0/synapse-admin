@@ -14,10 +14,15 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppUsersRouteImport } from './routes/_app/users'
 import { Route as AppUsageRouteImport } from './routes/_app/usage'
+import { Route as AppPricesRouteImport } from './routes/_app/prices'
+import { Route as AppPackagesRouteImport } from './routes/_app/packages'
 import { Route as AppKnowledgeRouteImport } from './routes/_app/knowledge'
 import { Route as AppInstitutionsRouteImport } from './routes/_app/institutions'
+import { Route as AppIndividualsRouteImport } from './routes/_app/individuals'
 import { Route as AppHelpRouteImport } from './routes/_app/help'
 import { Route as AppGrantsRouteImport } from './routes/_app/grants'
+import { Route as AppCostsRouteImport } from './routes/_app/costs'
+import { Route as AppAlertsRouteImport } from './routes/_app/alerts'
 import { Route as AppAgentsRouteImport } from './routes/_app/agents'
 import { Route as AppAccessRouteImport } from './routes/_app/access'
 import { Route as AppConfigurationIndexRouteImport } from './routes/_app/configuration/index'
@@ -49,6 +54,16 @@ const AppUsageRoute = AppUsageRouteImport.update({
   path: '/usage',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPricesRoute = AppPricesRouteImport.update({
+  id: '/prices',
+  path: '/prices',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPackagesRoute = AppPackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppKnowledgeRoute = AppKnowledgeRouteImport.update({
   id: '/knowledge',
   path: '/knowledge',
@@ -59,6 +74,11 @@ const AppInstitutionsRoute = AppInstitutionsRouteImport.update({
   path: '/institutions',
   getParentRoute: () => AppRoute,
 } as any)
+const AppIndividualsRoute = AppIndividualsRouteImport.update({
+  id: '/individuals',
+  path: '/individuals',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppHelpRoute = AppHelpRouteImport.update({
   id: '/help',
   path: '/help',
@@ -67,6 +87,16 @@ const AppHelpRoute = AppHelpRouteImport.update({
 const AppGrantsRoute = AppGrantsRouteImport.update({
   id: '/grants',
   path: '/grants',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCostsRoute = AppCostsRouteImport.update({
+  id: '/costs',
+  path: '/costs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAlertsRoute = AppAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAgentsRoute = AppAgentsRouteImport.update({
@@ -105,10 +135,15 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/access': typeof AppAccessRoute
   '/agents': typeof AppAgentsRoute
+  '/alerts': typeof AppAlertsRoute
+  '/costs': typeof AppCostsRoute
   '/grants': typeof AppGrantsRoute
   '/help': typeof AppHelpRoute
+  '/individuals': typeof AppIndividualsRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
   '/knowledge': typeof AppKnowledgeRoute
+  '/packages': typeof AppPackagesRoute
+  '/prices': typeof AppPricesRoute
   '/usage': typeof AppUsageRoute
   '/users': typeof AppUsersRouteWithChildren
   '/institutions/$tenantId': typeof AppInstitutionsTenantIdRoute
@@ -120,10 +155,15 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/access': typeof AppAccessRoute
   '/agents': typeof AppAgentsRoute
+  '/alerts': typeof AppAlertsRoute
+  '/costs': typeof AppCostsRoute
   '/grants': typeof AppGrantsRoute
   '/help': typeof AppHelpRoute
+  '/individuals': typeof AppIndividualsRoute
   '/institutions': typeof AppInstitutionsRouteWithChildren
   '/knowledge': typeof AppKnowledgeRoute
+  '/packages': typeof AppPackagesRoute
+  '/prices': typeof AppPricesRoute
   '/usage': typeof AppUsageRoute
   '/users': typeof AppUsersRouteWithChildren
   '/': typeof AppIndexRoute
@@ -138,10 +178,15 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/access': typeof AppAccessRoute
   '/_app/agents': typeof AppAgentsRoute
+  '/_app/alerts': typeof AppAlertsRoute
+  '/_app/costs': typeof AppCostsRoute
   '/_app/grants': typeof AppGrantsRoute
   '/_app/help': typeof AppHelpRoute
+  '/_app/individuals': typeof AppIndividualsRoute
   '/_app/institutions': typeof AppInstitutionsRouteWithChildren
   '/_app/knowledge': typeof AppKnowledgeRoute
+  '/_app/packages': typeof AppPackagesRoute
+  '/_app/prices': typeof AppPricesRoute
   '/_app/usage': typeof AppUsageRoute
   '/_app/users': typeof AppUsersRouteWithChildren
   '/_app/': typeof AppIndexRoute
@@ -157,10 +202,15 @@ export interface FileRouteTypes {
     | '/login'
     | '/access'
     | '/agents'
+    | '/alerts'
+    | '/costs'
     | '/grants'
     | '/help'
+    | '/individuals'
     | '/institutions'
     | '/knowledge'
+    | '/packages'
+    | '/prices'
     | '/usage'
     | '/users'
     | '/institutions/$tenantId'
@@ -172,10 +222,15 @@ export interface FileRouteTypes {
     | '/login'
     | '/access'
     | '/agents'
+    | '/alerts'
+    | '/costs'
     | '/grants'
     | '/help'
+    | '/individuals'
     | '/institutions'
     | '/knowledge'
+    | '/packages'
+    | '/prices'
     | '/usage'
     | '/users'
     | '/'
@@ -189,10 +244,15 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/access'
     | '/_app/agents'
+    | '/_app/alerts'
+    | '/_app/costs'
     | '/_app/grants'
     | '/_app/help'
+    | '/_app/individuals'
     | '/_app/institutions'
     | '/_app/knowledge'
+    | '/_app/packages'
+    | '/_app/prices'
     | '/_app/usage'
     | '/_app/users'
     | '/_app/'
@@ -245,6 +305,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsageRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/prices': {
+      id: '/_app/prices'
+      path: '/prices'
+      fullPath: '/prices'
+      preLoaderRoute: typeof AppPricesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/packages': {
+      id: '/_app/packages'
+      path: '/packages'
+      fullPath: '/packages'
+      preLoaderRoute: typeof AppPackagesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/knowledge': {
       id: '/_app/knowledge'
       path: '/knowledge'
@@ -259,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInstitutionsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/individuals': {
+      id: '/_app/individuals'
+      path: '/individuals'
+      fullPath: '/individuals'
+      preLoaderRoute: typeof AppIndividualsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/help': {
       id: '/_app/help'
       path: '/help'
@@ -271,6 +352,20 @@ declare module '@tanstack/react-router' {
       path: '/grants'
       fullPath: '/grants'
       preLoaderRoute: typeof AppGrantsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/costs': {
+      id: '/_app/costs'
+      path: '/costs'
+      fullPath: '/costs'
+      preLoaderRoute: typeof AppCostsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/alerts': {
+      id: '/_app/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AppAlertsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/agents': {
@@ -345,10 +440,15 @@ const AppUsersRouteWithChildren = AppUsersRoute._addFileChildren(
 interface AppRouteChildren {
   AppAccessRoute: typeof AppAccessRoute
   AppAgentsRoute: typeof AppAgentsRoute
+  AppAlertsRoute: typeof AppAlertsRoute
+  AppCostsRoute: typeof AppCostsRoute
   AppGrantsRoute: typeof AppGrantsRoute
   AppHelpRoute: typeof AppHelpRoute
+  AppIndividualsRoute: typeof AppIndividualsRoute
   AppInstitutionsRoute: typeof AppInstitutionsRouteWithChildren
   AppKnowledgeRoute: typeof AppKnowledgeRoute
+  AppPackagesRoute: typeof AppPackagesRoute
+  AppPricesRoute: typeof AppPricesRoute
   AppUsageRoute: typeof AppUsageRoute
   AppUsersRoute: typeof AppUsersRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
@@ -358,10 +458,15 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAccessRoute: AppAccessRoute,
   AppAgentsRoute: AppAgentsRoute,
+  AppAlertsRoute: AppAlertsRoute,
+  AppCostsRoute: AppCostsRoute,
   AppGrantsRoute: AppGrantsRoute,
   AppHelpRoute: AppHelpRoute,
+  AppIndividualsRoute: AppIndividualsRoute,
   AppInstitutionsRoute: AppInstitutionsRouteWithChildren,
   AppKnowledgeRoute: AppKnowledgeRoute,
+  AppPackagesRoute: AppPackagesRoute,
+  AppPricesRoute: AppPricesRoute,
   AppUsageRoute: AppUsageRoute,
   AppUsersRoute: AppUsersRouteWithChildren,
   AppIndexRoute: AppIndexRoute,

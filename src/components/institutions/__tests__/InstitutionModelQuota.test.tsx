@@ -11,6 +11,11 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@clickhouse/click-ui', () => ({
+  Dialog: Object.assign(
+    ({ open, children }: { open: boolean; children?: React.ReactNode }) =>
+      open ? <div>{children}</div> : null,
+    { Content: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
+  ),
   Icon: () => <span />,
   Pagination: () => null,
   SearchField: () => <input />,
@@ -34,7 +39,6 @@ vi.mock('@clickhouse/click-ui', () => ({
 
 const policy = {
   version: 3,
-  mode: 'shadow',
   timezone: 'Asia/Dhaka',
   limits: {
     institutionTokens: null,
@@ -114,7 +118,6 @@ vi.mock('@/server', () => ({
     },
     models,
   }),
-  getPlatformInstitutionQuotaReadinessFn: vi.fn().mockResolvedValue(undefined),
   getMembersFn: vi.fn().mockResolvedValue({ members: [], total: 0 }),
   getPlatformInstitutionAgentAccessFn: vi.fn().mockResolvedValue({}),
   listPlatformInstitutionPoliciesFn: vi.fn().mockResolvedValue({ policies: [] }),
@@ -127,7 +130,6 @@ vi.mock('@/server', () => ({
     requiresOverageAcknowledgement: false,
   }),
   createPlatformInstitutionPolicyFn: vi.fn(),
-  revokePlatformInstitutionAdminFn: vi.fn(),
   updatePlatformInstitutionAgentAccessFn: vi.fn(),
   reconcilePlatformInstitutionAgentAccessFn: vi.fn(),
 }));
@@ -205,6 +207,8 @@ describe('institution model quota', () => {
       { modelKey: 'glm-4.6v', maxTokens: 1000 },
       { modelKey: 'gpt-5.6-luna', maxTokens: 5000 },
     ]);
+    expect(call.data.policy).not.toHaveProperty('mode');
+    expect(screen.queryByText('Mode')).toBeNull();
   });
 
   it('does not offer a model that already has a limit', async () => {

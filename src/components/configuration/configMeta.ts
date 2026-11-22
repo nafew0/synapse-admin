@@ -194,11 +194,6 @@ export const SECTION_META: Record<
     descriptionKey: 'com_config_section_langfuse_desc',
     tab: 'system',
   },
-  creditPackages: {
-    titleKey: 'com_config_section_creditPackages',
-    descriptionKey: 'com_config_section_creditPackages_desc',
-    tab: 'system',
-  },
   version: {
     titleKey: 'com_config_section_version',
     descriptionKey: 'com_config_section_version_desc',

@@ -17,4 +17,7 @@ export type * from './user';
 export type * from './usage';
 export type * from './billing';
 export type * from './charts';
+export type * from './alerts';
+export type * from './costs';
+export type * from './prices';
 export type * from './kb';

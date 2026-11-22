@@ -18,8 +18,6 @@ vi.mock('./utils/api', () => ({
 }));
 
 import {
-  assignPlatformInstitutionAdminFn,
-  createPlatformInstitutionFn,
   getPlatformInstitutionAgentAccessFn,
   listPlatformInstitutionsFn,
   reconcilePlatformInstitutionAgentAccessFn,
@@ -45,55 +43,6 @@ describe('platform institution server functions', () => {
     await listPlatformInstitutionsFn();
 
     expect(apiFetch).toHaveBeenCalledWith('/api/platform/institutions');
-  });
-
-  it('posts institution creation payloads', async () => {
-    apiFetch.mockResolvedValueOnce(
-      jsonResponse(201, { institution: { tenantId: 'tenant-a', name: 'Tenant A' } }),
-    );
-
-    await createPlatformInstitutionFn({
-      data: {
-        tenantId: 'tenant-a',
-        name: 'Tenant A',
-        slug: 'tenant-a',
-        adminEmail: 'admin@example.com',
-        adminName: 'Admin User',
-        maxActiveMembers: 25,
-      },
-    });
-
-    expect(apiFetch).toHaveBeenCalledWith('/api/platform/institutions', {
-      method: 'POST',
-      body: JSON.stringify({
-        tenantId: 'tenant-a',
-        name: 'Tenant A',
-        slug: 'tenant-a',
-        adminEmail: 'admin@example.com',
-        adminName: 'Admin User',
-        limits: { maxActiveMembers: 25 },
-      }),
-    });
-  });
-
-  it('posts institution-admin assignments by email', async () => {
-    apiFetch.mockResolvedValueOnce(jsonResponse(200, { inviteLink: null }));
-
-    await assignPlatformInstitutionAdminFn({
-      data: {
-        tenantId: 'tenant-a',
-        email: 'admin@example.com',
-        name: 'Admin User',
-      },
-    });
-
-    expect(apiFetch).toHaveBeenCalledWith('/api/platform/institutions/tenant-a/admins', {
-      method: 'POST',
-      body: JSON.stringify({
-        email: 'admin@example.com',
-        name: 'Admin User',
-      }),
-    });
   });
 
   it('loads tenant agent access without a group selector', async () => {

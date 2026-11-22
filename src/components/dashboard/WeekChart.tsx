@@ -134,25 +134,27 @@ export function WeekChart({ thisWeek, lastWeek, today }: t.WeekChartProps) {
           </span>
         ))}
       </div>
-      <table className="sr-only">
-        <caption>{localize('com_dash_week_title')}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{localize('com_dash_weekday_day')}</th>
-            <th scope="col">{localize('com_dash_week_this')}</th>
-            <th scope="col">{localize('com_dash_week_last_col')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {thisWeek.map((day, order) => (
-            <tr key={day.day}>
-              <td>{formatWeekday(order === 6 ? 0 : order + 1, 'long')}</td>
-              <td>{day.day > today ? '—' : formatCompact(day.value)}</td>
-              <td>{formatCompact(lastWeek[order]?.value ?? 0)}</td>
+      <div className="sr-only">
+        <table>
+          <caption>{localize('com_dash_week_title')}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{localize('com_dash_weekday_day')}</th>
+              <th scope="col">{localize('com_dash_week_this')}</th>
+              <th scope="col">{localize('com_dash_week_last_col')}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {thisWeek.map((day, order) => (
+              <tr key={day.day}>
+                <td>{formatWeekday(order === 6 ? 0 : order + 1, 'long')}</td>
+                <td>{day.day > today ? '—' : formatCompact(day.value)}</td>
+                <td>{formatCompact(lastWeek[order]?.value ?? 0)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

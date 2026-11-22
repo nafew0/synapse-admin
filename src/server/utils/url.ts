@@ -15,3 +15,11 @@ export function getServerApiUrl(): string {
   }
   return getApiBaseUrl();
 }
+
+const DEFAULT_BDREN_ADMIN_URL = 'https://bdren.ai/admin';
+
+/** Where institutions and invitations are managed. Read at request time, so it follows the deployment env. */
+export function getBdrenAdminUrl(): string {
+  const configured = typeof process !== 'undefined' ? process.env?.BDREN_ADMIN_URL?.trim() : '';
+  return configured || DEFAULT_BDREN_ADMIN_URL;
+}

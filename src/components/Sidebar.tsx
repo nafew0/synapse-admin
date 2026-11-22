@@ -2,19 +2,24 @@ import { useState } from 'react';
 import { Dropdown } from '@clickhouse/click-ui';
 import { Link, useRouter } from '@tanstack/react-router';
 import {
+  Bell,
   Bot,
   BookOpen,
   Building2,
   ChartColumn,
   CircleHelp,
+  Coins,
   KeyRound,
   LayoutDashboard,
   Moon,
   Network,
+  Package,
   PanelLeft,
   Settings2,
   ShieldCheck,
   Sun,
+  Tags,
+  UserRound,
   Users,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
@@ -66,6 +71,12 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
           capability: SystemCapabilities.READ_USERS,
         },
         {
+          labelKey: 'com_nav_individuals',
+          path: '/individuals',
+          icon: UserRound,
+          superadminOnly: true,
+        },
+        {
           labelKey: canManageRoles ? 'com_nav_access' : 'com_nav_groups',
           path: '/access',
           icon: canManageRoles ? ShieldCheck : Network,
@@ -83,6 +94,10 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
           superadminOnly: true,
         },
         { labelKey: 'com_nav_agents', path: '/agents', icon: Bot, superadminOnly: true },
+        { labelKey: 'com_nav_packages', path: '/packages', icon: Package, superadminOnly: true },
+        { labelKey: 'com_nav_costs', path: '/costs', icon: Coins, superadminOnly: true },
+        { labelKey: 'com_nav_prices', path: '/prices', icon: Tags, superadminOnly: true },
+        { labelKey: 'com_nav_alerts', path: '/alerts', icon: Bell, superadminOnly: true },
         {
           labelKey: 'com_nav_configuration',
           path: '/configuration',

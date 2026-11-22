@@ -94,23 +94,25 @@ export function WeekdayUsage({ series }: { series: t.TrendDatum[] }) {
               </span>
             ))}
           </div>
-          <table className="sr-only">
-            <caption>{localize('com_dash_weekday_title')}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{localize('com_dash_weekday_day')}</th>
-                <th scope="col">{localize('com_dash_weekday_average')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {averages.map((day) => (
-                <tr key={day.weekday}>
-                  <td>{formatWeekday(day.weekday, 'long')}</td>
-                  <td>{formatCompact(day.average)}</td>
+          <div className="sr-only">
+            <table>
+              <caption>{localize('com_dash_weekday_title')}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">{localize('com_dash_weekday_day')}</th>
+                  <th scope="col">{localize('com_dash_weekday_average')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {averages.map((day) => (
+                  <tr key={day.weekday}>
+                    <td>{formatWeekday(day.weekday, 'long')}</td>
+                    <td>{formatCompact(day.average)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <p className="m-0 text-xs text-(--cui-color-text-muted)">{localize('com_dash_weekday_note')}</p>
         </figure>
       )}

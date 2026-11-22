@@ -14,6 +14,11 @@ vi.mock('@tanstack/react-router', () => ({
 const createToast = vi.fn();
 
 vi.mock('@clickhouse/click-ui', () => ({
+  Dialog: Object.assign(
+    ({ open, children }: { open: boolean; children?: React.ReactNode }) =>
+      open ? <div>{children}</div> : null,
+    { Content: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
+  ),
   createToast: (...args: unknown[]) => createToast(...args),
   Icon: () => <span />,
   Button: ({
@@ -57,7 +62,6 @@ vi.mock('@/server', () => ({
   getPlatformInstitutionQuotaFn: vi.fn().mockResolvedValue({
     policy: {
       version: 1,
-      mode: 'shadow',
       timezone: 'Asia/Dhaka',
       limits: { institutionTokens: null, memberTokens: null, modelTokens: [] },
       warningThresholds: [],
@@ -69,7 +73,6 @@ vi.mock('@/server', () => ({
     },
     models: [],
   }),
-  getPlatformInstitutionQuotaReadinessFn: vi.fn().mockResolvedValue(undefined),
   getMembersFn: vi.fn().mockResolvedValue({ members: [], total: 0 }),
   getPlatformInstitutionAgentAccessFn: vi.fn(),
   getPlatformInstitutionOcrAccessFn: vi.fn().mockResolvedValue({ enabled: false }),
@@ -77,7 +80,6 @@ vi.mock('@/server', () => ({
   listPlatformInstitutionPoliciesFn: vi.fn().mockResolvedValue({ policies: [] }),
   previewPlatformInstitutionPolicyFn: vi.fn(),
   createPlatformInstitutionPolicyFn: vi.fn(),
-  revokePlatformInstitutionAdminFn: vi.fn(),
   updatePlatformInstitutionAgentAccessFn: vi.fn(),
   reconcilePlatformInstitutionAgentAccessFn: vi.fn(),
 }));

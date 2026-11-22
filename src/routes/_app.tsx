@@ -5,6 +5,7 @@ import type { ErrorComponentProps } from '@tanstack/react-router';
 import { useCapabilities, useCommandMenu, useMediaQuery, useLocalize } from '@/hooks';
 import { CommandMenu } from '@/components/CommandMenu';
 import { Banner } from '@/components/banner';
+import { AlertsBanner } from '@/components/alerts';
 import { KbWatcher } from '@/components/knowledge';
 import { AccessDenied } from '@/components/shared';
 import { READ_KB_CAPABILITY, SystemCapabilities } from '@/constants';
@@ -22,6 +23,9 @@ const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/access': 'com_access_title',
   '/grants': 'com_grants_title',
   '/help': 'com_help_title',
+  '/alerts': 'com_alerts_title',
+  '/costs': 'com_costs_title',
+  '/prices': 'com_prices_title',
 };
 
 /** Institution admins manage members and groups; the platform-wide names describe a superadmin's view. */
@@ -104,6 +108,7 @@ function AppLayout() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar user={user} collapsed={sidebarCollapsed || isNarrow} onToggle={toggleSidebar} />
       <div className="flex min-w-0 flex-1 flex-col">
+        {user?.isPlatformSuperadmin === true && <AlertsBanner />}
         {user?.id && <Banner userId={user.id} />}
         {user?.id && !user.isPlatformSuperadmin && hasCapability(READ_KB_CAPABILITY) && (
           <KbWatcher />
