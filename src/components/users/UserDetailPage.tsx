@@ -170,6 +170,8 @@ export function UserDetailPage() {
               userId={userId}
               current={member.usagePackage}
               standalone={member.accountScope === 'standalone'}
+              managed={member.limitsManagedElsewhere === true}
+              bdrenOverride={member.bdrenOverride ?? null}
             />
           ) : null}
         </>

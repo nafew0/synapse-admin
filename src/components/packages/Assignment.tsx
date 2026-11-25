@@ -220,6 +220,13 @@ export function TrialPackageCard({ current }: { current?: string | null }) {
   );
 }
 
+const OVERRIDE_DAYS = 90;
+const DAY_MS = 86_400_000;
+/** Kept off the 90-day limit so a browser clock slightly ahead of Synapse's is still accepted. */
+const OVERRIDE_MARGIN_MS = 3_600_000;
+const REASON_MIN = 3;
+const REASON_MAX = 500;
+
 /** A date input value (YYYY-MM-DD) as the end of that day in local time, as an ISO instant. */
 function endOfDay(date: string): string | null {
   if (!date) return null;
@@ -227,26 +234,98 @@ function endOfDay(date: string): string | null {
   return Number.isNaN(end.getTime()) ? null : end.toISOString();
 }
 
+/** A moment as a date input value (YYYY-MM-DD) in local time. */
+function dateValue(time: number): string {
+  const date = new Date(time);
+  return new Date(time - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+}
+
+/** The end of the chosen day, held inside the 90 days a bdren.ai-managed override may last. */
+function overrideEnd(date: string, now: number): string | null {
+  const end = endOfDay(date);
+  if (!end) return null;
+  const cap = now + OVERRIDE_DAYS * DAY_MS - OVERRIDE_MARGIN_MS;
+  return new Date(Math.min(new Date(end).getTime(), cap)).toISOString();
+}
+
+/** Synapse refuses a reason outside 3–500 characters, and needs one for a managed user. */
+function reasonValid(reason: string, required: boolean): boolean {
+  if (!reason) return !required;
+  return reason.length >= REASON_MIN && reason.length <= REASON_MAX;
+}
+
+/** A managed user's override must end, and no later than the 90-day limit. */
+function expiresValid(expires: string, required: boolean, latest: string): boolean {
+  if (!required) return true;
+  return expires !== '' && expires <= latest;
+}
+
+function memberDescription(managed: boolean, standalone: boolean): t.TranslationKeys {
+  if (managed) return 'com_assign_override_description';
+  return standalone ? 'com_assign_member_description_standalone' : 'com_assign_member_description';
+}
+
+function shortDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+}
+
+/** bdren.ai's live override for this person, and whether Synapse's own one is on top of it. */
+function BdrenOverrideNote({
+  override,
+  alsoSynapse,
+}: {
+  override: t.BdrenOverride;
+  alsoSynapse: boolean;
+}) {
+  const localize = useLocalize();
+  const change = override.packageName ?? localize('com_assign_bdren_override_limits');
+  const key =
+    override.scope === 'institution'
+      ? 'com_assign_bdren_override_institution'
+      : 'com_assign_bdren_override';
+  return (
+    <p role="status" className="m-0 text-[13px] text-(--cui-color-text-default)">
+      {localize(key, { change, ends: shortDate(override.endsAt) })}
+      {alsoSynapse ? ` ${localize('com_assign_both_overrides')}` : null}
+    </p>
+  );
+}
+
 export function MemberPackageCard({
   userId,
   current,
   standalone = false,
+  managed = false,
+  bdrenOverride = null,
 }: {
   userId: string;
   current?: t.MemberUsagePackage | null;
   /** A person outside any institution falls back to the trial package, not an institution default. */
   standalone?: boolean;
+  /** bdren.ai supplies this person's limits: a package here is an emergency override. */
+  managed?: boolean;
+  /** bdren.ai's live override for this person, shown so support sees both. */
+  bdrenOverride?: t.BdrenOverride | null;
 }) {
   const localize = useLocalize();
   const queryClient = useQueryClient();
   const packagesQuery = usePackages();
   const [key, setKey] = useState(current?.packageKey ?? '');
   const [expires, setExpires] = useState(current?.expiresAt?.slice(0, 10) ?? '');
+  const [reason, setReason] = useState(current?.reason ?? '');
 
   useEffect(() => {
     setKey(current?.packageKey ?? '');
     setExpires(current?.expiresAt?.slice(0, 10) ?? '');
-  }, [current?.packageKey, current?.expiresAt]);
+    setReason(current?.reason ?? '');
+  }, [current?.packageKey, current?.expiresAt, current?.reason]);
+
+  const now = Date.now();
+  const today = dateValue(now);
+  const latest = dateValue(now + OVERRIDE_DAYS * DAY_MS);
+  const trimmed = reason.trim();
 
   const save = useMutation({
     mutationFn: async (): Promise<void> => {
@@ -254,8 +333,9 @@ export function MemberPackageCard({
         await clearUserUsagePackageFn({ data: { userId } });
         return;
       }
+      const expiresAt = managed ? overrideEnd(expires, Date.now()) : endOfDay(expires);
       await setUserUsagePackageFn({
-        data: { userId, packageKey: key, expiresAt: endOfDay(expires) },
+        data: { userId, packageKey: key, expiresAt, ...(trimmed ? { reason: trimmed } : {}) },
       });
     },
     onSuccess: () => {
@@ -266,24 +346,33 @@ export function MemberPackageCard({
   });
 
   const changed =
-    key !== (current?.packageKey ?? '') || expires !== (current?.expiresAt?.slice(0, 10) ?? '');
+    key !== (current?.packageKey ?? '') ||
+    expires !== (current?.expiresAt?.slice(0, 10) ?? '') ||
+    reason !== (current?.reason ?? '');
+  const valid = !key || (reasonValid(trimmed, managed) && expiresValid(expires, managed, latest));
 
   return (
     <Card
       title={localize('com_assign_member_title')}
-      description={localize(
-        standalone ? 'com_assign_member_description_standalone' : 'com_assign_member_description',
-      )}
+      description={localize(memberDescription(managed, standalone))}
       className="md:col-span-2"
       action={
         <Button
           type="primary"
           label={localize('com_ui_save')}
-          disabled={!changed || save.isPending}
+          disabled={!changed || !valid || save.isPending}
           onClick={() => save.mutate()}
         />
       }
     >
+      {managed ? (
+        <p className="m-0 text-[13px] text-(--cui-color-text-muted)">
+          {localize('com_assign_override_note')}
+        </p>
+      ) : null}
+      {managed && bdrenOverride ? (
+        <BdrenOverrideNote override={bdrenOverride} alsoSynapse={current?.override === true} />
+      ) : null}
       {packagesQuery.isLoading ? (
         <LoadingState />
       ) : (
@@ -302,16 +391,44 @@ export function MemberPackageCard({
             htmlFor="member-package-expiry"
             className="flex flex-col gap-1.5 text-sm text-(--cui-color-text-default)"
           >
-            <span className="font-medium">{localize('com_assign_expires')}</span>
+            <span className="font-medium">
+              {localize(managed ? 'com_assign_override_ends' : 'com_assign_expires')}
+            </span>
             <input
               id="member-package-expiry"
               type="date"
               value={expires}
+              min={today}
+              max={managed ? latest : undefined}
+              required={managed}
               disabled={!key || save.isPending}
               onChange={(event) => setExpires(event.target.value)}
               className={SELECT_CLASS}
             />
           </label>
+          <div className="flex flex-col gap-1.5 text-sm text-(--cui-color-text-default) md:col-span-2">
+            <label htmlFor="member-package-reason" className="font-medium">
+              {localize(managed ? 'com_assign_reason' : 'com_assign_reason_optional')}
+            </label>
+            <textarea
+              id="member-package-reason"
+              rows={2}
+              value={reason}
+              maxLength={REASON_MAX}
+              required={managed}
+              aria-describedby="member-package-reason-hint"
+              placeholder={localize('com_assign_reason_placeholder')}
+              disabled={!key || save.isPending}
+              onChange={(event) => setReason(event.target.value)}
+              className={SELECT_CLASS}
+            />
+            <span
+              id="member-package-reason-hint"
+              className="text-[13px] text-(--cui-color-text-muted)"
+            >
+              {localize('com_assign_reason_hint')}
+            </span>
+          </div>
         </div>
       )}
     </Card>

@@ -21,6 +21,7 @@ import {
   listUsagePackagesFn,
   updateUsagePackageFn,
   updateUsagePricingFn,
+  setUserUsagePackageFn,
   archiveUsagePackageFn,
 } from './packages';
 
@@ -59,6 +60,35 @@ describe('usage package server functions', () => {
       { method: 'POST' },
     ]);
     expect(apiFetch.mock.calls[1][1]).toMatchObject({ method: 'PUT' });
+  });
+
+  it('sends a member override with its reason', async () => {
+    await setUserUsagePackageFn({
+      data: {
+        userId: 'u/1',
+        packageKey: 'standard',
+        expiresAt: '2026-12-31T00:00:00.000Z',
+        reason: 'bdren.ai is down',
+      },
+    });
+    expect(apiFetch).toHaveBeenCalledWith('/api/platform/users/u%2F1/usage-package', {
+      method: 'PUT',
+      body: JSON.stringify({
+        packageKey: 'standard',
+        expiresAt: '2026-12-31T00:00:00.000Z',
+        reason: 'bdren.ai is down',
+      }),
+    });
+  });
+
+  it("surfaces Synapse's refusal of a member override", async () => {
+    const failed = new Response('{}', { status: 400 });
+    apiFetch.mockResolvedValueOnce(failed);
+    extractApiError.mockRejectedValueOnce(new Error('An override lasts at most 90 days'));
+    await expect(
+      setUserUsagePackageFn({ data: { userId: 'u1', packageKey: 'standard', expiresAt: null } }),
+    ).rejects.toThrow('An override lasts at most 90 days');
+    expect(extractApiError).toHaveBeenCalledWith(failed, 'Failed to assign the member package');
   });
 
   it('surfaces the API error', async () => {

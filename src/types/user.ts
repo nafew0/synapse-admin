@@ -1,4 +1,4 @@
-import type { MemberUsagePackage } from './billing';
+import type { BdrenOverride, MemberUsagePackage } from './billing';
 /** Identifies a role or group a user is assigned to. */
 export interface AssignmentRef {
   id: string;
@@ -19,6 +19,10 @@ export interface InstitutionSeatSummary {
 export interface InstitutionMember {
   /** The member's own usage package (platform view only). */
   usagePackage?: MemberUsagePackage | null;
+  /** bdren.ai supplies this person's limits, so their own package is an emergency override (platform view only). */
+  limitsManagedElsewhere?: boolean;
+  /** bdren.ai's live override for this person, if any (platform view only). */
+  bdrenOverride?: BdrenOverride | null;
   id: string;
   kind: MemberKind;
   tenantId?: string;

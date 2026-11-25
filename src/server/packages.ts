@@ -112,6 +112,7 @@ export const setUserUsagePackageFn = createServerFn({ method: 'POST' })
       userId: z.string().min(1),
       packageKey: z.string().min(1),
       expiresAt: z.string().nullable(),
+      reason: z.string().trim().min(3).max(500).optional(),
     }),
   )
   .handler(async ({ data }): Promise<{ usagePackage: t.MemberUsagePackage }> => {

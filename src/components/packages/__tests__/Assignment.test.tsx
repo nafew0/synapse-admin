@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createToast } from '@clickhouse/click-ui';
 import type * as t from '@/types';
 import '@/locales/i18n';
 
@@ -170,6 +171,156 @@ describe('MemberPackageCard', () => {
     fireEvent.click(screen.getByText('Save'));
     await waitFor(() =>
       expect(server.clearUserUsagePackageFn).toHaveBeenCalledWith({ data: { userId: 'u1' } }),
+    );
+  });
+});
+
+describe('MemberPackageCard for a bdren.ai-managed user', () => {
+  const daysFromToday = (days: number): string => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+
+  it('points to bdren.ai first and needs a reason and an end date', async () => {
+    renderWithClient(<MemberPackageCard userId="u1" current={null} managed />);
+    const expiry = await screen.findByLabelText('Ends (required, at most 90 days)');
+    expect(screen.getByText(/bdren.ai's superadmin override first/)).toBeInTheDocument();
+    expect(expiry).toHaveAttribute('max', daysFromToday(90));
+
+    fireEvent.change(screen.getByLabelText('Member package'), { target: { value: 'standard' } });
+    const save = screen.getByText('Save');
+    expect(save).toBeDisabled();
+
+    fireEvent.change(expiry, { target: { value: daysFromToday(10) } });
+    expect(save).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'ok' } });
+    expect(save).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Reason'), {
+      target: { value: '  bdren.ai is down  ' },
+    });
+    expect(save).toBeEnabled();
+
+    fireEvent.change(expiry, { target: { value: daysFromToday(91) } });
+    expect(save).toBeDisabled();
+    fireEvent.change(expiry, { target: { value: daysFromToday(10) } });
+    fireEvent.click(save);
+
+    await waitFor(() => expect(server.setUserUsagePackageFn).toHaveBeenCalledTimes(1));
+    expect(server.setUserUsagePackageFn).toHaveBeenCalledWith({
+      data: {
+        userId: 'u1',
+        packageKey: 'standard',
+        expiresAt: new Date(`${daysFromToday(10)}T23:59:59`).toISOString(),
+        reason: 'bdren.ai is down',
+      },
+    });
+  });
+
+  it('keeps the last allowed day inside the 90-day limit', async () => {
+    renderWithClient(<MemberPackageCard userId="u1" current={null} managed />);
+    fireEvent.change(await screen.findByLabelText('Member package'), {
+      target: { value: 'standard' },
+    });
+    fireEvent.change(screen.getByLabelText('Ends (required, at most 90 days)'), {
+      target: { value: daysFromToday(90) },
+    });
+    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Pilot fix' } });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() => expect(server.setUserUsagePackageFn).toHaveBeenCalledTimes(1));
+    const { expiresAt } = server.setUserUsagePackageFn.mock.calls[0][0].data;
+    expect(new Date(expiresAt).getTime()).toBeLessThan(Date.now() + 90 * 86_400_000);
+  });
+
+  it('shows the current override reason and still removes the package without one', async () => {
+    renderWithClient(
+      <MemberPackageCard
+        userId="u1"
+        managed
+        current={{
+          packageKey: 'standard',
+          expiresAt: null,
+          override: true,
+          reason: 'Exam week',
+        }}
+      />,
+    );
+    expect(await screen.findByLabelText('Reason')).toHaveValue('Exam week');
+    fireEvent.change(screen.getByLabelText('Member package'), { target: { value: '' } });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() =>
+      expect(server.clearUserUsagePackageFn).toHaveBeenCalledWith({ data: { userId: 'u1' } }),
+    );
+  });
+
+  it("shows bdren.ai's override and says when Synapse's own one wins", async () => {
+    const bdrenOverride: t.BdrenOverride = {
+      scope: 'person',
+      kind: 'package',
+      packageName: 'Plus',
+      startsAt: '2026-11-20T00:00:00Z',
+      endsAt: '2026-12-20T00:00:00Z',
+    };
+    const { unmount } = renderWithClient(
+      <MemberPackageCard userId="u1" current={null} managed bdrenOverride={bdrenOverride} />,
+    );
+    const note = await screen.findByRole('status');
+    expect(note).toHaveTextContent('bdren.ai has an override for this person: Plus, until 20 Dec 2026.');
+    expect(note).not.toHaveTextContent('also has a Synapse override');
+    unmount();
+
+    renderWithClient(
+      <MemberPackageCard
+        userId="u1"
+        managed
+        current={{ packageKey: 'standard', expiresAt: null, override: true, reason: 'Outage' }}
+        bdrenOverride={{ ...bdrenOverride, scope: 'institution', kind: 'limits', packageName: null }}
+      />,
+    );
+    const both = await screen.findByRole('status');
+    expect(both).toHaveTextContent("all members of this person's institution: custom limits");
+    expect(both).toHaveTextContent('also has a Synapse override here, which wins inside Synapse');
+  });
+
+  it('shows the error Synapse returns', async () => {
+    server.setUserUsagePackageFn.mockRejectedValueOnce(
+      new Error('A support override needs a reason and an expiresAt'),
+    );
+    renderWithClient(<MemberPackageCard userId="u1" current={null} managed />);
+    fireEvent.change(await screen.findByLabelText('Member package'), {
+      target: { value: 'standard' },
+    });
+    fireEvent.change(screen.getByLabelText('Ends (required, at most 90 days)'), {
+      target: { value: daysFromToday(5) },
+    });
+    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Outage' } });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() =>
+      expect(createToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'danger',
+          title: 'A support override needs a reason and an expiresAt',
+        }),
+      ),
+    );
+  });
+});
+
+describe('MemberPackageCard reason for an unmanaged user', () => {
+  it('is optional, and sent when given', async () => {
+    renderWithClient(<MemberPackageCard userId="u1" current={null} />);
+    fireEvent.change(await screen.findByLabelText('Member package'), {
+      target: { value: 'standard' },
+    });
+    expect(screen.queryByText(/superadmin override first/)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Reason (optional)'), {
+      target: { value: 'Research grant' },
+    });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() =>
+      expect(server.setUserUsagePackageFn).toHaveBeenCalledWith({
+        data: { userId: 'u1', packageKey: 'standard', expiresAt: null, reason: 'Research grant' },
+      }),
     );
   });
 });

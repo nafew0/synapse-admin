@@ -43,7 +43,22 @@ export type InstitutionUsagePackage = {
   assignedAt?: string;
 };
 
-export type MemberUsagePackage = { packageKey: string; expiresAt: string | null };
+export type MemberUsagePackage = {
+  packageKey: string;
+  expiresAt: string | null;
+  /** A support override that beats the bdren.ai allowance until it expires. */
+  override?: boolean;
+  reason?: string | null;
+};
+
+/** bdren.ai's superadmin override for a person, from Synapse's cached allowance (never its reason). */
+export type BdrenOverride = {
+  scope: string;
+  kind: string;
+  packageName: string | null;
+  startsAt: string;
+  endsAt: string;
+};
 
 /** One allowance window, in credits (USD × 1e6) with taka alongside. */
 export type CreditMeter = {
