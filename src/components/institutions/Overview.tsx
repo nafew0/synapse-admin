@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Button } from '@clickhouse/click-ui';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, AlertTriangle, CheckCircle2, IdCard, Layers, UserCheck } from 'lucide-react';
 import type * as t from '@/types';
@@ -38,6 +37,7 @@ import {
   TILE_STAGGER_MS,
 } from '@/components/shared';
 import { getMembersFn } from '@/server';
+import { BdrenLink } from './BdrenLink';
 
 const TOP_ROWS = 5;
 const ALL_MODELS = 100;
@@ -48,8 +48,6 @@ interface InstitutionOverviewProps {
   admins: t.InstitutionMember[];
   adminsLoading: boolean;
   adminsError: boolean;
-  revoking: boolean;
-  onRevokeAdmin: (admin: t.InstitutionMember) => void;
   onOpenMembers: () => void;
 }
 
@@ -74,8 +72,6 @@ export function InstitutionOverview({
   admins,
   adminsLoading,
   adminsError,
-  revoking,
-  onRevokeAdmin,
   onOpenMembers,
 }: InstitutionOverviewProps) {
   const localize = useLocalize();
@@ -204,6 +200,9 @@ export function InstitutionOverview({
               {current?.totalCost != null ? (
                 <span>{localize('com_inst_cost_estimate', { cost: formatUsageCost(current.totalCost) })}</span>
               ) : null}
+              {current?.ocrPages ? (
+                <span>{localize('com_inst_ocr_pages', { count: current.ocrPages })}</span>
+              ) : null}
             </span>
           }
         >
@@ -320,8 +319,6 @@ export function InstitutionOverview({
             admins={admins}
             loading={adminsLoading}
             error={adminsError}
-            revoking={revoking}
-            onRevoke={onRevokeAdmin}
           />
         </Card>
         <Card title={localize('com_inst_details_title')}>
@@ -349,6 +346,10 @@ export function InstitutionOverview({
             />
             <DetailRow label={localize('com_inst_detail_slug')} value={institution.slug ?? '—'} />
             <DetailRow label={localize('com_inst_detail_tenant')} value={tenantId} />
+            <dt className="text-(--cui-color-text-muted)">{localize('com_inst_detail_bdren_org')}</dt>
+            <dd className="m-0 min-w-0 font-medium">
+              <BdrenLink tenantId={tenantId} organizationId={institution.bdrenOrganizationId} />
+            </dd>
           </dl>
         </Card>
       </section>
@@ -497,14 +498,10 @@ function AdminList({
   admins,
   loading,
   error,
-  revoking,
-  onRevoke,
 }: {
   admins: t.InstitutionMember[];
   loading: boolean;
   error: boolean;
-  revoking: boolean;
-  onRevoke: (admin: t.InstitutionMember) => void;
 }) {
   const localize = useLocalize();
   if (error) {
@@ -527,12 +524,6 @@ function AdminList({
             <span className="truncate font-semibold">{admin.name || admin.email}</span>
             <span className="truncate text-xs text-(--cui-color-text-muted)">{admin.email}</span>
           </span>
-          <Button
-            type="secondary"
-            label={localize('com_inst_admin_revoke')}
-            disabled={revoking}
-            onClick={() => onRevoke(admin)}
-          />
         </li>
       ))}
     </ul>

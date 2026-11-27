@@ -1,0 +1,1 @@
+export { IndividualsPage } from './IndividualsPage';

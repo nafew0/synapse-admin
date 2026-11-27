@@ -2,33 +2,34 @@ import { useState } from 'react';
 import { Dropdown } from '@clickhouse/click-ui';
 import { Link, useRouter } from '@tanstack/react-router';
 import {
+  Bell,
   Bot,
+  BookOpen,
   Building2,
   ChartColumn,
   CircleHelp,
+  Coins,
   KeyRound,
   LayoutDashboard,
   Moon,
   Network,
+  Package,
   PanelLeft,
   Settings2,
   ShieldCheck,
   Sun,
+  Tags,
+  UserRound,
   Users,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import type * as t from '@/types';
-import {
-  useStripAriaExpanded,
-  useMemberSummary,
-  useCapabilities,
-  useLocalize,
-} from '@/hooks';
+import { useStripAriaExpanded, useMemberSummary, useCapabilities, useLocalize } from '@/hooks';
 import { useTheme } from '@/contexts/ThemeContext';
 import synapseDarkLogo from '@/assets/synapse-logo-dark.svg';
 import synapseLogo from '@/assets/synapse-logo.svg';
 import { SettingsDialog } from './SettingsDialog';
-import { SystemCapabilities } from '@/constants';
+import { READ_KB_CAPABILITY, SystemCapabilities } from '@/constants';
 import { getInitials, cn } from '@/utils';
 import { adminLogoutFn } from '@/server';
 
@@ -48,6 +49,16 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
           icon: ChartColumn,
           capability: SystemCapabilities.READ_USAGE,
         },
+        ...(isPlatformSuperadmin
+          ? []
+          : [
+              {
+                labelKey: 'com_nav_knowledge' as const,
+                path: '/knowledge',
+                icon: BookOpen,
+                capability: READ_KB_CAPABILITY,
+              },
+            ]),
       ],
     },
     {
@@ -58,6 +69,12 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
           path: '/users',
           icon: Users,
           capability: SystemCapabilities.READ_USERS,
+        },
+        {
+          labelKey: 'com_nav_individuals',
+          path: '/individuals',
+          icon: UserRound,
+          superadminOnly: true,
         },
         {
           labelKey: canManageRoles ? 'com_nav_access' : 'com_nav_groups',
@@ -77,6 +94,10 @@ function buildSections(canManageRoles: boolean, isPlatformSuperadmin: boolean): 
           superadminOnly: true,
         },
         { labelKey: 'com_nav_agents', path: '/agents', icon: Bot, superadminOnly: true },
+        { labelKey: 'com_nav_packages', path: '/packages', icon: Package, superadminOnly: true },
+        { labelKey: 'com_nav_costs', path: '/costs', icon: Coins, superadminOnly: true },
+        { labelKey: 'com_nav_prices', path: '/prices', icon: Tags, superadminOnly: true },
+        { labelKey: 'com_nav_alerts', path: '/alerts', icon: Bell, superadminOnly: true },
         {
           labelKey: 'com_nav_configuration',
           path: '/configuration',
@@ -143,7 +164,9 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
 
   const pendingInvites = seatSummary?.pendingInvites ?? 0;
   const nextTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
-  const themeLabel = localize(nextTheme === 'dark' ? 'com_nav_switch_dark' : 'com_nav_switch_light');
+  const themeLabel = localize(
+    nextTheme === 'dark' ? 'com_nav_switch_dark' : 'com_nav_switch_light',
+  );
   const ThemeIcon = nextTheme === 'dark' ? Moon : Sun;
 
   const handleLogout = async () => {
@@ -190,7 +213,9 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
                 {localize('com_auth_title')}
               </span>
               <span className="truncate text-xs text-(--cui-color-text-muted)">
-                {localize(isPlatformSuperadmin ? 'com_nav_platform_admin' : 'com_nav_institution_admin')}
+                {localize(
+                  isPlatformSuperadmin ? 'com_nav_platform_admin' : 'com_nav_institution_admin',
+                )}
               </span>
             </div>
           ) : null}
@@ -203,7 +228,10 @@ export function Sidebar({ user, collapsed, onToggle }: t.SidebarProps) {
           {sections.map((section) => (
             <div key={section.titleKey} className="flex flex-col gap-0.5">
               {collapsed ? (
-                <div aria-hidden="true" className="mx-2 mb-1 border-t border-(--cui-color-stroke-muted)" />
+                <div
+                  aria-hidden="true"
+                  className="mx-2 mb-1 border-t border-(--cui-color-stroke-muted)"
+                />
               ) : (
                 <span className="px-3 pb-1.5 text-[11px] font-semibold tracking-[0.08em] text-(--cui-color-text-muted) uppercase">
                   {localize(section.titleKey)}

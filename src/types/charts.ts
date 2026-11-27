@@ -91,7 +91,7 @@ export interface CardProps {
   title: string;
   description?: ReactNode;
   action?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   className?: string;
 }
 
@@ -114,4 +114,22 @@ export interface WeekChartProps {
   /** Monday to Sunday of the week before, aligned day for day. */
   lastWeek: TrendDatum[];
   today: string;
+}
+
+export interface StackedBarSeries {
+  key: string;
+  label: string;
+  /** A CSS color, normally a `var(--syn-…)` token. */
+  color: string;
+  /** One value per day, in the order of `days`. */
+  values: number[];
+}
+
+export interface StackedBarsProps {
+  days: string[];
+  series: StackedBarSeries[];
+  label: string;
+  formatValue: (value: number) => string;
+  formatDay: (day: string) => string;
+  height?: number;
 }

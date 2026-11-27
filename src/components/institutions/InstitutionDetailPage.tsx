@@ -7,24 +7,33 @@ import {
   getMembersFn,
   getPlatformInstitutionFn,
   getPlatformInstitutionAgentAccessFn,
+  getPlatformInstitutionOcrAccessFn,
   getPlatformInstitutionQuotaFn,
-  getPlatformInstitutionQuotaReadinessFn,
   listPlatformInstitutionPoliciesFn,
   previewPlatformInstitutionPolicyFn,
   reconcilePlatformInstitutionAgentAccessFn,
-  revokePlatformInstitutionAdminFn,
   updatePlatformInstitutionAgentAccessFn,
+  updatePlatformInstitutionOcrAccessFn,
 } from '@/server';
 import type * as t from '@/types';
 import { EmptyState, LoadingState } from '@/components/shared';
+import { CreditUsage, InstitutionPackageCard } from '@/components/packages';
+import { InstitutionCost } from '@/components/costs';
 import { notifyError, notifySuccess } from '@/utils';
 import { useLocalize } from '@/hooks';
 import { InstitutionOverview } from './Overview';
 import { ChatAccess } from './ChatAccess';
+import { KnowledgeBase } from '@/components/knowledge';
 
 const Route = getRouteApi('/_app/institutions/$tenantId');
 const AppRoute = getRouteApi('/_app');
-type Tab = 'overview' | 'members' | 'agents' | 'usage' | 'policy' | 'history';
+type Tab = 'overview' | 'members' | 'agents' | 'knowledge' | 'usage' | 'cost' | 'policy' | 'history';
+
+function tabLabel(item: Tab, localize: (key: string) => string): string {
+  if (item === 'usage') return 'Usage & limits';
+  if (item === 'knowledge') return localize('com_kb_title');
+  return item[0].toUpperCase() + item.slice(1);
+}
 
 function formatTokens(value: number | null | undefined) {
   return value == null ? 'Unlimited' : new Intl.NumberFormat().format(value);
@@ -92,11 +101,6 @@ export function InstitutionDetailPage() {
       }),
     enabled: tab === 'overview',
   });
-  const readinessQuery = useQuery({
-    queryKey: ['platformInstitutionQuotaReadiness', tenantId],
-    queryFn: () => getPlatformInstitutionQuotaReadinessFn({ data: { tenantId } }),
-    enabled: tab === 'usage',
-  });
   const historyQuery = useQuery({
     queryKey: ['platformInstitutionPolicies', tenantId],
     queryFn: () => listPlatformInstitutionPoliciesFn({ data: { tenantId } }),
@@ -108,15 +112,20 @@ export function InstitutionDetailPage() {
     queryFn: () => getPlatformInstitutionAgentAccessFn({ data: { tenantId } }),
     enabled: tab === 'agents',
   });
-  const revokeAdminMutation = useMutation({
-    mutationFn: (admin: t.InstitutionMember) =>
-      revokePlatformInstitutionAdminFn({ data: { tenantId, userId: admin.id } }),
-    onSuccess: () => {
-      notifySuccess('Institution administrator revoked');
-      queryClient.invalidateQueries({ queryKey: ['platformInstitutionAdmins', tenantId] });
-      queryClient.invalidateQueries({ queryKey: ['platformInstitutionMembers', tenantId] });
+  const ocrAccessKey = ['platformInstitutionOcrAccess', tenantId];
+  const ocrAccessQuery = useQuery({
+    queryKey: ocrAccessKey,
+    queryFn: () => getPlatformInstitutionOcrAccessFn({ data: { tenantId } }),
+    enabled: tab === 'agents',
+  });
+  const ocrAccessMutation = useMutation({
+    mutationFn: (enabled: boolean) =>
+      updatePlatformInstitutionOcrAccessFn({ data: { tenantId, enabled } }),
+    onSuccess: (result) => {
+      notifySuccess(result.enabled ? 'Document reading enabled' : 'Document reading disabled');
     },
     onError: (error: Error) => notifyError(error.message),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ocrAccessKey }),
   });
   const agentAccessMutation = useMutation({
     mutationFn: (input: { agentId: string; enabled: boolean }) =>
@@ -199,7 +208,9 @@ export function InstitutionDetailPage() {
       </header>
 
       <nav className="flex flex-wrap gap-2 border-b border-(--cui-color-stroke-default) pb-3">
-        {(['overview', 'members', 'agents', 'usage', 'policy', 'history'] as const).map((item) => (
+        {(
+          ['overview', 'members', 'agents', 'knowledge', 'usage', 'cost', 'policy', 'history'] as const
+        ).map((item) => (
           <button
             key={item}
             type="button"
@@ -210,22 +221,25 @@ export function InstitutionDetailPage() {
                 : 'rounded-lg px-3 py-2 text-sm text-(--cui-color-text-muted) hover:bg-(--cui-color-background-hover)'
             }
           >
-            {item === 'usage' ? 'Usage & limits' : item[0].toUpperCase() + item.slice(1)}
+            {tabLabel(item, localize)}
           </button>
         ))}
       </nav>
 
       {tab === 'overview' && <ChatAccess institution={institution} />}
+      {tab === 'knowledge' && <KnowledgeBase tenantId={tenantId} />}
+
       {tab === 'overview' && (
-        <InstitutionOverview
-          institution={institution}
-          admins={admins}
-          adminsLoading={adminsQuery.isLoading}
-          adminsError={adminsQuery.isError}
-          revoking={revokeAdminMutation.isPending}
-          onRevokeAdmin={(admin) => revokeAdminMutation.mutate(admin)}
-          onOpenMembers={() => setTab('members')}
-        />
+        <>
+          <InstitutionOverview
+            institution={institution}
+            admins={admins}
+            adminsLoading={adminsQuery.isLoading}
+            adminsError={adminsQuery.isError}
+            onOpenMembers={() => setTab('members')}
+          />
+          <InstitutionPackageCard tenantId={tenantId} current={institution.usagePackage} />
+        </>
       )}
       {tab === 'members' && membersQuery.isError && (
         <EmptyState message={membersQuery.error?.message || 'Failed to load members.'} />
@@ -243,6 +257,15 @@ export function InstitutionDetailPage() {
             setMemberOffset(0);
           }}
           onOffsetChange={setMemberOffset}
+        />
+      )}
+      {tab === 'agents' && (
+        <OcrAccess
+          enabled={ocrAccessQuery.data?.enabled}
+          loading={ocrAccessQuery.isLoading}
+          error={ocrAccessQuery.isError ? ocrAccessQuery.error?.message : undefined}
+          saving={ocrAccessMutation.isPending || ocrAccessQuery.isFetching}
+          onToggle={(enabled) => ocrAccessMutation.mutate(enabled)}
         />
       )}
       {tab === 'agents' && (
@@ -266,10 +289,10 @@ export function InstitutionDetailPage() {
           policy={quota.policy}
           health={quota.health}
           models={quota.models}
-          readiness={readinessQuery.data}
-          readinessError={readinessQuery.isError}
+          credits={quota.credits}
         />
       )}
+      {tab === 'cost' && <InstitutionCost tenantId={tenantId} />}
       {tab === 'policy' && (
         <PolicyEditor
           /** Remount when the loaded version changes so the form values and the
@@ -353,6 +376,40 @@ function Members({
           disabled={offset + limit >= total || loading}
           onClick={() => onOffsetChange(offset + limit)}
           label="Next"
+        />
+      </div>
+    </Panel>
+  );
+}
+
+function OcrAccess({
+  enabled,
+  loading,
+  error,
+  saving,
+  onToggle,
+}: {
+  enabled?: boolean;
+  loading: boolean;
+  error?: string;
+  saving: boolean;
+  onToggle: (enabled: boolean) => void;
+}) {
+  if (loading) return <LoadingState />;
+  if (error) return <EmptyState message={error} />;
+
+  return (
+    <Panel title="Document reading">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-prose text-sm text-(--cui-color-text-muted)">
+          Send scanned documents to Unstructured for reading when members ask Office Assistant to
+          work with them. Each page read is charged at cost.
+        </p>
+        <Switch
+          checked={enabled === true}
+          disabled={saving}
+          aria-label="Send scanned documents to Unstructured for reading"
+          onCheckedChange={onToggle}
         />
       </div>
     </Panel>
@@ -486,92 +543,55 @@ function AudienceStatus({
   );
 }
 
-function Usage({
+export function Usage({
   policy,
   health,
   models,
-  readiness,
-  readinessError,
+  credits,
 }: {
   policy: t.UsagePolicy;
   models: t.QuotaModelRow[];
+  /** Set once the institution is on usage packages; replaces the per-model token view. */
+  credits?: t.CreditConsole | null;
   health: {
     range: { start: string; end: string; timezone: string };
     buckets: t.UsageBucketHealth[];
     warnings: t.UsageWarning[];
   };
-  readiness?: t.QuotaReadinessReport;
-  readinessError?: boolean;
 }) {
   const institutionBucket = health.buckets.find((bucket) => bucket.scopeType === 'institution');
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Metric label="Used tokens" value={formatTokens(institutionBucket?.usedTokens ?? 0)} />
-      <Metric
-        label="Reserved tokens"
-        value={formatTokens(institutionBucket?.reservedTokens ?? 0)}
-      />
-      <Metric
-        label="Remaining"
-        value={formatTokens(
-          institutionBucket?.remaining ?? policy.limits.institutionTokens ?? null,
-        )}
-      />
-      <Panel title="Model breakdown" className="md:col-span-3">
-        {models.length === 0 ? (
-          <p className="text-sm text-(--cui-color-text-muted)">
-            No models are configured for this institution.
-          </p>
-        ) : (
-          models.map((model) => <ModelQuotaLine key={model.modelKey} model={model} />)
-        )}
-        <p className="mt-3 text-xs text-(--cui-color-text-muted)">
-          Resets {new Date(health.range.end).toLocaleString()} ({health.range.timezone})
-        </p>
-      </Panel>
-      {readinessError && (
+      {credits ? (
         <div className="md:col-span-3">
-          <Panel title="Shadow rollout gate">
-            <p className="text-sm text-(--cui-color-text-muted)">
-              Could not load the readiness report. This panel is not a pass or a fail — retry.
+          <CreditUsage credits={credits} />
+        </div>
+      ) : (
+        <>
+          <Metric label="Used tokens" value={formatTokens(institutionBucket?.usedTokens ?? 0)} />
+          <Metric
+            label="Reserved tokens"
+            value={formatTokens(institutionBucket?.reservedTokens ?? 0)}
+          />
+          <Metric
+            label="Remaining"
+            value={formatTokens(
+              institutionBucket?.remaining ?? policy.limits.institutionTokens ?? null,
+            )}
+          />
+          <Panel title="Model breakdown" className="md:col-span-3">
+            {models.length === 0 ? (
+              <p className="text-sm text-(--cui-color-text-muted)">
+                No models are configured for this institution.
+              </p>
+            ) : (
+              models.map((model) => <ModelQuotaLine key={model.modelKey} model={model} />)
+            )}
+            <p className="mt-3 text-xs text-(--cui-color-text-muted)">
+              Resets {new Date(health.range.end).toLocaleString()} ({health.range.timezone})
             </p>
           </Panel>
-        </div>
-      )}
-      {readiness && (
-        <Panel title="Shadow rollout gate" className="md:col-span-3">
-          <p className={readiness.ready ? 'text-sm text-emerald-400' : 'text-sm text-amber-400'}>
-            {readiness.ready ? 'Ready for manual enforcement review' : 'Not ready for enforcement'}
-          </p>
-          <div className="mt-2 grid gap-x-6 md:grid-cols-3">
-            <Detail label="Observed days" value={readiness.metrics.observedDays.toFixed(1)} />
-            <Detail
-              label="Attributable calls"
-              value={formatTokens(readiness.metrics.attributableCalls)}
-            />
-            <Detail
-              label="Unattributed events"
-              value={String(readiness.metrics.unattributedEvents)}
-            />
-            <Detail label="Duplicate groups" value={String(readiness.metrics.duplicateGroups)} />
-            <Detail
-              label="Stale reservations"
-              value={`${(readiness.metrics.staleRate * 100).toFixed(3)}%`}
-            />
-            <Detail
-              label="Estimation overage"
-              value={`${(readiness.metrics.estimationOverageRate * 100).toFixed(3)}%`}
-            />
-            <Detail
-              label="Reservation coverage"
-              value={`${(readiness.metrics.reservationCoverageRate * 100).toFixed(2)}%`}
-            />
-            <Detail
-              label="Uncovered model calls"
-              value={String(readiness.metrics.uncoveredLedgerCalls)}
-            />
-          </div>
-        </Panel>
+        </>
       )}
       {health.warnings.length > 0 && (
         <Panel title="Usage warnings" className="md:col-span-3">
@@ -586,7 +606,7 @@ function Usage({
   );
 }
 
-function PolicyEditor({
+export function PolicyEditor({
   tenantId,
   policy,
   models,
@@ -597,7 +617,6 @@ function PolicyEditor({
   models: t.QuotaModelRow[];
   onSaved: () => void;
 }) {
-  const [mode, setMode] = useState(policy.mode);
   const [timezone, setTimezone] = useState(policy.timezone);
   const [institutionLimit, setInstitutionLimit] = useState(
     policy.limits.institutionTokens?.toString() ?? '',
@@ -617,7 +636,6 @@ function PolicyEditor({
     try {
       return {
         input: {
-          mode,
           timezone,
           limits: {
             institutionTokens: parseLimit(institutionLimit),
@@ -633,7 +651,7 @@ function PolicyEditor({
     } catch (error) {
       return { error: error instanceof Error ? error.message : 'Invalid limit' };
     }
-  }, [institutionLimit, memberLimit, mode, modelLimits, timezone]);
+  }, [institutionLimit, memberLimit, modelLimits, timezone]);
 
   useEffect(() => setPreview(null), [parsed]);
   const previewMutation = useMutation({
@@ -673,12 +691,6 @@ function PolicyEditor({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Panel title={`Policy version ${policy.version + 1}`}>
-        <Field label="Mode">
-          <select value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
-            <option value="shadow">Shadow</option>
-            <option value="enforce">Enforce</option>
-          </select>
-        </Field>
         <Field label="Institution timezone">
           <input value={timezone} onChange={(event) => setTimezone(event.target.value)} />
         </Field>
@@ -756,9 +768,6 @@ function describePolicyChanges(next: t.UsagePolicy, previous: t.UsagePolicy | un
     return ['Initial policy'];
   }
   const changes: string[] = [];
-  if (previous.mode !== next.mode) {
-    changes.push(`Mode ${previous.mode} → ${next.mode}`);
-  }
   if (previous.timezone !== next.timezone) {
     changes.push(`Timezone ${previous.timezone} → ${next.timezone}`);
   }
@@ -799,7 +808,7 @@ function describePolicyChanges(next: t.UsagePolicy, previous: t.UsagePolicy | un
   return changes.length > 0 ? changes : ['No effective limit changes'];
 }
 
-function History({ policies }: { policies: t.UsagePolicy[] }) {
+export function History({ policies }: { policies: t.UsagePolicy[] }) {
   if (policies.length === 0) {
     return (
       <Panel title="Policy history">
@@ -821,7 +830,7 @@ function History({ policies }: { policies: t.UsagePolicy[] }) {
       {[...ascending].reverse().map((policy) => (
         <div key={policy.version} className="border-b border-(--cui-color-stroke-default) py-3">
           <p className="text-sm font-medium text-(--cui-color-text-default)">
-            Version {policy.version} · {policy.mode}
+            Version {policy.version}
           </p>
           <p className="text-xs text-(--cui-color-text-muted)">
             {policy.reason ?? 'No reason recorded'} ·{' '}

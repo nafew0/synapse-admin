@@ -22,31 +22,6 @@ const listMembersInput = z.object({
   accountScope: z.enum(['all', 'institution', 'standalone']).optional(),
 });
 
-export const listStandaloneCreditPackagesFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<{ currency: string; list: t.CreditPackage[] }> => {
-    const response = await apiFetch('/api/platform/users/standalone/packages');
-    if (!response.ok) await extractApiError(response, 'Failed to fetch individual packages');
-    return (await response.json()) as { currency: string; list: t.CreditPackage[] };
-  },
-);
-
-export const createStandaloneInviteFn = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      email: z.string().email(),
-      username: z.string().trim().min(2).max(80).optional(),
-      creditPackageId: z.string().min(1),
-    }),
-  )
-  .handler(async ({ data }): Promise<t.StandaloneInviteResponse> => {
-    const response = await apiFetch('/api/platform/users/standalone/invites', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) await extractApiError(response, 'Failed to invite individual user');
-    return (await response.json()) as t.StandaloneInviteResponse;
-  });
-
 function toQueryString(input: z.infer<typeof listMembersInput>): string {
   const params = new URLSearchParams();
   params.set('limit', String(input.limit));
@@ -110,27 +85,6 @@ export const getUserUsageFn = createServerFn({ method: 'GET' })
     return (await response.json()) as t.UserUsageResponse;
   });
 
-export const inviteMemberFn = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      name: z.string().trim().min(1),
-      email: z.string().email(),
-      role: memberRoleSchema,
-      creditPackageId: z.string().min(1).optional(),
-    }),
-  )
-  .handler(async ({ data }): Promise<{ inviteLink?: string | null }> => {
-    const response = await apiFetch('/api/admin/users/invite', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to invite member');
-    }
-    const json = (await response.json()) as { inviteLink?: string | null };
-    return { inviteLink: json.inviteLink ?? null };
-  });
-
 const XLSX_CONTENT_TYPE =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -184,116 +138,6 @@ export const exportMembersFn = createServerFn({ method: 'POST' })
     });
   });
 
-const inviteAudienceSchema = z.enum(['expired', 'pending', 'all']);
-
-export const getResendableInviteCountsFn = createServerFn({ method: 'GET' })
-  .inputValidator(
-    z.object({
-      tenantId: z.string().optional(),
-      accountScope: z.enum(['institution', 'standalone']).optional(),
-      platform: z.boolean().optional(),
-    }),
-  )
-  .handler(async ({ data }): Promise<{ counts: t.ResendableInviteCounts }> => {
-    const base = data.platform ? '/api/platform/users' : '/api/admin/users';
-    const params = new URLSearchParams();
-    if (data.tenantId?.trim()) {
-      params.set('tenantId', data.tenantId.trim());
-    }
-    if (data.accountScope) {
-      params.set('accountScope', data.accountScope);
-    }
-    const query = params.toString();
-    const response = await apiFetch(`${base}/invites/resendable${query ? `?${query}` : ''}`);
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to load invitation counts');
-    }
-    return (await response.json()) as { counts: t.ResendableInviteCounts };
-  });
-
-export const resendInvitesBulkFn = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      audience: inviteAudienceSchema,
-      tenantId: z.string().optional(),
-      accountScope: z.enum(['institution', 'standalone']).optional(),
-      platform: z.boolean().optional(),
-    }),
-  )
-  .handler(async ({ data }): Promise<t.InviteResendResponse> => {
-    const base = data.platform ? '/api/platform/users' : '/api/admin/users';
-    const response = await apiFetch(`${base}/invites/resend-bulk`, {
-      method: 'POST',
-      body: JSON.stringify(
-        data.platform
-          ? {
-              audience: data.audience,
-              tenantId: data.tenantId,
-              accountScope: data.accountScope,
-            }
-          : { audience: data.audience },
-      ),
-    });
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to resend invitations');
-    }
-    return (await response.json()) as t.InviteResendResponse;
-  });
-
-export const resendInviteFn = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      inviteId: z.string(),
-      tenantId: z.string().optional(),
-      platform: z.boolean().optional(),
-    }),
-  )
-  .handler(async ({ data }): Promise<{ inviteLink?: string | null }> => {
-    const route = data.platform
-      ? data.tenantId
-        ? '/api/platform/users'
-        : '/api/platform/users/standalone'
-      : '/api/admin/users';
-    const response = await apiFetch(
-      `${route}/invites/${encodeURIComponent(data.inviteId)}/resend`,
-      {
-        method: 'POST',
-        body: data.platform ? JSON.stringify({ tenantId: data.tenantId }) : undefined,
-      },
-    );
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to resend invitation');
-    }
-    const json = (await response.json()) as { inviteLink?: string | null };
-    return { inviteLink: json.inviteLink ?? null };
-  });
-
-export const revokeInviteFn = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      inviteId: z.string(),
-      tenantId: z.string().optional(),
-      platform: z.boolean().optional(),
-    }),
-  )
-  .handler(async ({ data }) => {
-    const route = data.platform
-      ? data.tenantId
-        ? '/api/platform/users'
-        : '/api/platform/users/standalone'
-      : '/api/admin/users';
-    const response = await apiFetch(
-      `${route}/invites/${encodeURIComponent(data.inviteId)}/revoke`,
-      {
-        method: 'POST',
-        body: data.platform ? JSON.stringify({ tenantId: data.tenantId }) : undefined,
-      },
-    );
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to revoke invitation');
-    }
-  });
-
 export const suspendMemberFn = createServerFn({ method: 'POST' })
   .inputValidator(
     z.object({
@@ -329,25 +173,6 @@ export const reactivateMemberFn = createServerFn({ method: 'POST' })
     });
     if (!response.ok) {
       await extractApiError(response, 'Failed to reactivate member');
-    }
-  });
-
-export const removeMemberFn = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      userId: z.string(),
-      tenantId: z.string().optional(),
-      platform: z.boolean().optional(),
-    }),
-  )
-  .handler(async ({ data }) => {
-    const route = data.platform ? '/api/platform/users' : '/api/admin/users';
-    const response = await apiFetch(`${route}/${encodeURIComponent(data.userId)}/remove`, {
-      method: 'POST',
-      body: data.platform ? JSON.stringify({ tenantId: data.tenantId }) : undefined,
-    });
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to remove member');
     }
   });
 
@@ -393,52 +218,6 @@ export const resendMemberVerificationFn = createServerFn({ method: 'POST' })
     if (!response.ok) {
       await extractApiError(response, 'Failed to resend verification email');
     }
-  });
-
-export const dryRunMemberImportFn = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ csvText: z.string().min(1) }))
-  .handler(
-    async ({
-      data,
-    }): Promise<{
-      summary: t.InstitutionImportSummary;
-      results: t.InstitutionImportRowResult[];
-    }> => {
-      const response = await apiFetch('/api/admin/users/invites/import/dry-run', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        await extractApiError(response, 'Failed to validate CSV import');
-      }
-      return (await response.json()) as {
-        summary: t.InstitutionImportSummary;
-        results: t.InstitutionImportRowResult[];
-      };
-    },
-  );
-
-export const createMemberImportFn = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ csvText: z.string().min(1) }))
-  .handler(async ({ data }): Promise<{ job: t.InstitutionImportJob }> => {
-    const response = await apiFetch('/api/admin/users/invites/import', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to start CSV import');
-    }
-    return (await response.json()) as { job: t.InstitutionImportJob };
-  });
-
-export const getMemberImportJobFn = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ jobId: z.string() }))
-  .handler(async ({ data }): Promise<{ job: t.InstitutionImportJob }> => {
-    const response = await apiFetch(`/api/admin/users/imports/${encodeURIComponent(data.jobId)}`);
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to fetch import job');
-    }
-    return (await response.json()) as { job: t.InstitutionImportJob };
   });
 
 export const searchUsersFn = createServerFn({ method: 'GET' })

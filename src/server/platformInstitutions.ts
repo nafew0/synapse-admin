@@ -72,6 +72,27 @@ export const updatePlatformInstitutionAgentAccessFn = createServerFn({ method: '
     return (await response.json()) as t.PlatformAgentAccessUpdateResult;
   });
 
+export const getPlatformInstitutionOcrAccessFn = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ tenantId: z.string().min(1) }))
+  .handler(async ({ data }): Promise<{ enabled: boolean }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/ocr-access`,
+    );
+    if (!response.ok) await extractApiError(response, 'Failed to load OCR access');
+    return (await response.json()) as { enabled: boolean };
+  });
+
+export const updatePlatformInstitutionOcrAccessFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ tenantId: z.string().min(1), enabled: z.boolean() }))
+  .handler(async ({ data }): Promise<{ enabled: boolean }> => {
+    const response = await apiFetch(
+      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/ocr-access`,
+      { method: 'PATCH', body: JSON.stringify({ enabled: data.enabled }) },
+    );
+    if (!response.ok) await extractApiError(response, 'Failed to update OCR access');
+    return (await response.json()) as { enabled: boolean };
+  });
+
 export const reconcilePlatformInstitutionAgentAccessFn = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ tenantId: z.string().min(1) }))
   .handler(async ({ data }): Promise<t.PlatformAgentAccessReconcileResult> => {
@@ -96,6 +117,10 @@ export const getPlatformInstitutionQuotaFn = createServerFn({ method: 'GET' })
         warnings: t.UsageWarning[];
       };
       models: t.QuotaModelRow[];
+      /** Set once the institution is on usage packages. */
+      credits?: t.CreditConsole | null;
+      /** The packages the account holds; for individuals, `memberPackageKey` is the trial. */
+      usagePackage?: t.InstitutionUsagePackage | null;
     }> => {
       const response = await apiFetch(
         `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/quota`,
@@ -109,19 +134,11 @@ export const getPlatformInstitutionQuotaFn = createServerFn({ method: 'GET' })
           warnings: t.UsageWarning[];
         };
         models: t.QuotaModelRow[];
+        credits?: t.CreditConsole | null;
+        usagePackage?: t.InstitutionUsagePackage | null;
       };
     },
   );
-
-export const getPlatformInstitutionQuotaReadinessFn = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ tenantId: z.string().min(1) }))
-  .handler(async ({ data }): Promise<t.QuotaReadinessReport> => {
-    const response = await apiFetch(
-      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/quota/readiness`,
-    );
-    if (!response.ok) await extractApiError(response, 'Failed to fetch quota readiness');
-    return (await response.json()) as t.QuotaReadinessReport;
-  });
 
 export const listPlatformInstitutionPoliciesFn = createServerFn({ method: 'GET' })
   .inputValidator(z.object({ tenantId: z.string().min(1) }))
@@ -134,7 +151,6 @@ export const listPlatformInstitutionPoliciesFn = createServerFn({ method: 'GET' 
   });
 
 const policyInput = z.object({
-  mode: z.enum(['shadow', 'enforce']),
   timezone: z.string().min(1),
   limits: z.object({
     institutionTokens: z.number().int().nonnegative().nullable(),
@@ -187,86 +203,6 @@ export const createPlatformInstitutionPolicyFn = createServerFn({ method: 'POST'
     return (await response.json()) as { policy: t.UsagePolicy; preview: t.UsagePolicyPreview };
   });
 
-export const createPlatformInstitutionFn = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      tenantId: z.string().trim().min(1),
-      name: z.string().trim().min(1),
-      slug: z.string().trim().optional(),
-      adminEmail: z.string().email(),
-      adminName: z.string().trim().optional(),
-      maxActiveMembers: z.number().int().positive().nullable().optional(),
-    }),
-  )
-  .handler(
-    async ({
-      data,
-    }): Promise<{
-      institution: t.PlatformInstitution;
-      user?: t.PlatformInstitutionAdminResult['user'];
-      invite?: t.PlatformInstitutionAdminResult['invite'];
-      inviteLink?: string | null;
-    }> => {
-      const response = await apiFetch('/api/platform/institutions', {
-        method: 'POST',
-        body: JSON.stringify({
-          tenantId: data.tenantId,
-          name: data.name,
-          slug: data.slug || undefined,
-          adminEmail: data.adminEmail || undefined,
-          adminName: data.adminName || undefined,
-          limits:
-            data.maxActiveMembers != null ? { maxActiveMembers: data.maxActiveMembers } : undefined,
-        }),
-      });
-      if (!response.ok) {
-        await extractApiError(response, 'Failed to create institution');
-      }
-      const json = (await response.json()) as {
-        institution: t.PlatformInstitution;
-        user?: t.PlatformInstitutionAdminResult['user'];
-        invite?: t.PlatformInstitutionAdminResult['invite'];
-        inviteLink?: string | null;
-      };
-      return {
-        institution: json.institution,
-        user: json.user,
-        invite: json.invite,
-        inviteLink: json.inviteLink ?? null,
-      };
-    },
-  );
-
-export const assignPlatformInstitutionAdminFn = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      tenantId: z.string().trim().min(1),
-      email: z.string().email(),
-      name: z.string().trim().optional(),
-    }),
-  )
-  .handler(async ({ data }): Promise<t.PlatformInstitutionAdminResult> => {
-    const response = await apiFetch(
-      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/admins`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          email: data.email,
-          name: data.name || undefined,
-        }),
-      },
-    );
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to assign institution admin');
-    }
-    const json = (await response.json()) as t.PlatformInstitutionAdminResult;
-    return {
-      user: json.user,
-      invite: json.invite,
-      inviteLink: json.inviteLink ?? null,
-    };
-  });
-
 export const suspendPlatformInstitutionFn = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ tenantId: z.string().trim().min(1) }))
   .handler(async ({ data }): Promise<{ institution: t.PlatformInstitution }> => {
@@ -316,33 +252,24 @@ export const updatePlatformInstitutionChatAccessFn = createServerFn({ method: 'P
     return (await response.json()) as { institution: t.PlatformInstitution };
   });
 
-export const removePlatformInstitutionFn = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ tenantId: z.string().trim().min(1) }))
-  .handler(async ({ data }): Promise<{ institution: t.PlatformInstitution }> => {
-    const response = await apiFetch(
-      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}`,
-      { method: 'DELETE' },
-    );
-    if (!response.ok) await extractApiError(response, 'Failed to remove institution');
-    return (await response.json()) as { institution: t.PlatformInstitution };
-  });
-
-export const revokePlatformInstitutionAdminFn = createServerFn({ method: 'POST' })
+export const updatePlatformInstitutionBdrenOrganizationFn = createServerFn({ method: 'POST' })
   .inputValidator(
     z.object({
       tenantId: z.string().trim().min(1),
-      userId: z.string().trim().min(1),
+      bdrenOrganizationId: z.string().trim().min(1).max(100).nullable(),
     }),
   )
-  .handler(async ({ data }): Promise<{ ok: true }> => {
-    const response = await apiFetch(
-      `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/admins/${encodeURIComponent(
-        data.userId,
-      )}`,
-      { method: 'DELETE' },
-    );
-    if (!response.ok) {
-      await extractApiError(response, 'Failed to revoke institution admin');
-    }
-    return { ok: true };
-  });
+  .handler(
+    async ({ data }): Promise<{ tenantId: string; bdrenOrganizationId: string | null }> => {
+      const response = await apiFetch(
+        `/api/platform/institutions/${encodeURIComponent(data.tenantId)}/bdren-organization`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({ bdrenOrganizationId: data.bdrenOrganizationId }),
+        },
+      );
+      if (!response.ok) await extractApiError(response, 'Failed to link the bdren.ai organization');
+      return (await response.json()) as { tenantId: string; bdrenOrganizationId: string | null };
+    },
+  );
+

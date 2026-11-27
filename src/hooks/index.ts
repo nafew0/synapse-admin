@@ -14,3 +14,6 @@ export * from './useReorderVoiceover';
 export * from './useSearchIndex';
 export * from './useStripAriaExpanded';
 export * from './useUsage';
+export * from './useCosts';
+export * from './usePrices';
+export * from './useKbStorage';

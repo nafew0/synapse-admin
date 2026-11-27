@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
@@ -7,10 +7,8 @@ import type * as t from '@/types';
 import {
   formatRelativeTime,
   formatUsageNumber,
-  notifySuccess,
   formatCompact,
   modelRowKey,
-  notifyError,
   presetRange,
   cn,
 } from '@/utils';
@@ -22,8 +20,7 @@ import {
   ShareBar,
 } from '@/components/shared';
 import { useMemberActions, useLocalize } from '@/hooks';
-import { getUserCreditsFn, getUserUsageFn } from '@/server';
-import { ConfirmDialog } from '@/components/access';
+import { getUserUsageFn } from '@/server';
 
 const DETAIL_RANGE = '30d';
 /** Stays in view beside a long table; scrolls inside itself when taller than the screen. */
@@ -48,15 +45,8 @@ function formatDateTime(value?: string | null): string {
 /** Details and actions for the member or invite selected in the members table. */
 export function MemberPanel({ member, onClose, canManage, platform }: t.MemberPanelProps) {
   const localize = useLocalize();
-  const [confirm, setConfirm] = useState<'revoke' | 'remove' | null>(null);
   const actions = useMemberActions(member, platform, onClose);
-  const { clearResendLink } = actions;
   const panelRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    setConfirm(null);
-    clearResendLink();
-  }, [clearResendLink, member?.id]);
 
   /** When the panel sits below the table (narrow screens), bring it into view on selection. */
   useEffect(() => {
@@ -122,75 +112,20 @@ export function MemberPanel({ member, onClose, canManage, platform }: t.MemberPa
         <UserDetails member={member} platform={platform} canManage={canManage} actions={actions} />
       )}
 
-      {canManage ? (
+      {canManage && !isInvite ? (
         <div className="flex flex-wrap gap-2 border-t border-(--cui-color-stroke-muted) pt-4">
-          {isInvite ? (
-            <>
-              <PanelButton
-                tone="brand"
-                disabled={actions.busy}
-                onClick={() => actions.resend.mutate()}
-              >
-                {localize(member.status === 'expired' ? 'com_members_reissue' : 'com_members_resend')}
-              </PanelButton>
-              <PanelButton
-                tone="danger"
-                disabled={actions.busy || member.status === 'expired'}
-                onClick={() => setConfirm('revoke')}
-              >
-                {localize('com_members_revoke')}
-              </PanelButton>
-            </>
-          ) : (
-            <>
-              {member.status === 'active' ? (
-                <PanelButton disabled={actions.busy} onClick={() => actions.suspend.mutate()}>
-                  {localize('com_members_suspend')}
-                </PanelButton>
-              ) : null}
-              {member.status === 'suspended' ? (
-                <PanelButton disabled={actions.busy} onClick={() => actions.reactivate.mutate()}>
-                  {localize('com_members_reactivate')}
-                </PanelButton>
-              ) : null}
-              <PanelButton tone="danger" disabled={actions.busy} onClick={() => setConfirm('remove')}>
-                {localize('com_members_remove')}
-              </PanelButton>
-            </>
-          )}
+          {member.status === 'active' ? (
+            <PanelButton disabled={actions.busy} onClick={() => actions.suspend.mutate()}>
+              {localize('com_members_suspend')}
+            </PanelButton>
+          ) : null}
+          {member.status === 'suspended' ? (
+            <PanelButton disabled={actions.busy} onClick={() => actions.reactivate.mutate()}>
+              {localize('com_members_reactivate')}
+            </PanelButton>
+          ) : null}
         </div>
       ) : null}
-
-      {actions.resendLink ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-(--cui-color-stroke-default) p-3">
-          <p className="m-0 text-xs text-(--cui-color-text-muted)">{localize('com_members_link_fallback')}</p>
-          <p className="m-0 text-xs break-all">{actions.resendLink}</p>
-          <PanelButton
-            onClick={() => {
-              navigator.clipboard.writeText(actions.resendLink ?? '').then(
-                () => notifySuccess(localize('com_members_link_copied')),
-                () => notifyError(localize('com_members_link_copy_failed')),
-              );
-            }}
-          >
-            {localize('com_members_copy_link')}
-          </PanelButton>
-        </div>
-      ) : null}
-
-      <ConfirmDialog
-        open={confirm != null}
-        title={localize(confirm === 'revoke' ? 'com_members_revoke_title' : 'com_members_remove_title')}
-        description={localize(
-          confirm === 'revoke' ? 'com_members_revoke_desc' : 'com_members_remove_desc',
-          { email: member.email },
-        )}
-        confirmLabel={localize(confirm === 'revoke' ? 'com_members_revoke' : 'com_members_remove_confirm')}
-        confirmType="danger"
-        saving={actions.busy}
-        onConfirm={() => (confirm === 'revoke' ? actions.revoke.mutate() : actions.remove.mutate())}
-        onCancel={() => setConfirm(null)}
-      />
     </aside>
   );
 }
@@ -230,29 +165,20 @@ function UserDetails({
   actions: ReturnType<typeof useMemberActions>;
 }) {
   const localize = useLocalize();
-  const [packageId, setPackageId] = useState('');
   const range = useMemo(() => presetRange(DETAIL_RANGE), []);
   const usage = useQuery({
     queryKey: ['user-usage', member.id, platform, range],
     queryFn: () => getUserUsageFn({ data: { userId: member.id, platform, ...range } }),
   });
-  const credits = useQuery({
-    queryKey: ['user-credits', member.id, platform],
-    queryFn: () => getUserCreditsFn({ data: { userId: member.id, platform } }),
-  });
 
   const models = usage.data?.models ?? [];
   const topModel = models[0]?.totalTokens ?? 0;
-  const packages = credits.data?.packages?.list ?? [];
-  const latestGrant = credits.data?.grants[0];
-  const latestPackage = packages.find((pkg) => pkg.id === latestGrant?.packageId);
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <Figure label={localize('com_members_tokens_30d')} value={formatCompact(usage.data?.summary.totalTokens ?? 0)} />
         <Figure label={localize('com_usage_requests')} value={formatUsageNumber(usage.data?.summary.eventCount ?? 0)} />
-        <Figure label={localize('com_members_credits')} value={formatUsageNumber(credits.data?.balance ?? 0)} />
       </div>
 
       <div className="flex flex-col gap-2.5">
@@ -287,12 +213,6 @@ function UserDetails({
           ...(platform ? [[localize('com_usage_institution'), member.institutionName || member.tenantId || '—'] as [string, string]] : []),
           [localize('com_members_joined'), formatDate(member.createdAt)],
           [localize('com_members_sign_in'), member.provider || '—'],
-          [
-            localize('com_members_latest_credits'),
-            latestGrant
-              ? `+${formatUsageNumber(latestGrant.credits)} · ${formatDate(latestGrant.createdAt)}${latestPackage ? ` · ${latestPackage.label}` : ''}`
-              : '—',
-          ],
         ]}
       />
 
@@ -310,30 +230,6 @@ function UserDetails({
               <option value="INSTITUTION_ADMIN">{localize('com_members_role_institution_admin')}</option>
             </select>
           </label>
-          <div className="flex flex-col gap-1.5 text-[13px] font-semibold">
-            <label htmlFor={`grant-${member.id}`}>{localize('com_members_grant_credits')}</label>
-            <div className="flex gap-2">
-              <select
-                id={`grant-${member.id}`}
-                value={packageId}
-                onChange={(event) => setPackageId(event.target.value)}
-                className="admin-themed-control h-10 min-w-0 flex-1 rounded-lg border border-(--cui-color-stroke-default) bg-(--syn-surface) px-2.5 text-sm font-normal text-(--cui-color-text-default)"
-              >
-                <option value="">{localize('com_members_select_package')}</option>
-                {packages.map((pkg) => (
-                  <option key={pkg.id} value={pkg.id}>
-                    {pkg.label}
-                  </option>
-                ))}
-              </select>
-              <PanelButton
-                disabled={!packageId || actions.busy}
-                onClick={() => actions.grantCredits.mutate(packageId, { onSuccess: () => setPackageId('') })}
-              >
-                {localize('com_members_grant')}
-              </PanelButton>
-            </div>
-          </div>
           {platform && member.tenantId && !member.emailVerified ? (
             <PanelButton disabled={actions.busy} onClick={() => actions.resendVerification.mutate()}>
               {localize('com_members_resend_verification')}

@@ -1,3 +1,4 @@
+export * from './bdren';
 export * from './auth';
 export * from './banner';
 export * from './capabilities';
@@ -9,5 +10,9 @@ export * from './roles';
 export * from './scopes';
 export * from './users';
 export * from './agentsCatalog';
-export * from './billing';
 export * from './usage';
+export * from './packages';
+export * from './alerts';
+export * from './costs';
+export * from './prices';
+export * from './kb';

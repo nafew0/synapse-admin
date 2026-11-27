@@ -15,6 +15,8 @@ export interface UsageSummary {
   eventCount: number;
   memberCount: number;
   modelCount: number;
+  /** Scanned pages read by the OCR service. */
+  ocrPages?: number;
 }
 
 export interface MemberUsageRow {
